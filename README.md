@@ -10,11 +10,18 @@ Visibility: private.
 
 ## What lives here
 
-Each idea becomes a self-contained folder under [`projects/`](./projects). One
-folder = one product / experiment / utility.
+Each idea becomes a self-contained folder under [`projects/`](./projects),
+grouped by kind:
+
+- **[`projects/apps/`](./projects/apps)** — real products (in production
+  or a working POC).
+- **[`projects/agents/`](./projects/agents)** — AI agent ideas (personal
+  utilities, team-facing teammates, intern-project pitches).
+
+One folder = one product / experiment / utility.
 
 ```
-projects/<slug>/
+projects/<kind>/<slug>/
 ├── README.md         ← the narrative entry point. Idea first, then
 │                       a tour of the detailings, then links into spec/.
 ├── idea.md           ← the why, in detail: problem, users, north star
@@ -42,14 +49,15 @@ Reusable scaffolding:
 ## How to add a new idea
 
 ```bash
+kind=agents   # or apps
 slug=my-new-idea
-mkdir -p projects/$slug/{spec,plan,prompts,assets}
-cp _templates/project-readme.md projects/$slug/README.md
-cp _templates/idea.md           projects/$slug/idea.md
-cp _templates/spec.md           projects/$slug/spec/README.md
-cp _templates/plan.md           projects/$slug/plan/README.md
-cp _templates/build-prompt.md   projects/$slug/prompts/build-from-spec.md
-touch projects/$slug/assets/.gitkeep
+mkdir -p projects/$kind/$slug/{spec,plan,prompts,assets}
+cp _templates/project-readme.md projects/$kind/$slug/README.md
+cp _templates/idea.md           projects/$kind/$slug/idea.md
+cp _templates/spec.md           projects/$kind/$slug/spec/README.md
+cp _templates/plan.md           projects/$kind/$slug/plan/README.md
+cp _templates/build-prompt.md   projects/$kind/$slug/prompts/build-from-spec.md
+touch projects/$kind/$slug/assets/.gitkeep
 ```
 
 Then iterate: fill in the README narrative (idea → detailings → links) →
@@ -70,12 +78,21 @@ build prompt.
 
 ## Projects
 
+Grouped by kind:
+
+### Apps — real products
+
 | Slug | One-liner | Status |
 | --- | --- | --- |
-| [aadhat-management](./projects/aadhat-management) | Hindi/English wholesale-retail business management app (Firebase + Capacitor). | In production; spec frozen, security hardening pending. |
-| [identityposc](./projects/identityposc) | POC for shop-floor ambient identity from CCTV (camera + mic) — learns who people are by overhearing how they're addressed. | POC complete (F1 80 % on Tears of Steel, recall 100 %); next phase is production hardening. |
-| [winui-expert-teammate](./projects/winui-expert-teammate) | An AI teammate for the WinUI team — one brain, many surfaces (Teams, Outlook, GitHub/ADO, Agency); identity, memory, proactive behaviour layered onto existing WinUI agents. | Pitched as intern project; phased delivery plan ready. |
-| [assistant-inbox-triage](./projects/assistant-inbox-triage) | Personal AI that watches my mail, Teams, PRs, and bugs and tells me what's worth doing today (Microsoft-internal). | Early-stage idea capture; open decisions on surface + runtime. |
-| [agent-prompt-optimizer](./projects/agent-prompt-optimizer) | An agent that makes me better at using AI — by rewriting prompts in flight, replaying my sessions, or coaching me in real time. | Early-stage idea capture; three competing shapes on the table. |
-| [agent-ado-bugfixer](./projects/agent-ado-bugfixer) | Agency-mode agent that walks my ADO bug list and proposes fixes — draft PRs, root-cause notes, dupe calls. Personal-scope. | Early-stage idea capture; needs area allow-list + audit of existing internal tools. |
-| [agent-notes-reminders](./projects/agent-notes-reminders) | Capture-first agent — voice/text in, auto-classified notes + scheduled reminders out — without me deciding where things go. | Early-stage idea capture; tenant + capture-surface undecided. |
+| [aadhat-management](./projects/apps/aadhat-management) | Hindi/English wholesale-retail business management app (Firebase + Capacitor). | In production; spec frozen, security hardening pending. |
+| [identityposc](./projects/apps/identityposc) | POC for shop-floor ambient identity from CCTV (camera + mic) — learns who people are by overhearing how they're addressed. | POC complete (F1 80 % on Tears of Steel, recall 100 %); next phase is production hardening. |
+
+### Agents — AI agent ideas
+
+| Slug | One-liner | Status |
+| --- | --- | --- |
+| [winui-expert-teammate](./projects/agents/winui-expert-teammate) | An AI teammate for the WinUI team — one brain, many surfaces (Teams, Outlook, GitHub/ADO, Agency); identity, memory, proactive behaviour layered onto existing WinUI agents. | Pitched as intern project; phased delivery plan ready. |
+| [inbox-triage](./projects/agents/inbox-triage) | Personal AI that watches my mail, Teams, PRs, and bugs and tells me what's worth doing today (Microsoft-internal). | Early-stage idea capture; open decisions on surface + runtime. |
+| [prompt-optimizer](./projects/agents/prompt-optimizer) | An agent that makes me better at using AI — by rewriting prompts in flight, replaying my sessions, or coaching me in real time. | Early-stage idea capture; three competing shapes on the table. |
+| [ado-bugfixer](./projects/agents/ado-bugfixer) | Agency-mode agent that walks my ADO bug list and proposes fixes — draft PRs, root-cause notes, dupe calls. Personal-scope. | Early-stage idea capture; needs area allow-list + audit of existing internal tools. |
+| [notes-reminders](./projects/agents/notes-reminders) | Capture-first agent — voice/text in, auto-classified notes + scheduled reminders out — without me deciding where things go. | Early-stage idea capture; tenant + capture-surface undecided. |

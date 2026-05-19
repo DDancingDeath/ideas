@@ -7,7 +7,7 @@ idea folder and produce a working application elsewhere.
 ## Repo shape
 
 ```
-projects/<slug>/
+projects/<kind>/<slug>/
 ├── README.md     ← always start here. Tells you which files matter and in what order.
 ├── idea.md       ← problem, users, success criteria. Read for context.
 ├── spec/         ← functional source of truth. THE WHAT.
@@ -16,14 +16,18 @@ projects/<slug>/
 └── assets/       ← images: mockups, screenshots, diagrams.
 ```
 
+`<kind>` is one of:
+- `apps/` — real products (in production or a working POC).
+- `agents/` — AI agent ideas (personal utilities, team-facing teammates).
+
 ## How to read a project
 
-1. **`projects/<slug>/README.md`** — **the narrative entry point.** It
-   opens with the idea, walks you through how the system works, lists
-   what it does today, the tech stack, and the known issues, and ends
-   with a reading order that points into the rest. If you only read one
-   file per project, read this one. New projects follow
-   `_templates/project-readme.md`.
+1. **`projects/<kind>/<slug>/README.md`** — **the narrative entry
+   point.** It opens with the idea, walks you through how the system
+   works, lists what it does today, the tech stack, and the known
+   issues, and ends with a reading order that points into the rest.
+   If you only read one file per project, read this one. New projects
+   follow `_templates/project-readme.md`.
 2. **`idea.md`** — deeper version of the idea: who is this for, success
    criteria, non-goals, open questions. Don't skip; it changes your
    design choices.
@@ -58,7 +62,7 @@ Otherwise:
 
 1. Confirm the target stack with the user (don't assume).
 2. Generate code in a **separate repository or directory**, never in
-   `projects/<slug>/`. This repo stays docs-only.
+   `projects/<kind>/<slug>/`. This repo stays docs-only.
 3. Cross-link: in the generated repo's README, link back to the spec folder
    here.
 
