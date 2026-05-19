@@ -22,12 +22,14 @@ as a PWA with an Android wrapper.
    data model + authorization design.
 6. **[`spec/chat-design.md`](./spec/chat-design.md)** — design for the in-app
    AI assistant feature.
-7. **[`plan/review-issues.md`](./plan/review-issues.md)** — known defects.
+7. **[`spec/voice-billing-v2.md`](./spec/voice-billing-v2.md)** — v2 design
+   for tap-to-talk voice billing on the billing page (v1 is already live).
+8. **[`plan/review-issues.md`](./plan/review-issues.md)** — known defects.
    New work must not reintroduce these.
-8. **[`plan/promotion.md`](./plan/promotion.md)** — staging→prod promotion
+9. **[`plan/promotion.md`](./plan/promotion.md)** — staging→prod promotion
    protocol.
-9. **[`plan/staging-smoke-checklist.md`](./plan/staging-smoke-checklist.md)**
-   — manual smoke test before promotion.
+10. **[`plan/staging-smoke-checklist.md`](./plan/staging-smoke-checklist.md)**
+    — manual smoke test before promotion.
 
 ## Build this app from the spec
 
@@ -60,5 +62,7 @@ A reimplementation does not need to use this stack — but the data shape
 
 ## Recent changes
 
+- _2026-05-20_ · Added `spec/voice-billing-v2.md` — v2 design doc imported
+  from the staging mirror's working tree (was uncommitted there).
 - _2026-05-19_ · Initial import of spec + plan docs from
   `AadhatManagementApp-staging/docs/`.

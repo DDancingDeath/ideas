@@ -18,6 +18,9 @@ This is the source of truth for what the app does.
 5. **[`chat-design.md`](./chat-design.md)** — design for the AI assistant
    tab (page `15-chat.md` is the surface; this doc is the implementation
    design behind it).
+6. **[`voice-billing-v2.md`](./voice-billing-v2.md)** — design doc for v2
+   of the tap-to-talk voice billing feature on `02-billing.md`. V1 is live
+   (commit `56e230f` on the live repo); v2 is in design.
 
 ## Glossary
 
