@@ -18,9 +18,15 @@ projects/<slug>/
 
 ## How to read a project
 
-1. **`projects/<slug>/README.md`** — orientation, status, where things live.
-2. **`idea.md`** — load context: who is this for, what problem, what success
-   looks like. Don't skip; it changes your design choices.
+1. **`projects/<slug>/README.md`** — **the narrative entry point.** It
+   opens with the idea, walks you through how the system works, lists
+   what it does today, the tech stack, and the known issues, and ends
+   with a reading order that points into the rest. If you only read one
+   file per project, read this one. New projects follow
+   `_templates/project-readme.md`.
+2. **`idea.md`** — deeper version of the idea: who is this for, success
+   criteria, non-goals, open questions. Don't skip; it changes your
+   design choices.
 3. **`spec/`** — the canonical spec. If there's a `spec/README.md`, follow its
    reading order. If `spec/page-specs/` exists, read each page spec.
 4. **`plan/`** — read `review-issues.md` (known defects, do not reintroduce)

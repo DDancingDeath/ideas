@@ -1,0 +1,155 @@
+# identityposc configuration. Two presets share one code path.
+# Default for the POC is `best`. Override with --preset fast.
+
+active_preset: best
+
+paths:
+  models_dir:     data/models
+  thumbnails_dir: data/thumbnails
+  db_path:        data/db/identities.sqlite
+  eval_dir:       data/eval
+
+# Pipeline tunables that apply equally to both presets.
+pipeline:
+  # Decode FPS for the video lane. Lower = cheaper detection. 4 fps gives us
+  # 4 face samples per second per track, which is plenty for embedding.
+  sample_fps: 4
+
+  # Size to which detected face crops are resized before embedding (InsightFace expects 112x112).
+  face_crop_size: 112
+
+  # Face cluster admission: cosine similarity to centroid must be >= this to join.
+  # ArcFace R100 typically scores same-person at 0.50-0.90 and different-person
+  # at 0.00-0.35. 0.40 is a comfortable boundary that merges shot-to-shot views
+  # of the same actor while still separating distinct people. Tune lower if you
+  # see over-fragmentation; tune higher (toward 0.50) if you see false merges.
+  face_cluster_threshold: 0.40
+
+  # Speaker (ECAPA fallback path only; pyannote produces its own IDs):
+  # ECAPA-TDNN cosine similarity for same-speaker typically lands in the 0.25-0.45
+  # range (it's trained for verification, not similarity scoring). 0.30 gives us
+  # reasonable merging without collapsing distinct speakers.
+  speaker_cluster_threshold: 0.30
+
+  # AV co-occurrence linker
+  # Votes are FRACTIONAL: a turn with N visible faces contributes 1/N to each
+  # (speaker, face) pair. So min_votes ~= "equivalent of N solo-face turns".
+  av_link_min_votes:    3.0
+  av_link_min_ratio:    0.6   # margin of leader over runner-up
+  av_link_max_faces:    4     # turns with > this many faces are skipped (too noisy)
+
+  # Name-binding promotion. Votes are weighted by extractor confidence
+  # (typically 0.90-0.98) AND, for face votes, by 1/N visible faces, AND for
+  # speaker votes by a bucketed inverse-distance weight (closest = 1.0).
+  # 1.0 means "a single isolated mention shouldn't bind" — at conf=0.9 and
+  # closest-speaker weight ~0.7, one vote is ~0.63, two votes ~1.26 — i.e.,
+  # we need at least TWO independent mentions before promoting a name. This
+  # blocks the Whisper-hallucinates-a-single-name-from-noise failure mode.
+  name_bind_min_votes:  1.0
+  # Face-channel votes are 1/N fractional (a turn with N visible faces splits
+  # the vote N ways) AND systematically biased by reverse-shot cinematography
+  # (the *listener* is on screen during a turn). To avoid binding the wrong
+  # face on a single mention, require a higher bar on the face channel —
+  # ~2.5× the speaker bar means a face cluster must accrue ≥1.0 votes
+  # (e.g. 2 mentions in single-other-face contexts, or 4 in 2-face contexts).
+  # Face name votes are 1/N-weighted (split across all visible faces during
+  # the speaker's turn) AND systematically biased by reverse-shot
+  # cinematography (camera frames listener while speaker is off-screen). Keep
+  # this at 2.5× the speaker bar so face bindings need ≥ 2 unambiguous
+  # mentions before promoting — single mentions with two faces present can
+  # never reach this.
+  name_bind_face_min_votes: 2.5
+  # Margin of leader over runner-up. With weak ECAPA fallback diarization,
+  # the same real person frequently fragments across two speaker IDs that
+  # both attract votes for the same name. A *strict* ratio (0.5, with the
+  # binder using >=) blocks the common 2:1 tie pattern, where the leader has
+  # exactly twice the runner-up — typically caused by one extra fragmented
+  # vote landing on the wrong cluster. Lower this only after diarization
+  # quality improves (e.g. real pyannote with HF token).
+  name_bind_min_ratio:  0.5
+
+  # Time window (seconds) used by the name extractor to find the "other recent
+  # speaker". Searched both backward AND forward in time. 20s comfortably covers
+  # the natural pause-and-reply pattern of conversation.
+  recent_speaker_window_s: 20.0
+
+  # AV co-occurrence search window: a face seen within ±this many seconds of a speech turn
+  # counts as co-present.
+  av_cooccurrence_window_s: 0.5
+
+  # ASR-quality gate for the name extractor.
+  # Turns whose Whisper ``avg_logprob`` is BELOW this value are skipped
+  # entirely — they're noise / hallucinations and should not feed NER. -0.7
+  # is the empirical cliff between intelligible speech and Whisper inventing
+  # words from silence/static (we observed bogus single-word "Ashley?" turns
+  # at logprob = -0.95 binding to faces during media playback in the room).
+  name_extract_min_logprob: -0.7
+
+  # Whisper hallucination guard.
+  # When ≥ this many consecutive turns from the same speaker have IDENTICAL
+  # transcripts (after lowercasing/stripping punctuation), the WHOLE burst is
+  # treated as hallucinated and skipped for name extraction. Real conversation
+  # almost never produces 3+ identical-text adjacent turns; Whisper routinely
+  # does on noisy/silent stretches ("Mom. Mom. Mom. Mom...").
+  name_extract_max_repetition: 3
+
+logging:
+  level: INFO
+  log_to_file: true
+  log_dir: data/logs
+
+dashboard:
+  host: "127.0.0.1"
+  port: 8000
+  poll_interval_s: 2.0
+
+# ---------------------------------------------------------------------------
+# Preset definitions. Add new presets by adding a new top-level key here.
+# ---------------------------------------------------------------------------
+
+best:
+  description: "Accuracy-first POC preset. Slower than real-time on CPU is fine."
+  video:
+    insightface_pack: "buffalo_l"       # SCRFD-10G + ArcFace R100 (512-d)
+    detector_input_size: [640, 640]
+    detector_score_threshold: 0.5
+    tracker: "bytetrack"                # 'bytetrack' or 'iou_centroid'
+  audio:
+    sample_rate: 16000
+    vad: "silero"                       # 'silero' or 'webrtc'
+    silero_threshold: 0.5
+    asr_model: "large-v3"               # faster-whisper model name
+    asr_compute_type: "int8"            # CPU; switch to 'float16' on GPU
+    asr_beam_size: 5
+    asr_language: "en"
+    asr_task: "transcribe"              # 'transcribe' (keep source lang) or 'translate' (-> EN)
+    asr_vad_filter: true
+    diarization: "pyannote"             # 'pyannote' (best, needs HF_TOKEN) or 'ecapa' or 'resemblyzer'
+    pyannote_model: "pyannote/speaker-diarization-3.1"
+    ecapa_model: "speechbrain/spkrec-ecapa-voxceleb"
+  nlp:
+    spacy_model: "en_core_web_trf"
+    use_coref: false                    # fastcoref is optional; off by default to keep deps small
+
+fast:
+  description: "Real-time preset for production. Smaller, lower-accuracy models."
+  video:
+    insightface_pack: "buffalo_s"       # SCRFD-2.5G + MobileFaceNet
+    detector_input_size: [320, 320]
+    detector_score_threshold: 0.5
+    tracker: "iou_centroid"
+  audio:
+    sample_rate: 16000
+    vad: "webrtc"
+    webrtc_aggressiveness: 2
+    asr_model: "small"                  # multilingual; was 'small.en' (English-only) — swapped for live Hindi demos
+    asr_compute_type: "int8"
+    asr_beam_size: 1
+    asr_language: "en"
+    asr_task: "transcribe"
+    asr_vad_filter: false               # Silero already pre-filters; Whisper's internal VAD over-rejects low-gain audio
+    diarization: "resemblyzer"
+    ecapa_model: "speechbrain/spkrec-ecapa-voxceleb"
+  nlp:
+    spacy_model: "en_core_web_sm"
+    use_coref: false

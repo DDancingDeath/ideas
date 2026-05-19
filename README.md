@@ -15,13 +15,20 @@ folder = one product / experiment / utility.
 
 ```
 projects/<slug>/
-├── README.md         ← entry point. Read this first.
-├── idea.md           ← the why: problem, users, north star
+├── README.md         ← the narrative entry point. Idea first, then
+│                       a tour of the detailings, then links into spec/.
+├── idea.md           ← the why, in detail: problem, users, north star
 ├── spec/             ← the what: functional spec, page specs, data design
 ├── plan/             ← the how: roadmap, review notes, promotion
 ├── prompts/          ← ready-to-paste agent prompts ("build this for me")
 └── assets/           ← mockups, screenshots, diagrams
 ```
+
+**The project `README.md` is the canonical narrative doc.** Read it
+top-to-bottom and you have: the idea, how the system works at a glance,
+what it does today, the tech stack, the known issues, and a reading
+order pointing into `spec/` and `plan/` for the deep details. New
+projects should follow [`_templates/project-readme.md`](./_templates/project-readme.md).
 
 Reusable scaffolding:
 
@@ -36,12 +43,18 @@ Reusable scaffolding:
 
 ```bash
 slug=my-new-idea
-cp -r _templates projects/$slug
-mv projects/$slug/idea.md projects/$slug/idea.md     # fill in the blanks
-# write a project README that points to the idea + spec entry points
+mkdir -p projects/$slug/{spec,plan,prompts,assets}
+cp _templates/project-readme.md projects/$slug/README.md
+cp _templates/idea.md           projects/$slug/idea.md
+cp _templates/spec.md           projects/$slug/spec/README.md
+cp _templates/plan.md           projects/$slug/plan/README.md
+cp _templates/build-prompt.md   projects/$slug/prompts/build-from-spec.md
+touch projects/$slug/assets/.gitkeep
 ```
 
-Then iterate: idea → spec → mocks in `assets/` → plan → prompt → build.
+Then iterate: fill in the README narrative (idea → detailings → links) →
+write idea.md → drop mocks in `assets/` → flesh out `spec/` → write the
+build prompt.
 
 ---
 
@@ -59,4 +72,5 @@ Then iterate: idea → spec → mocks in `assets/` → plan → prompt → build
 
 | Slug | One-liner | Status |
 | --- | --- | --- |
-| [aadhat-management](./projects/aadhat-management) | Hindi/English wholesale-retail business management app (Firebase + Capacitor). | In production; spec frozen, refactor pending. |
+| [aadhat-management](./projects/aadhat-management) | Hindi/English wholesale-retail business management app (Firebase + Capacitor). | In production; spec frozen, security hardening pending. |
+| [identityposc](./projects/identityposc) | POC for shop-floor ambient identity from CCTV (camera + mic) — learns who people are by overhearing how they're addressed. | POC complete (F1 80 % on Tears of Steel, recall 100 %); next phase is production hardening. |
