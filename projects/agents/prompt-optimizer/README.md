@@ -75,7 +75,15 @@ Could plug in as:
       a rewrite was good? Manual thumbs / outcome inference?
 - [ ] **Models we target**: all LLMs uniformly, or per-model coaching
       (e.g. "Claude prefers X, GPT-5 prefers Y")?
+- [ ] **Genuine gap vs Clawpilot et al.** Clawpilot
+      (`aka.ms/clawpilot-request`) has model switching + personalities
+      but no prompt rewriting/coaching layer; that gap is the
+      differentiator here. Confirm no internal team has shipped this
+      before building.
 
 ## Recent changes
 
+- _2026-05-20_ · Noted that this is a **genuine gap** vs Clawpilot
+  (Clawpilot handles model switching + personalities but not prompt
+  rewriting / coaching).
 - _2026-05-20_ · Idea captured. No code.

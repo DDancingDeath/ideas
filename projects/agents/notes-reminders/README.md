@@ -76,6 +76,10 @@ Deeper detail: [`idea.md`](./idea.md).
 
 ## Open decisions
 
+- [ ] **Try Clawpilot first for the reminders + briefing layer.**
+      Clawpilot Workflows handle multi-step scheduled prompts; pair
+      with the capture-and-classify front end this project adds.
+      Request access at `aka.ms/clawpilot-request`.
 - [ ] **Tenant**: work AAD (notes route to corp OneNote / Outlook) or
       personal Microsoft account?
 - [ ] **Capture surface**: hotkey desktop only, mobile-first, or
@@ -84,9 +88,13 @@ Deeper detail: [`idea.md`](./idea.md).
       and skip the Microsoft stack?
 - [ ] **Wake-word**: yes (battery + privacy concerns) or push-to-talk
       only?
-- [ ] **Existing tools**: is this Copilot for M365 + a hotkey, or
-      something genuinely new?
+- [ ] **Existing tools**: is this Copilot for M365 + Clawpilot
+      Workflows + a hotkey, or something genuinely new?
 
 ## Recent changes
 
+- _2026-05-20_ · Noted **Clawpilot** (Microsoft-internal) as the
+  likely substrate for reminders + scheduled briefs. This project's
+  remaining differentiator is the voice-first capture + on-device STT
+  + auto-classification front end.
 - _2026-05-20_ · Idea captured. No code.

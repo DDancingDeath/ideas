@@ -84,6 +84,12 @@ already pattern-checked.
 
 ## Open decisions
 
+- [ ] **Host shape**: standalone agent vs **Clawpilot Workflow + Skill**
+      (Microsoft-internal — `aka.ms/clawpilot-request`). Clawpilot
+      already provides the shell + browser + workflow + scheduling
+      substrate; this project's value is the autonomous-investigation
+      logic and dupe-detection — both feasible as a Skill prompt + a
+      Workflow on a daily schedule.
 - [ ] **Area scope**: which ADO area paths / repos is this allowed to
       touch in MVP? Suggest one area to start.
 - [ ] **Coding agent**: reuse Copilot Coding Agent for the actual PR
@@ -97,4 +103,6 @@ already pattern-checked.
 
 ## Recent changes
 
+- _2026-05-20_ · Noted **Clawpilot** as a viable host (a Skill +
+  scheduled Workflow may be the lightest path to the MVP).
 - _2026-05-20_ · Idea captured. No code.

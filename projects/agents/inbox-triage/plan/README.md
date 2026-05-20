@@ -7,26 +7,32 @@ chosen surface. The idea is captured; design decisions are pending.
 
 ## Next steps (in order)
 
-1. **Audit existing internal tools.** Before writing anything, search:
+1. **Try Clawpilot first.** Request access at `aka.ms/clawpilot-request`.
+   Configure Heartbeat (Teams + Outlook polling) + a "morning triage"
+   Workflow + a Skill that encodes the ranking logic this project
+   describes. If that covers it, this project ships as a Clawpilot
+   config + a Skill prompt — not a from-scratch agent. Decide *now*
+   whether the remaining gap justifies new code.
+2. **Audit other internal tools.** Before writing anything, also search:
    - Copilot for M365 Priority Inbox + Chat
    - MyHub
    - Internal hackathon repos via internal GitHub search for
      "inbox triage", "PR digest", "ADO bug digest"
    - Internal MCP server registry
    Goal: confirm this isn't ~70 % built already.
-2. **Resolve open decisions** (see `../README.md` → "Open decisions").
-3. **AAD app registration** in the personal-use AAD app pattern
+3. **Resolve open decisions** (see `../README.md` → "Open decisions").
+4. **AAD app registration** in the personal-use AAD app pattern
    internal docs describe. Get Graph + ADO scopes approved.
-4. **Walking skeleton:** pull *only* PRs assigned to me + unread Teams
+5. **Walking skeleton:** pull *only* PRs assigned to me + unread Teams
    @mentions into a local SQLite. No LLM yet. CLI table output.
-5. **Add the LLM triage pass** for ranking + a one-line "why this
+6. **Add the LLM triage pass** for ranking + a one-line "why this
    matters" per item. Still no draft generation.
-6. **Add draft generation** for PR review comments (lowest-risk
+7. **Add draft generation** for PR review comments (lowest-risk
    draft — going into a comment box, not a sent mail).
-7. **Add mail + bug sources.**
-8. **Pick and build the surface** (Teams card / CLI / Electron).
-9. **Tune.** Iterate on prompt + features based on observed ranking
-   quality.
+8. **Add mail + bug sources.**
+9. **Pick and build the surface** (Teams card / CLI / Electron).
+10. **Tune.** Iterate on prompt + features based on observed ranking
+    quality.
 
 ## Risks
 

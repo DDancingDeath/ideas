@@ -68,6 +68,11 @@ skim.
 
 ## Inspiration / prior art
 
+- **Clawpilot** _(Microsoft-internal, `aka.ms/clawpilot-request`)_ —
+  daily-driver AI assistant with WorkIQ (M365 query), Heartbeat
+  (background Teams + Outlook polling with urgent-item notifications),
+  and Workflows (scheduled multi-step natural-language tasks). Heavy
+  overlap with this project's MVP — try first.
 - **Copilot for M365 Priority Inbox + Chat** — solves part of #1 (mail
   prioritization) and #2 (Teams summarization). Audit before building.
 - **MyHub** — internal portal aggregating PRs, bugs, mails. UI-only;
@@ -77,6 +82,10 @@ skim.
 
 ## Open questions
 
+- [ ] **Has Clawpilot already eaten this MVP?** Likely yes for the
+      morning-brief/digest piece. The remaining differentiator (if any)
+      is opinionated ranking + draft generation per source — confirm
+      before any code.
 - [ ] Does Copilot for M365 already do enough of this? Audit needed
       before any code.
 - [ ] Surface choice: Teams self-chat Adaptive Card vs CLI digest vs

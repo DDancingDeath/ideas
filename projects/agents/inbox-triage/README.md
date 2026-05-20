@@ -11,6 +11,37 @@
 
 ---
 
+## ⚠️ Existing tool: Clawpilot may already cover the MVP
+
+**Clawpilot** (Microsoft-internal AI assistant — request access at
+`aka.ms/clawpilot-request`) already ships most of what this project
+calls "MVP":
+
+- **WorkIQ** — queries M365 (mail, Teams, meetings, OneDrive). Same
+  surface this project planned to integrate via Graph.
+- **Heartbeat** — polls Teams + Outlook every N minutes during work
+  hours and notifies on urgent items. Same shape as the proposed
+  morning brief + on-demand digest.
+- **Workflows** — natural-language multi-step on a schedule. A "morning
+  triage" workflow is the obvious composition.
+- **Teams Bridge** — phone → Teams self-chat → Clawpilot. Matches the
+  "Teams self-chat Adaptive Card" surface option here.
+- **Skills** — teach-once-run-forever, the substrate for repeatable
+  triage logic.
+
+**Action before any code:** request dogfood access, configure
+Heartbeat + a triage Workflow + a Skill, and decide what's actually
+left to build. Likely outcome is one of:
+
+1. **Consume Clawpilot directly** — this project becomes a Clawpilot
+   Skill + Workflow config, not a from-scratch agent. (Most likely.)
+2. **Thin layer on top** — keep this project for the *opinionated
+   ranking* that Clawpilot's generic Workflows don't enforce.
+3. **Retire this project** — if Clawpilot is sufficient with
+   configuration alone.
+
+---
+
 ## The idea
 
 The pain: every morning starts with 80 unread Outlook items, 30 Teams
@@ -155,6 +186,10 @@ inbox-triage/
 
 ## Open decisions (block on the user)
 
+- [ ] **Try Clawpilot first** — does the Heartbeat + Workflow + Skill
+      combo cover what you need? If yes, this project doesn't need to
+      ship as a standalone agent. Request access at
+      `aka.ms/clawpilot-request`.
 - [ ] **Surface**: Teams self-chat Adaptive Card vs CLI digest vs
       Electron tray app vs all three?
 - [ ] **Runtime**: Python or Node?
@@ -168,4 +203,8 @@ inbox-triage/
 
 ## Recent changes
 
+- _2026-05-20_ · Noted heavy overlap with **Clawpilot** (Microsoft-
+  internal AI assistant with WorkIQ + Heartbeat + Workflows). MVP
+  likely reduces to a Clawpilot Skill + Workflow config rather than a
+  from-scratch agent. See the "Existing tool: Clawpilot" section above.
 - _2026-05-20_ · Idea captured. No code.

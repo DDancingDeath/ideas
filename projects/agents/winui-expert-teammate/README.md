@@ -179,6 +179,25 @@ siloed, per-user, with snapshot knowledge. This project gives them
 surface the team uses. Don't rebuild the brain — build the body and
 the heartbeat.
 
+### And how is this different from Clawpilot?
+
+**Clawpilot** (Microsoft-internal personal AI assistant —
+`aka.ms/clawpilot-request`) is the *personal-assistant* counterpart:
+one user, one device, runs across that user's surfaces (file system,
+shell, browser, M365, Workflows on a schedule, Heartbeat
+notifications). It's "the user's daily driver."
+
+**This project is the *team-teammate* counterpart**: one identity
+across the *team's* shared surfaces (Teams channels, GitHub/ADO PRs +
+bugs, shared mail threads, Agency). Assignable, persistent shared
+memory of the team's history, accountable in standup. It's "another
+member of the WinUI team."
+
+The two compose: a Clawpilot user could ask their personal assistant
+"@WinUIBot says X about this PR — what should I do?" and the team
+teammate would reply on the shared PR while the personal assistant
+brings the context back to the user.
+
 ---
 
 ## Reading order

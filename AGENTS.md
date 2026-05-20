@@ -44,6 +44,14 @@ projects/<kind>/<slug>/
 
 ## Authoring rules (when modifying this repo)
 
+- **Before scoping any new agent project, audit Clawpilot** (Microsoft-
+  internal personal AI assistant — `aka.ms/clawpilot-request`). It
+  ships file system / shell / browser / search / **WorkIQ** (M365
+  query) / **Workflows** (scheduled multi-step prompts) / **Skills**
+  (teach-once-run-forever) / **Heartbeat** (background Teams + Outlook
+  polling) / **Teams Bridge** (phone → self-chat remote). A lot of
+  "personal agent" ideas reduce to a Clawpilot Skill + Workflow
+  config. Always confirm the gap before greenlighting new code.
 - **Never delete user-authored content** without confirmation. Move it to a
   `archive/` subfolder inside the project instead.
 - **Spec changes need a one-line entry** in the project README under a

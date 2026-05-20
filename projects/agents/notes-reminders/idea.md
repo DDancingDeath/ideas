@@ -49,6 +49,13 @@ shelf — not searchable, not actionable, not surfaced when needed.
 
 ## Inspiration / prior art
 
+- **Clawpilot** _(Microsoft-internal, `aka.ms/clawpilot-request`)_ —
+  Workflows + Skills cover the *reminders / scheduled brief* side
+  cleanly (multi-step natural-language prompts on a cron). It does
+  **not** do voice-first capture, on-device STT, or auto-classification
+  of captures into note/todo/reminder — that's the gap this project
+  fills. The reminders layer should likely be a Clawpilot Workflow,
+  with the capture-and-classify pipeline as the new piece.
 - **AudioPen / Otter** — voice-first capture, but no auto-routing.
 - **Apple / Google Reminders** — fast capture, no classification.
 - **Microsoft To Do + OneNote** — destination systems; lack the
@@ -58,6 +65,8 @@ shelf — not searchable, not actionable, not surfaced when needed.
 
 ## Open questions
 
+- [ ] **Can Clawpilot host the reminders + briefing layer?** If yes,
+      this project narrows to the capture-and-classify front end only.
 - [ ] Tenant — work AAD or personal MSA?
 - [ ] Capture surface — desktop hotkey, mobile-first, both?
 - [ ] Output systems — Outlook + OneNote, or local store?
