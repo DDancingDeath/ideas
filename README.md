@@ -46,23 +46,26 @@ Reusable scaffolding:
 
 ---
 
-## How to add a new idea
+## Adding new things
 
-```bash
-kind=agents   # or apps
-slug=my-new-idea
-mkdir -p projects/$kind/$slug/{spec,plan,prompts,assets}
-cp _templates/project-readme.md projects/$kind/$slug/README.md
-cp _templates/idea.md           projects/$kind/$slug/idea.md
-cp _templates/spec.md           projects/$kind/$slug/spec/README.md
-cp _templates/plan.md           projects/$kind/$slug/plan/README.md
-cp _templates/build-prompt.md   projects/$kind/$slug/prompts/build-from-spec.md
-touch projects/$kind/$slug/assets/.gitkeep
+Three one-liners. See [`CONVENTIONS.md`](./CONVENTIONS.md) for the full
+contract and [`tools/README.md`](./tools/README.md) for prerequisites.
+
+```powershell
+# 1. Add a new idea (a new folder in this repo)
+.\tools\add-idea.ps1 -Slug my-new-idea -Kind agents `
+                     -Title "My new idea" -Pitch "One paragraph."
+
+# 2. Add a new skill (new GitHub repo, or PR to internal ADO)
+.\tools\add-skill.ps1 -Slug my-skill -Target github
+
+# 3. Add a new agent
+.\tools\add-agent.ps1 -Slug my-agent -Target github
 ```
 
-Then iterate: fill in the README narrative (idea → detailings → links) →
-write idea.md → drop mocks in `assets/` → flesh out `spec/` → write the
-build prompt.
+Each script scaffolds from [`_templates/`](./_templates), commits with
+the `Co-authored-by: Copilot` trailer, and pushes. Use `-NoPush` /
+`-NoCommit` to inspect before publishing.
 
 ---
 

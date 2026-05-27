@@ -1,0 +1,64 @@
+{
+  "$schema": "./config.schema.json",
+  "_doc": "Targets for the add-idea / add-skill / add-agent scripts. Edit values marked TODO before first use of the corresponding target.",
+
+  "ideas": {
+    "_doc": "Where new ideas land. Always this repo.",
+    "githubOwner": "DDancingDeath",
+    "repo": "ideas",
+    "defaultBranch": "main"
+  },
+
+  "skills": {
+    "_doc": "Where new skills land. Set 'defaultTarget' to 'github' or 'ado'. Each target has its own block below.",
+    "defaultTarget": "github",
+
+    "github": {
+      "_doc": "Public/personal skills live in their own repo under DDancingDeath. The script creates 'skill-<slug>'.",
+      "owner": "DDancingDeath",
+      "repoPattern": "skill-{slug}",
+      "private": true,
+      "topic": "copilot-cli-skill"
+    },
+
+    "ado": {
+      "_doc": "Internal skills are contributed to a Microsoft ADO repo via PR. Fill in repoName + path on first internal use.",
+      "organization": "os.developers",
+      "project": "hik",
+      "repoName": "TODO-set-internal-skills-repo-name",
+      "skillsDir": "skills/{slug}",
+      "branchPattern": "users/{user}/add-skill-{slug}",
+      "prTitlePattern": "Add skill: {slug}",
+      "reviewers": []
+    }
+  },
+
+  "agents": {
+    "_doc": "Where new agents land. Same shape as skills.",
+    "defaultTarget": "github",
+
+    "github": {
+      "owner": "DDancingDeath",
+      "repoPattern": "agent-{slug}",
+      "private": true,
+      "topic": "ai-agent"
+    },
+
+    "ado": {
+      "organization": "os.developers",
+      "project": "hik",
+      "repoName": "TODO-set-internal-agents-repo-name",
+      "agentsDir": "agents/{slug}",
+      "branchPattern": "users/{user}/add-agent-{slug}",
+      "prTitlePattern": "Add agent: {slug}",
+      "reviewers": []
+    }
+  },
+
+  "git": {
+    "_doc": "Author identity used for commits created by these scripts.",
+    "userName": "DDancingDeath",
+    "userEmail": "223556219+Copilot@users.noreply.github.com",
+    "coAuthor": "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+  }
+}

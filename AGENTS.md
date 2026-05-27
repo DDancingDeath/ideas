@@ -63,6 +63,29 @@ projects/<kind>/<slug>/
 - **No secrets** — API keys, connection strings, internal URLs. If you find
   any, redact and warn.
 
+## When the user says "add an idea / skill / agent"
+
+There are three canonical scripts in [`tools/`](./tools). Use them
+instead of recreating the scaffold by hand:
+
+| User says                | You run                                                  |
+| ------------------------ | -------------------------------------------------------- |
+| "add an idea X"          | `.\tools\add-idea.ps1  -Slug <kebab-slug> -Kind agents`  |
+| "add a skill X"          | `.\tools\add-skill.ps1 -Slug <kebab-slug> -Target github` |
+| "add an agent X"         | `.\tools\add-agent.ps1 -Slug <kebab-slug> -Target github` |
+
+- Default `-Target` is `github` (creates a new private repo under
+  `DDancingDeath`). Use `-Target ado` only when the user explicitly
+  says "internal" / "ADO" / "Microsoft" — and check that
+  `tools/config.json` has the `ado.*.repoName` filled in first
+  (`TODO-…` values mean it's not configured yet — ask the user).
+- Slug must match `^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$`. Derive a
+  reasonable slug from the user's title.
+- Always derive `-Title` and a one-paragraph `-Pitch` / `-Description`
+  from the user's request when possible — do not leave them blank.
+- See [`CONVENTIONS.md`](./CONVENTIONS.md) for what each workflow
+  produces and where.
+
 ## When the user says "build the app"
 
 If a `prompts/build-from-spec.md` exists, that is the contract. Follow it.
