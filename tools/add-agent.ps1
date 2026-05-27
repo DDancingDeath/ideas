@@ -11,6 +11,10 @@
 .PARAMETER Target
     "github" (default) or "ado".
 
+.PARAMETER Domain
+    Only used with -Target ado. Domain folder under agents/ (e.g. os, ado, winui, triage, meta).
+    Defaults to agents.ado.defaultDomain from config.json.
+
 .PARAMETER Title
     Display title.
 
@@ -30,6 +34,7 @@
 param(
     [Parameter(Mandatory)][string]$Slug,
     [ValidateSet('github','ado')][string]$Target,
+    [string]$Domain,
     [string]$Title,
     [string]$Description,
     [string]$WorkRoot = 'D:\work',
@@ -112,6 +117,13 @@ switch ($Target) {
             throw "tools/config.json -> agents.ado.repoName is not set. Edit it before using -Target ado."
         }
         Assert-AzDevOps
+        if (-not $Domain) { $Domain = $cfg.agents.ado.defaultDomain }
+        if (-not $Domain) { throw "Provide -Domain or set agents.ado.defaultDomain in config.json." }
+        $known = @($cfg.agents.ado.knownDomains)
+        if ($known -and ($Domain -notin $known)) {
+            Write-Warn "Domain '$Domain' is not in knownDomains ($($known -join ', ')). Proceeding anyway; update agents/README.md to register the new domain."
+        }
+
         $org   = $cfg.agents.ado.organization
         $proj  = $cfg.agents.ado.project
         $repo  = $cfg.agents.ado.repoName
@@ -131,19 +143,28 @@ switch ($Target) {
         }
 
         $user = Get-GitUserAlias
-        $branch = Resolve-Pattern $cfg.agents.ado.branchPattern @{ slug = $Slug; user = $user }
+        $branch = Resolve-Pattern $cfg.agents.ado.branchPattern @{ slug = $Slug; user = $user; domain = $Domain }
         Invoke-Git -WorkingDir $clonePath checkout -b $branch
 
-        $agentRel = Resolve-Pattern $cfg.agents.ado.agentsDir @{ slug = $Slug }
+        $agentRel = Resolve-Pattern $cfg.agents.ado.agentsDir @{ slug = $Slug; domain = $Domain }
         $agentAbs = Join-Path $clonePath $agentRel
+        if (Test-Path $agentAbs) { throw "Agent directory already exists in repo: $agentRel" }
         Scaffold-AgentFiles -Root $agentAbs -TemplateDir $templates -Tokens $tokens
 
-        if ($NoPush) { Write-Warn "Skipping push/PR (-NoPush)."; break }
+        if ($NoPush) {
+            Write-Warn "Skipping push/PR (-NoPush)."
+            Write-Host ""
+            Write-Host "Next steps:" -ForegroundColor Cyan
+            Write-Host "  1. Edit $agentRel/AGENT.md - replace TODOs with real content." -ForegroundColor Gray
+            Write-Host "  2. Update $($cfg.agents.ado.catalogFile) - add a row to the catalog table." -ForegroundColor Gray
+            Write-Host "  3. Re-run without -NoPush to commit and open the PR." -ForegroundColor Gray
+            break
+        }
         Invoke-Git -WorkingDir $clonePath add -- $agentRel
         Invoke-Git -WorkingDir $clonePath commit -m "Add agent: $Slug`n`n$($cfg.git.coAuthor)"
         Invoke-Git -WorkingDir $clonePath push -u origin $branch
 
-        $prTitle = Resolve-Pattern $cfg.agents.ado.prTitlePattern @{ slug = $Slug }
+        $prTitle = Resolve-Pattern $cfg.agents.ado.prTitlePattern @{ slug = $Slug; domain = $Domain }
         Write-Step "Opening PR ..."
         $reviewerArgs = @()
         if ($cfg.agents.ado.reviewers) { $reviewerArgs = @('--reviewers') + $cfg.agents.ado.reviewers }
@@ -154,10 +175,11 @@ switch ($Target) {
             --source-branch $branch `
             --target-branch main `
             --title $prTitle `
-            --description "Initial scaffold of agent '$Slug'." `
+            --description "Initial scaffold of agent '$Slug' under domain '$Domain'.`n`nReminder: update $($cfg.agents.ado.catalogFile) catalog table before merge." `
             @reviewerArgs `
             --open
         if ($LASTEXITCODE -ne 0) { throw "az repos pr create failed." }
         Write-Ok "PR opened."
+        Write-Warn "Don't forget to update $($cfg.agents.ado.catalogFile) catalog table in a follow-up commit on this branch."
     }
 }

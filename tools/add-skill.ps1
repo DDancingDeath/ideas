@@ -10,6 +10,10 @@
     "github" (default) -> creates DDancingDeath/skill-<slug> via gh.
     "ado"              -> clones the ADO repo from tools/config.json, branches, scaffolds, pushes, opens PR.
 
+.PARAMETER Domain
+    Only used with -Target ado. Domain folder under skills/ (e.g. os, ado, winui, triage, docs, meta).
+    Defaults to skills.ado.defaultDomain from config.json.
+
 .PARAMETER Title
     Display title. Default: title-cased slug.
 
@@ -32,6 +36,7 @@
 param(
     [Parameter(Mandatory)][string]$Slug,
     [ValidateSet('github','ado')][string]$Target,
+    [string]$Domain,
     [string]$Title,
     [string]$Description,
     [string]$WorkRoot = 'D:\work',
@@ -114,6 +119,13 @@ switch ($Target) {
             throw "tools/config.json -> skills.ado.repoName is not set. Edit it before using -Target ado."
         }
         Assert-AzDevOps
+        if (-not $Domain) { $Domain = $cfg.skills.ado.defaultDomain }
+        if (-not $Domain) { throw "Provide -Domain or set skills.ado.defaultDomain in config.json." }
+        $known = @($cfg.skills.ado.knownDomains)
+        if ($known -and ($Domain -notin $known)) {
+            Write-Warn "Domain '$Domain' is not in knownDomains ($($known -join ', ')). Proceeding anyway; update skills/README.md to register the new domain."
+        }
+
         $org   = $cfg.skills.ado.organization
         $proj  = $cfg.skills.ado.project
         $repo  = $cfg.skills.ado.repoName
@@ -133,19 +145,28 @@ switch ($Target) {
         }
 
         $user = Get-GitUserAlias
-        $branch = Resolve-Pattern $cfg.skills.ado.branchPattern @{ slug = $Slug; user = $user }
+        $branch = Resolve-Pattern $cfg.skills.ado.branchPattern @{ slug = $Slug; user = $user; domain = $Domain }
         Invoke-Git -WorkingDir $clonePath checkout -b $branch
 
-        $skillRel = Resolve-Pattern $cfg.skills.ado.skillsDir @{ slug = $Slug }
+        $skillRel = Resolve-Pattern $cfg.skills.ado.skillsDir @{ slug = $Slug; domain = $Domain }
         $skillAbs = Join-Path $clonePath $skillRel
+        if (Test-Path $skillAbs) { throw "Skill directory already exists in repo: $skillRel" }
         Scaffold-SkillFiles -Root $skillAbs -TemplateDir $templates -Tokens $tokens
 
-        if ($NoPush) { Write-Warn "Skipping push/PR (-NoPush)."; break }
+        if ($NoPush) {
+            Write-Warn "Skipping push/PR (-NoPush)."
+            Write-Host ""
+            Write-Host "Next steps:" -ForegroundColor Cyan
+            Write-Host "  1. Edit $skillRel/SKILL.md - replace TODOs with real content." -ForegroundColor Gray
+            Write-Host "  2. Update $($cfg.skills.ado.catalogFile) - add a row to the catalog table." -ForegroundColor Gray
+            Write-Host "  3. Re-run without -NoPush to commit and open the PR." -ForegroundColor Gray
+            break
+        }
         Invoke-Git -WorkingDir $clonePath add -- $skillRel
         Invoke-Git -WorkingDir $clonePath commit -m "Add skill: $Slug`n`n$($cfg.git.coAuthor)"
         Invoke-Git -WorkingDir $clonePath push -u origin $branch
 
-        $prTitle = Resolve-Pattern $cfg.skills.ado.prTitlePattern @{ slug = $Slug }
+        $prTitle = Resolve-Pattern $cfg.skills.ado.prTitlePattern @{ slug = $Slug; domain = $Domain }
         Write-Step "Opening PR ..."
         $reviewerArgs = @()
         if ($cfg.skills.ado.reviewers) { $reviewerArgs = @('--reviewers') + $cfg.skills.ado.reviewers }
@@ -156,10 +177,11 @@ switch ($Target) {
             --source-branch $branch `
             --target-branch main `
             --title $prTitle `
-            --description "Initial scaffold of skill '$Slug'." `
+            --description "Initial scaffold of skill '$Slug' under domain '$Domain'.`n`nReminder: update $($cfg.skills.ado.catalogFile) catalog table before merge." `
             @reviewerArgs `
             --open
         if ($LASTEXITCODE -ne 0) { throw "az repos pr create failed." }
         Write-Ok "PR opened."
+        Write-Warn "Don't forget to update $($cfg.skills.ado.catalogFile) catalog table in a follow-up commit on this branch."
     }
 }

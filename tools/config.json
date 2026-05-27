@@ -22,12 +22,15 @@
     },
 
     "ado": {
-      "_doc": "Internal skills are contributed to a Microsoft ADO repo via PR. Fill in repoName + path on first internal use.",
-      "organization": "os.developers",
-      "project": "hik",
-      "repoName": "TODO-set-internal-skills-repo-name",
-      "skillsDir": "skills/{slug}",
-      "branchPattern": "users/{user}/add-skill-{slug}",
+      "_doc": "Internal skills follow the Hik repo convention: skills/<domain>/<slug>/SKILL.md. Domains: os, ado, winui, triage, docs, meta.",
+      "organization": "microsoft",
+      "project": "OS.Developer",
+      "repoName": "Hik",
+      "skillsDir": "skills/{domain}/{slug}",
+      "defaultDomain": "meta",
+      "knownDomains": ["os", "ado", "winui", "triage", "docs", "meta"],
+      "catalogFile": "skills/README.md",
+      "branchPattern": "user/{user}/skill-{slug}",
       "prTitlePattern": "Add skill: {slug}",
       "reviewers": []
     }
@@ -45,11 +48,15 @@
     },
 
     "ado": {
-      "organization": "os.developers",
-      "project": "hik",
-      "repoName": "TODO-set-internal-agents-repo-name",
-      "agentsDir": "agents/{slug}",
-      "branchPattern": "users/{user}/add-agent-{slug}",
+      "_doc": "Internal agents follow the Hik repo convention: agents/<domain>/<slug>/AGENT.md.",
+      "organization": "microsoft",
+      "project": "OS.Developer",
+      "repoName": "Hik",
+      "agentsDir": "agents/{domain}/{slug}",
+      "defaultDomain": "winui",
+      "knownDomains": ["os", "ado", "winui", "triage", "meta"],
+      "catalogFile": "agents/README.md",
+      "branchPattern": "user/{user}/agent-{slug}",
       "prTitlePattern": "Add agent: {slug}",
       "reviewers": []
     }

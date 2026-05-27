@@ -72,17 +72,24 @@ instead of recreating the scaffold by hand:
 | ------------------------ | -------------------------------------------------------- |
 | "add an idea X"          | `.\tools\add-idea.ps1  -Slug <kebab-slug> -Kind agents`  |
 | "add a skill X"          | `.\tools\add-skill.ps1 -Slug <kebab-slug> -Target github` |
+| "add a skill X internally" / "to Hik" | `.\tools\add-skill.ps1 -Slug <slug> -Target ado -Domain <os\|ado\|winui\|triage\|docs\|meta>` |
 | "add an agent X"         | `.\tools\add-agent.ps1 -Slug <kebab-slug> -Target github` |
+| "add an agent X internally" / "to Hik" | `.\tools\add-agent.ps1 -Slug <slug> -Target ado -Domain <os\|ado\|winui\|triage\|meta>` |
 
 - Default `-Target` is `github` (creates a new private repo under
-  `DDancingDeath`). Use `-Target ado` only when the user explicitly
-  says "internal" / "ADO" / "Microsoft" — and check that
-  `tools/config.json` has the `ado.*.repoName` filled in first
-  (`TODO-…` values mean it's not configured yet — ask the user).
+  `DDancingDeath`). Use `-Target ado` when the user says "internal" /
+  "ADO" / "Microsoft" / "Hik".
+- For `-Target ado`, the **hierarchy is mandatory**: skills land at
+  `skills/<domain>/<slug>/SKILL.md` and agents at
+  `agents/<domain>/<slug>/AGENT.md`. Pick the domain that fits; if none
+  do, create a new one and remember to register it in the catalog.
 - Slug must match `^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$`. Derive a
   reasonable slug from the user's title.
 - Always derive `-Title` and a one-paragraph `-Pitch` / `-Description`
-  from the user's request when possible — do not leave them blank.
+  from the user's request when possible - do not leave them blank.
+- After an ADO PR is opened, **remind the user to update the catalog
+  table** in `skills/README.md` or `agents/README.md` - the script does
+  not auto-edit those.
 - See [`CONVENTIONS.md`](./CONVENTIONS.md) for what each workflow
   produces and where.
 

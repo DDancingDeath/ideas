@@ -24,11 +24,14 @@ in the `ado.*` blocks **before** using `-Target ado` for the first time.
   -Title "ADO bug triage" `
   -Description "Walks an ADO query and proposes dupe/triage/fix actions."
 
-# Add an internal skill via a PR to the configured ADO repo
-.\tools\add-skill.ps1 -Slug winui-perf-review -Target ado
+# Add an internal skill via a PR to the Hik ADO repo (skills/<domain>/<slug>/)
+.\tools\add-skill.ps1 -Slug winui-perf-review -Target ado -Domain winui
 
-# Add an agent
+# Add an agent (GitHub)
 .\tools\add-agent.ps1 -Slug morning-brief -Target github
+
+# Add an internal agent to Hik (agents/<domain>/<slug>/)
+.\tools\add-agent.ps1 -Slug winui-bug-triager -Target ado -Domain winui
 ```
 
 All scripts:
@@ -54,11 +57,37 @@ All scripts:
 - **Idea template** lives in [`../_templates/`](../_templates/). Five
   files (`project-readme.md`, `idea.md`, `spec.md`, `plan.md`,
   `build-prompt.md`).
-- **Skill template** in [`../_templates/skill/`](../_templates/skill/).
-- **Agent template** in [`../_templates/agent/`](../_templates/agent/).
+- **Skill template** in [`../_templates/skill/`](../_templates/skill/) -
+  shape matches the Hik repo's required `SKILL.md` front-matter
+  (`name`, `description`). `name` must equal the directory name.
+- **Agent template** in [`../_templates/agent/`](../_templates/agent/) -
+  shape matches the Hik repo's `AGENT.md` front-matter
+  (`name`, `description`, `default-model`, `default-agent-type`,
+  `default-mode`).
 
 Token substitution syntax in templates: `{{SLUG}}`, `{{TITLE}}`,
 `{{DESCRIPTION}}`, `{{PITCH}}`, `{{KIND}}`, `{{DATE}}`, `{{TARGET}}`.
+
+## Hik repo layout (for ADO target)
+
+The internal Microsoft repo is `microsoft/OS.Developer/Hik`. Its layout
+(maintained by the `meta/add-skill-or-agent` skill):
+
+```
+Hik/
+├── skills/<domain>/<slug>/SKILL.md      ← what the script writes
+├── agents/<domain>/<slug>/AGENT.md      ← what the script writes
+├── skills/README.md                     ← catalog you must update by hand
+└── agents/README.md                     ← catalog you must update by hand
+```
+
+Known domains: `os`, `ado`, `winui`, `triage`, `docs` (skills only),
+`meta`. New domains are allowed - the script warns and reminds you to
+register the new domain in the catalog README.
+
+The branch name format is `user/<alias>/skill-<slug>` (or
+`user/<alias>/agent-<slug>`). Ownership Enforcer gates the PR to
+approval by one of the listed owners in `Hik/owners.txt`.
 
 ## When the user says "add an X"
 

@@ -1,43 +1,56 @@
 ---
 name: {{SLUG}}
 description: {{DESCRIPTION}}
+default-model: claude-opus-4.7-1m-internal
+default-agent-type: general-purpose
+default-mode: background
 ---
 
 # {{TITLE}}
 
-> {{DESCRIPTION}}
+## When to dispatch
 
-## Role
-
-TODO: One paragraph describing the agent's role. What does it own? What
-problem does it solve? What is it _not_ responsible for?
-
-## When to invoke
-
-TODO: Trigger conditions - when a user (or another agent) should hand
-work to this agent.
+One paragraph describing when an orchestrator should hand work to this
+agent. What makes a session "ripe" for it?
 
 ## Inputs
 
-TODO: What the agent expects - files, context, prior conversation,
-arguments.
+* `input-1` - description
+* `input-2` - description
 
-## Output
-
-TODO: What the agent produces. Format and acceptance criteria.
-
-## Tools the agent uses
-
-TODO: List of MCP tools / APIs / shell commands / skills the agent
-relies on.
-
-## System prompt
+## System prompt (paste into `task(prompt=...)`)
 
 ```text
-TODO: paste / iterate the system prompt the agent uses. Keep it
-versioned in this file so changes are reviewable.
+You are <role>. Your job is to <task>.
+
+# Constraints
+- ...
+
+# Output
+- ...
 ```
 
-## Examples
+## Example invocation
 
-### Example 1 - TODO
+```python
+task(
+  agent_type="general-purpose",
+  model="claude-opus-4.7-1m-internal",
+  mode="background",
+  name="example-{{SLUG}}",
+  description="Example dispatch of {{SLUG}}",
+  prompt=<contents of the System prompt section above, with inputs substituted>,
+)
+```
+
+## Known limitations
+
+* ...
+
+---
+
+> Authoring notes (delete before PR):
+> - `name` in front-matter MUST equal the parent directory name (`{{SLUG}}`).
+> - Front-matter `default-*` fields are conventions used by the Hik repo
+>   orchestrators - keep them unless you have a specific reason to override.
+> - Update `agents/README.md` (catalog table) when adding this agent via PR.

@@ -59,16 +59,27 @@ A **skill** is a Copilot CLI / agent-runtime plugin (a folder with a
 not in this knowledge base.
 
 ```powershell
-# Public/personal — creates DDancingDeath/skill-<slug> (private repo by default)
+# Public/personal - creates DDancingDeath/skill-<slug> (private repo by default)
 .\tools\add-skill.ps1 -Slug <slug> -Target github -Title "<title>" -Description "<desc>"
 
-# Internal Microsoft — opens a PR to the ADO repo from tools/config.json
-.\tools\add-skill.ps1 -Slug <slug> -Target ado    -Title "<title>" -Description "<desc>"
+# Internal Microsoft - PR to microsoft/OS.Developer/Hik under skills/<domain>/<slug>/
+.\tools\add-skill.ps1 -Slug <slug> -Target ado -Domain <domain> -Title "<title>" -Description "<desc>"
 ```
 
-Scaffold content comes from [`_templates/skill/`](./_templates/skill/)
-(currently `SKILL.md` and `README.md` — extend the template directory
-to add more scaffolded files).
+Domains in the Hik repo today: `os`, `ado`, `winui`, `triage`, `docs`,
+`meta`. Default if `-Domain` omitted: `meta`. New domains are allowed -
+the script warns and reminds you to register the new domain in
+`skills/README.md`.
+
+Scaffold content comes from [`_templates/skill/`](./_templates/skill/).
+The template uses the front-matter shape Hik expects:
+
+```markdown
+---
+name: <skill-name>     # MUST equal the directory name
+description: <1-3 sentences, lead with the verb for action skills>
+---
+```
 
 ### GitHub target
 
@@ -78,27 +89,44 @@ to add more scaffolded files).
 3. Scaffolds the skill files with token substitution.
 4. Initial commit + push.
 
-### ADO target
+### ADO target (Hik repo)
 
-1. Clones (or fast-forwards) the configured ADO skills repo into
-   `D:\work\<repo>`.
-2. Creates a branch `users/<alias>/add-skill-<slug>`.
-3. Scaffolds the skill under `skills/<slug>/`.
-4. Commits, pushes, opens a PR via `az repos pr create` and opens it
-   in the browser.
+1. Clones (or fast-forwards) `https://dev.azure.com/microsoft/OS.Developer/_git/Hik`
+   into `D:\work\Hik`.
+2. Creates branch `user/<alias>/skill-<slug>`.
+3. Scaffolds under `skills/<domain>/<slug>/SKILL.md` (+ README.md).
+4. Commits, pushes, opens a PR via `az repos pr create`.
+5. **Reminds you to update `skills/README.md` catalog table** before
+   merge - this is a Hik repo quality bar and the script does not
+   auto-edit the catalog (the table format is opinionated).
 
 ---
 
 ## 3. Add an agent
 
-An **agent** is a built/deployable AI agent (system prompt + tool list
-+ optional code). Same shape and rules as a skill, but uses the
+An **agent** is a sub-agent configuration (system prompt + tool list +
+model selection). Same shape and rules as a skill, but uses the
 `agents.*` block in `config.json` and the
 [`_templates/agent/`](./_templates/agent/) directory.
 
 ```powershell
-.\tools\add-agent.ps1 -Slug <slug> -Target <github|ado>
+.\tools\add-agent.ps1 -Slug <slug> -Target <github|ado> [-Domain <domain>]
 ```
+
+For ADO target: lands at `agents/<domain>/<slug>/AGENT.md` in the Hik
+repo. Domains today: `os`, `ado`, `winui`, `triage`, `meta`. Default
+domain: `winui`. AGENT.md template includes the
+`default-model: claude-opus-4.7-1m-internal`, `default-agent-type`, and
+`default-mode` front-matter fields the Hik orchestrators expect.
+
+### Targets at a glance
+
+| Target | Where it lands | Repo URL |
+| --- | --- | --- |
+| `github` (skill) | New private repo `DDancingDeath/skill-<slug>` | `https://github.com/DDancingDeath/skill-<slug>` |
+| `github` (agent) | New private repo `DDancingDeath/agent-<slug>` | `https://github.com/DDancingDeath/agent-<slug>` |
+| `ado` (skill) | `skills/<domain>/<slug>/` in Hik | `https://dev.azure.com/microsoft/OS.Developer/_git/Hik` |
+| `ado` (agent) | `agents/<domain>/<slug>/` in Hik | `https://dev.azure.com/microsoft/OS.Developer/_git/Hik` |
 
 ---
 
