@@ -1,4 +1,4 @@
-# Personal Agent v0 — Launch-App Spike
+# Remote App Launcher
 
 > The smallest end-to-end loop that proves the [cross-device personal agent](../cross-device-personal-agent) concept works in real life. *Type `notepad` on the phone, notepad opens on the dev box.* Nothing else.
 

@@ -1,4 +1,4 @@
-# Functional spec — Personal Agent v0
+# Functional spec — Remote App Launcher
 
 This is the **source of truth for what to build**. An agent reading only this
 file should be able to produce a working v0.

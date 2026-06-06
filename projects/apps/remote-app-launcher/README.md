@@ -1,8 +1,8 @@
-# Personal Agent v0 — Launch-App Spike
+# Remote App Launcher
 
 > Weekend spike to prove the wire of the [cross-device personal agent](../cross-device-personal-agent) works end-to-end: type `notepad` on the phone, notepad opens on a named Windows dev box. One command kind (`launch-app`), one device, one app allow-list config file. Shared-secret auth, in-memory storage, HTTP long-poll, Expo Go. ~500 LoC across phone + cloud backend + device agent. If it lives, graduates into Phase 1 of [cross-device-personal-agent](../cross-device-personal-agent).
 
-- Live code repo: not yet — to be created at `github.com/DDancingDeath/personal-agent-v0` when build starts
+- Live code repo: not yet — to be created at `github.com/DDancingDeath/remote-app-launcher` when build starts
 - Status: **idea — fully designed, ready to build** (see `plan/README.md` for the task-level checklist)
 - Lineage: this is the v0 spike of [cross-device-personal-agent](../cross-device-personal-agent). If v0 lives, it folds back as the foundation of that project's Phase 1.
 
@@ -85,7 +85,7 @@ The full schemas for all 3 endpoints + the `Command` data shape + the `apps.json
 ## Layout
 
 ```
-personal-agent-v0/
+remote-app-launcher/
 ├── README.md         ← this doc
 ├── idea.md           ← vision + constraints
 ├── spec/             ← functional spec (APIs, schemas, config)

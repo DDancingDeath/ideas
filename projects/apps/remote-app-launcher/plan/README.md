@@ -1,4 +1,4 @@
-# Build plan — Personal Agent v0
+# Build plan — Remote App Launcher
 
 The plan answers **what to do next and in what order**. For "what to build", see `../spec/`.
 
@@ -34,7 +34,7 @@ Paste into:
 
 ### M0 — Repos & skeleton (~1 h)
 
-- [ ] Create GitHub repo `DDancingDeath/personal-agent-v0` (private) with three top-level folders: `pa-phone/`, `pa-backend/`, `pa-agent/`. Add a root README that links back to this idea folder.
+- [ ] Create GitHub repo `DDancingDeath/remote-app-launcher` (private) with three top-level folders: `pa-phone/`, `pa-backend/`, `pa-agent/`. Add a root README that links back to this idea folder.
 - [ ] `cd pa-backend && dotnet new web -n PaBackend && cd ..` — verify `dotnet run` starts on `http://localhost:5099`.
 - [ ] `cd pa-agent && dotnet new console -n PaAgent && cd ..` — verify `dotnet run` prints `Hello, World!`.
 - [ ] `npx create-expo-app pa-phone --template blank-typescript` — verify `npx expo start` shows a QR; scan it; Expo Go opens.

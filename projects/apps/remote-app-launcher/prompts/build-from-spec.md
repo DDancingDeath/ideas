@@ -1,4 +1,4 @@
-# Build prompt — Personal Agent v0 (Launch-App Spike)
+# Build prompt — Remote App Launcher
 
 Paste this prompt to a coding agent (Copilot CLI, Cursor, Claude Code, etc.)
 to generate the application from this spec.
