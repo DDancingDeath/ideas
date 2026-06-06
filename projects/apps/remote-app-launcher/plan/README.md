@@ -1,12 +1,33 @@
 # Build plan — Remote App Launcher
 
-The plan answers **what to do next and in what order**. For "what to build", see `../spec/`.
+The plan answers **what to do next and in what order**. For "what to build",
+see `../spec/`. For "how to coordinate multiple agents", see
+`./orchestration.md`. For "what each worker agent is told", see
+`../prompts/track-*.md`.
 
 ## Current status
 
-**Idea — design complete, code not started.** Spec is final; no open design decisions remain (only the tunnel-choice and Expo-Go-cellular open questions in `../idea.md`, both with working defaults). Ready for a weekend build.
+**Idea — design complete, code not started.** The spec is final and the
+contract is frozen in `../spec/contracts.md`. Ready for a parallel-agent
+build.
 
-Target: **≤ 12 h focused weekend time**, **≤ 1000 LoC**.
+LoC budget: ≤ 1000 total across the three components. Build effort budget:
+≤ 12 h of focused work.
+
+## Build modes
+
+The three components only meet through the API contract, which means the
+build can collapse from five sequential milestones into **one setup → three
+parallel tracks → one integration → one finalization**.
+
+| Mode | Who runs it | Wall-clock | Trade-off |
+| --- | --- | --- | --- |
+| **Parallel (recommended)** | 1 orchestrator + 3 worker agents | ~7 h | Needs an orchestrator-capable model; produces cleaner per-component PRs. |
+| **Sequential (fallback)** | 1 agent end-to-end | ~10 h | Simpler dispatch; same total work; serial wall-clock. Prompt: `../prompts/build-from-spec.md`. |
+
+The rest of this document describes the parallel build. The sequential
+fallback follows the same M0/M-integration/M-final bookends, just with M1+M2+M3
+done back-to-back by one agent instead of in parallel.
 
 ## Tools / prerequisites
 
@@ -14,12 +35,12 @@ Target: **≤ 12 h focused weekend time**, **≤ 1000 LoC**.
 - iPhone with [Expo Go](https://apps.apple.com/app/expo-go/id982107779) installed.
 - .NET 9 SDK ([download](https://dotnet.microsoft.com/download)).
 - Node 20+ and `npm`.
-- `expo` and `eas` CLIs (`npm install -g expo eas-cli` — `eas` not strictly needed for v0 but install it anyway).
+- `expo` and `eas` CLIs (`npm install -g expo eas-cli` — `eas` not strictly needed for v0).
 - VS dev tunnels CLI (`winget install Microsoft.devtunnel`).
-- Git, VS Code (or whatever).
+- Git, VS Code.
 - An iCloud-signed Apple ID on the phone (just for Expo Go install — no Apple Developer Program seat needed).
 
-Generate the shared secret once and store in three `.env` files (gitignored):
+Generate the shared secret once:
 
 ```powershell
 $secret = [byte[]]::new(32); [System.Security.Cryptography.RandomNumberGenerator]::Fill($secret); $hex = -join ($secret | ForEach-Object { $_.ToString("x2") }); $hex | Set-Clipboard
@@ -27,77 +48,179 @@ $secret = [byte[]]::new(32); [System.Security.Cryptography.RandomNumberGenerator
 
 Paste into:
 - `pa-backend/.env`: `PA_SECRET=...`
-- `pa-agent/.env`: `PA_SECRET=...`  (or pass via env var directly when launching)
-- `pa-phone/.env`: `EXPO_PUBLIC_PA_SECRET=...` and `EXPO_PUBLIC_PA_BACKEND_URL=https://...devtunnels.ms`
+- `pa-agent/.env`: `PA_SECRET=...`
+- `pa-phone/.env`: `EXPO_PUBLIC_PA_SECRET=...` and `EXPO_PUBLIC_PA_BACKEND_URL=...`
 
-## Roadmap (sub-milestones within v0)
+## Roadmap
 
-### M0 — Repos & skeleton (~1 h)
+```
+                       ┌────────────────────────────┐
+                       │  M0 — Pre-flight (~1 h)    │
+                       │  orchestrator, sequential  │
+                       └────────────┬───────────────┘
+                                    │
+              ┌─────────────────────┼─────────────────────┐
+              ▼                     ▼                     ▼
+    ┌──────────────────┐ ┌──────────────────┐  ┌──────────────────┐
+    │  Track B         │ │  Track A         │  │  Track P         │
+    │  Backend (~2 h)  │ │  Agent (~2 h)    │  │  Phone (~3 h)    │
+    │  worker #1       │ │  worker #2       │  │  worker #3       │
+    └─────────┬────────┘ └────────┬─────────┘  └────────┬─────────┘
+              │                   │                     │
+              └─────────────────┬─┴─────────────────────┘
+                                ▼
+                       ┌────────────────────────────┐
+                       │  M-integration (~1 h)      │
+                       │  orchestrator, sequential  │
+                       └────────────┬───────────────┘
+                                    ▼
+                       ┌────────────────────────────┐
+                       │  M-final (~2 h)            │
+                       │  tunnel, cellular, demo    │
+                       │  orchestrator, sequential  │
+                       └────────────────────────────┘
+```
 
-- [ ] Create GitHub repo `DDancingDeath/remote-app-launcher` (private) with three top-level folders: `pa-phone/`, `pa-backend/`, `pa-agent/`. Add a root README that links back to this idea folder.
-- [ ] `cd pa-backend && dotnet new web -n PaBackend && cd ..` — verify `dotnet run` starts on `http://localhost:5099`.
-- [ ] `cd pa-agent && dotnet new console -n PaAgent && cd ..` — verify `dotnet run` prints `Hello, World!`.
-- [ ] `npx create-expo-app pa-phone --template blank-typescript` — verify `npx expo start` shows a QR; scan it; Expo Go opens.
-- [ ] Add `.env`, `bin/`, `obj/`, `node_modules/`, `.expo/` to root `.gitignore`.
-- [ ] Commit.
+Wall-clock target: **~7 h** (1 + max(2, 2, 3) + 1 + 2).
+Total compute: **~9 h** across all agents — same as the sequential build.
 
-**Done when**: all three components build and run their template "hello" state.
+### M0 — Pre-flight (~1 h, orchestrator)
 
-### M1 — Backend (~2 h)
+The orchestrator (human or a meta-agent) sets up everything the three
+parallel tracks need. Nobody else touches the meta-repo during this phase.
 
-- [ ] In `PaBackend/Program.cs`: add the three endpoints from `../spec/README.md` and the auth middleware. In-memory `ConcurrentDictionary<string, Command>` + a `ConcurrentDictionary<string, Channel<Command>>` keyed by `deviceId` for the long-poll.
-- [ ] Use `Ulid` ([Cysharp.Ulid NuGet](https://www.nuget.org/packages/Ulid)) for `CommandId` so they sort by time.
-- [ ] Smoke-test with curl:
-  ```powershell
-  $env:PA_SECRET = "<hex>"
-  dotnet run --project PaBackend
-  # in another shell:
-  curl -H "X-Personal-Agent-Key: <hex>" -H "Content-Type: application/json" `
-       -d '{"deviceId":"my-dev-box","kind":"launch-app","args":{"appName":"notepad"}}' `
-       http://localhost:5099/commands
-  ```
-- [ ] Confirm long-poll works: kick off `GET /commands?deviceId=my-dev-box` in one window, POST a command in another → first request returns within ~100 ms.
-- [ ] Commit.
+- [ ] Create GitHub repo `DDancingDeath/remote-app-launcher` (private) with
+      three top-level folders: `pa-phone/`, `pa-backend/`, `pa-agent/`.
+- [ ] Add a root `README.md` that links back to this idea folder, names the
+      three tracks, and points at `docs/contracts.md` as the source of truth
+      for the contract.
+- [ ] Add root `.gitignore` covering: `.env`, `bin/`, `obj/`, `node_modules/`,
+      `.expo/`, `*.user`.
+- [ ] Copy `../spec/contracts.md` into the build repo at `docs/contracts.md`
+      and mark it READ-ONLY for worker agents in the root README.
+- [ ] Generate the shared secret (snippet above). Write `pa-backend/.env`,
+      `pa-agent/.env`, `pa-phone/.env`.
+- [ ] Create three feature branches off `main`: `track/backend`,
+      `track/agent`, `track/phone`. Push all three.
+- [ ] Commit + push `main`.
 
-**Done when**: 3 curl commands prove POST → long-poll-GET → result-POST → status-GET cycle works end-to-end.
+**Done when**: three feature branches exist on the remote, contracts are
+pinned in the build repo, the secret is in all three `.env` files, the root
+README names the three tracks.
 
-### M2 — Device agent (~2 h)
+### Parallel phase (run concurrently)
 
-- [ ] In `PaAgent/Program.cs`: parse `--device-id`, `--backend`, `--apps-config` flags ([`System.CommandLine`](https://www.nuget.org/packages/System.CommandLine) or a 10-line manual parser).
-- [ ] Load `apps.json`; warn-and-continue on missing executables.
-- [ ] Long-poll loop with `HttpClient`. Track `since`. Dedup by `commandId` in a `HashSet`.
-- [ ] On `launch-app`: lookup → `Process.Start` → POST result with PID.
-- [ ] Error handling: backend unreachable → log + sleep 5 s + retry. Unknown kind / unknown app / `Process.Start` exception → POST `failed`.
-- [ ] Test against the M1 backend (still on localhost): start agent → from another shell curl-POST a command → notepad launches → curl-GET shows `done` with PID.
-- [ ] Commit.
+Three workers spawn off M0 and run independently. Each worker:
 
-**Done when**: curl-POST `notepad` → notepad opens on dev box → curl-GET shows `done` + PID. Same for `calc`. `spotify` returns `failed` with the known-apps list.
+- Reads only `docs/contracts.md` + its own track prompt.
+- Implements its component in its own branch (`pa-<component>/`).
+- Verifies acceptance using mocks (does not depend on the other two tracks).
+- Opens a PR back to `main` when its local acceptance gate passes.
 
-### M3 — Phone (~3 h)
+See `./orchestration.md` for two execution modes (three terminals vs. one
+Copilot CLI driving three background subagents) and for the contract-change
+protocol.
 
-- [ ] Replace `pa-phone/App.tsx` with the single-screen UI from `../spec/README.md`. Plain RN components (no Tamagui in v0 — keep dependency count low).
-- [ ] Read `EXPO_PUBLIC_PA_BACKEND_URL` and `EXPO_PUBLIC_PA_SECRET` from `process.env`.
-- [ ] Submit-and-poll logic exactly as specified in `../spec/README.md`.
-- [ ] `npx expo start --tunnel` — scan QR with iPhone Expo Go.
-- [ ] Test on local wifi: backend still on `localhost`, phone on same wifi → tap **Launch** → notepad opens on dev box → ✅ shown on phone.
-- [ ] Commit.
+#### Track B — Backend (~2 h, worker #1)
 
-**Done when**: phone (on wifi) → backend (localhost) → agent → notepad opens, result returns to phone within seconds.
+Branch: `track/backend`. Folder: `pa-backend/` (+ `pa-backend.Tests/`).
+Prompt: `../prompts/track-backend.md`.
 
-### M4 — Tunnel + cellular + polish (~2 h)
+- [ ] `dotnet new web -n PaBackend` in `pa-backend/`. Add `Cysharp.Ulid`.
+- [ ] Implement the four endpoints + auth middleware from `docs/contracts.md`.
+- [ ] In-memory `ConcurrentDictionary<string, Command>` + per-device
+      `Channel<Command>` for the long-poll.
+- [ ] `dotnet test` covers happy path, auth failure, long-poll timeout, and
+      kind validation (via `WebApplicationFactory<Program>`).
+- [ ] Open PR with `dotnet test` output + a 4-step curl transcript in the
+      description.
+
+**Local acceptance**: `dotnet test` green; PR description includes the curl
+transcript. No dependency on Track A or Track P.
+
+#### Track A — Device agent (~2 h, worker #2)
+
+Branch: `track/agent`. Folder: `pa-agent/` (+ `pa-agent.Tests/` + `pa-agent.dev-mock/`).
+Prompt: `../prompts/track-agent.md`.
+
+- [ ] `dotnet new console -n PaAgent` in `pa-agent/`.
+- [ ] CLI parsing: `--device-id`, `--backend`, `--apps-config`. `PA_SECRET` from env.
+- [ ] Load and validate `apps.json`.
+- [ ] Long-poll loop with `HttpClient` (35 s timeout to allow 30 s long-poll).
+      Track `since`. Dedup by `commandId`.
+- [ ] Command dispatch: `launch-app` → `Process.Start` → POST result.
+      Other kinds / unknown app / process exception → POST `failed`.
+      HTTP errors → log + sleep 5 s + retry.
+- [ ] `dotnet test` with `HttpMessageHandler` mock covers happy launch,
+      unknown app, unknown kind, backend unreachable, dedup.
+- [ ] Write a 50-LoC PowerShell `pa-agent.dev-mock/dev-mock.ps1` stub so the
+      agent can be eyeballed without the real backend.
+- [ ] Open PR with `dotnet test` output + dev-mock run log in the description.
+
+**Local acceptance**: `dotnet test` green; PR description includes the
+dev-mock log showing notepad actually opening. No dependency on Track B or
+Track P.
+
+#### Track P — Phone (~3 h, worker #3)
+
+Branch: `track/phone`. Folder: `pa-phone/`. Prompt: `../prompts/track-phone.md`.
+
+- [ ] `npx create-expo-app pa-phone --template blank-typescript`.
+- [ ] Single-screen UI per `docs/contracts.md`. Plain RN components.
+- [ ] Read `EXPO_PUBLIC_PA_BACKEND_URL` and `EXPO_PUBLIC_PA_SECRET` at module load.
+- [ ] `api.ts` typed against the `Command` interface from `docs/contracts.md`.
+- [ ] Submit-and-poll logic (`POST /commands` → loop 60× × 500 ms `GET /commands/{id}`).
+- [ ] `npm test` with `jest.fn()`-mocked `fetch` covers happy `done`,
+      validation 400, polling timeout.
+- [ ] Optional 30-LoC Node `dev-mock.mjs` stub for interactive eyeballing.
+- [ ] Open PR with `npm test` output + Expo Go screenshot in the description.
+
+**Local acceptance**: `npm test` green; PR description includes a screenshot.
+No dependency on Track B or Track A.
+
+### M-integration (~1 h, orchestrator)
+
+After all three PRs are open and green, the orchestrator stitches them
+together.
+
+- [ ] Review each PR's local acceptance evidence. If any track is red,
+      kick it back with a targeted follow-up prompt.
+- [ ] Diff `docs/contracts.md` (build repo) against `../spec/contracts.md`
+      (ideas repo). If they differ: ideas-repo wins. Update build repo + log
+      the drift.
+- [ ] Merge in order: `track/backend` → `main`, then `track/agent`, then
+      `track/phone`. No conflicts expected (each track owns one folder).
+- [ ] Start backend (`dotnet run --project PaBackend`) and agent
+      (`dotnet run --project PaAgent -- --device-id my-dev-box --backend http://localhost:5099 --apps-config .\apps.json`)
+      on the dev box. Both on `localhost`.
+- [ ] On phone (same wifi), open Expo Go with
+      `EXPO_PUBLIC_PA_BACKEND_URL=http://<dev-box-lan-ip>:5099`.
+- [ ] Tap **Launch** with `notepad` → confirm notepad opens on dev box →
+      confirm ✅ on phone within ~1 s.
+- [ ] If broken: bisect by which boundary fails — `curl` the backend
+      directly, then check agent's poll log, then check phone's network tab.
+
+**Done when**: real-network end-to-end works from Expo Go on the same LAN as
+the backend.
+
+### M-final — Tunnel + cellular + polish + demo (~2 h, orchestrator)
 
 - [ ] `devtunnel host -p 5099 -a` → note the public URL.
-- [ ] Update `pa-phone/.env`: `EXPO_PUBLIC_PA_BACKEND_URL=https://...devtunnels.ms`. Restart `expo start --tunnel`. Reload Expo Go.
-- [ ] Turn off phone wifi → repeat the launch test over cellular. Measure latency (phone tap → notepad visible) by stopwatch.
-- [ ] Add 3 more apps to `apps.json` (one that I actually want like `oneNote`, plus `code` and `edge` with full paths).
-- [ ] Demo it three times in a row, two-week soak from there.
+- [ ] Update `pa-phone/.env`: `EXPO_PUBLIC_PA_BACKEND_URL=https://...devtunnels.ms`.
+      Restart `npx expo start --tunnel`. Reload Expo Go.
+- [ ] Turn off phone wifi → repeat the launch test over cellular. Measure
+      latency (phone tap → notepad visible) by stopwatch.
+- [ ] Add 3 more apps to `apps.json` (`onenote`, `code` with full path, `edge`).
+- [ ] Demo three times in a row. Start the two-week soak from here.
 - [ ] Commit.
 
-**Done when**: cellular launch works, p50 < 5 s, the demo has been done 3× without intervention.
+**Done when**: cellular launch works, p50 < 5 s, the demo has been done 3×
+without intervention.
 
 ## Backlog (unordered, for v0 only)
 
-- [ ] Tiny structured-log helper in each component (timestamp + level + message). Useful for the soak.
+- [ ] Tiny structured-log helper in each component (timestamp + level +
+      message). Useful for the soak.
 - [ ] `GET /healthz` on the backend (returns 200 + last-command timestamp).
 - [ ] `--verbose` flag on the agent that logs every poll.
 - [ ] Bash equivalent of the agent for Linux dev boxes (post-v0 if needed).
@@ -112,19 +235,24 @@ Anticipated debt to carry into v1 (and to **call out in the v0 README**):
 - In-memory store loses commands across backend restarts. Mitigation: v1 adds SQLite.
 - Single device hardcoded. Mitigation: v1 adds device registration + picker.
 - `launch-app` only — no way to know if the app *actually* opened on screen vs `Process.Start` returned a PID but the process exited immediately. v1 adds a sanity check (process still alive after 500 ms).
+- No structured tracing across the three components. Mitigation: v1 adds an
+  OpenTelemetry shim so a single `commandId` is the trace correlation key.
 
 ## Acceptance criteria for "v0 is done"
 
 All must hold:
 
-- [ ] M0 through M4 complete and committed.
+- [ ] M0, all three parallel tracks, M-integration, and M-final complete and committed.
 - [ ] Total LoC across all three components ≤ 1000 (count with `cloc` or `tokei`).
 - [ ] Launch demo (cellular) succeeds 3× in a row.
 - [ ] p50 latency from phone tap to app visible ≤ 5 s.
-- [ ] After 14 days of daily use, the soak test shows no manual intervention beyond restarting the agent (which can fail for any reason — the test is that *I notice and restart it*, not that it's invulnerable).
+- [ ] After 14 days of daily use, the soak test shows no manual intervention
+      beyond restarting the agent (which can fail for any reason — the test
+      is that *I notice and restart it*, not that it's invulnerable).
 
-If all hold → fold v0's code into Phase 1 of [cross-device-personal-agent](../cross-device-personal-agent).
-If any fail → write up the failure in this `plan/README.md`'s Decision log + update the parent project's open questions accordingly.
+If all hold → fold v0's code into Phase 1 of [cross-device-personal-agent](../../cross-device-personal-agent).
+If any fail → write up the failure in this `plan/README.md`'s Decision log
++ update the parent project's open questions accordingly.
 
 ## Decision log
 
@@ -140,3 +268,7 @@ Append-only. Each entry: date · decision · rationale · alternatives considere
 - _2026-06-07_ · Hardcoded single device `"my-dev-box"` · Adding device registration is ~3 h of UI + state. Pointless when I have one device · Considered: registration flow (planned for v1).
 - _2026-06-07_ · App allow-list via `apps.json`, edit-and-restart · No UI to manage; user edits a JSON file. Hot-reload deferred · Considered: `POST /apps` admin endpoint (rejected for v0; admin UI deferred to v1).
 - _2026-06-07_ · ULIDs for `CommandId` (via `Cysharp.Ulid`) · Sort-by-time is exactly what `since` filtering needs; ULIDs are 26 chars vs UUIDs' 36 and human-skimmable in logs · Considered: GUID (rejected — no time order), incrementing integer (rejected — global mutable counter across restarts is gross).
+- _2026-06-07_ · **Build plan is parallel-by-default, single-agent is the fallback** · The three components only meet through the API contract — they have zero shared code. Parallel execution compresses 7 h critical-path into 3 h wall-clock at the cost of one orchestrator + a frozen contract artefact. Compute cost is identical (same LoC). The contract is the lock that makes it safe · Considered: pure sequential (rejected — wastes wall-clock when components are independent), 4 parallel tracks splitting backend into "endpoints" + "auth" (rejected — backend is < 200 LoC, splitting adds coordination overhead with negative ROI).
+- _2026-06-07_ · **Contract pinned in `spec/contracts.md` (canon) + `docs/contracts.md` (build-repo copy)** · Workers context-load only the build repo, not the ideas repo. Keeps each prompt small enough to fit in a single context window. Drift detection: orchestrator diff-checks the two contract files before M-integration · Considered: git submodule pointing the build repo at the ideas repo (rejected — submodules are friction for every collaborator), single-source-of-truth in build repo (rejected — ideas repo is the planning canon and must survive the build repo being deleted).
+- _2026-06-07_ · **Branch-per-track + PR-back-to-main, with strict folder ownership** · Each track edits exactly one folder, so merges are conflict-free by construction. PRs give the orchestrator one obvious review surface per track (the local-acceptance evidence) · Considered: trunk-based with feature flags (rejected — only 3 tracks; branch overhead is negligible), three separate repos (rejected — re-stitching at integration is more work than merging branches; loses cross-component navigation).
+- _2026-06-07_ · **Local-acceptance gates per track use mocks, not cross-track dependencies** · Backend tests with `WebApplicationFactory`, agent tests with `HttpMessageHandler` mock + a dev-mock PowerShell stub for eyeballing, phone tests with `jest.fn()`-mocked `fetch` + an optional Node dev-mock. Means each worker can pass-fail without waiting for the others; the integration test happens once, at M-integration, against the real three · Considered: WireMock-backed shared contract testing (rejected — Pact-style consumer-driven contracts are great when the contract evolves; v0's contract is frozen at M0), test against the real backend (rejected — defeats parallelism).

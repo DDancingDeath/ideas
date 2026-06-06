@@ -1,11 +1,21 @@
-# Build prompt — Remote App Launcher
+# Build prompt — Remote App Launcher (single-agent fallback)
 
 Paste this prompt to a coding agent (Copilot CLI, Cursor, Claude Code, etc.)
-to generate the application from this spec.
+to generate the entire application sequentially with **one** agent.
+
+**Prefer the parallel build**: if you can run an orchestrator + three worker
+agents, use `./track-backend.md`, `./track-agent.md`, and `./track-phone.md`
+instead. They build the same artefact in roughly 7 h wall-clock instead of 10
+h, with cleaner per-component PRs. See `../plan/orchestration.md` for the
+parallel runbook.
+
+This file is the fallback for when only one agent slot is available.
 
 ---
 
-You are building **Personal Agent v0 (Launch-App Spike)**. Everything you need is in this folder.
+You are building **Remote App Launcher** (the v0 launch-app spike of
+[cross-device-personal-agent](../../cross-device-personal-agent)). Everything
+you need is in this folder.
 
 **Context loading order:**
 

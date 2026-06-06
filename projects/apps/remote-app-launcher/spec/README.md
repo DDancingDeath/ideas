@@ -6,7 +6,10 @@ file should be able to produce a working v0.
 ## Reading order
 
 1. This file (overview, components, APIs, schemas, configs, security).
-2. No subspec files in v0 — everything fits here.
+2. `./contracts.md` — the same API/types pinned in a copy-paste-ready form for
+   parallel-agent builds. If this file and `contracts.md` disagree,
+   `contracts.md` is authoritative for wire shapes; this file is
+   authoritative for behaviour and rationale.
 
 ## Overview
 
@@ -244,7 +247,7 @@ One screen. Layout (Tamagui or plain RN — *suggested*):
 
 ```
 ┌──────────────────────────────┐
-│  Personal Agent v0           │
+│  Remote App Launcher         │
 │                              │
 │  Device: my-dev-box          │
 │                              │

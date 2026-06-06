@@ -79,21 +79,33 @@ The full schemas for all 3 endpoints + the `Command` data shape + the `apps.json
 
 1. `idea.md` — vision, success criteria, anti-goals, open questions.
 2. `spec/README.md` — every API endpoint, every JSON shape, every config file, every CLI flag. **Source of truth for what to build.**
-3. `plan/README.md` — task-level breakdown (M0 → M4), tools, acceptance criteria, decision log.
-4. `prompts/build-from-spec.md` — paste to a coding agent to bootstrap the three repos.
+3. `spec/contracts.md` — same contract in copy-paste-ready C# records + TypeScript interfaces. **Frozen at start of build**; the lock that makes parallel-agent work safe.
+4. `plan/README.md` — milestone breakdown (M0 → parallel tracks → M-integration → M-final), tools, acceptance criteria, decision log.
+5. `plan/orchestration.md` — runbook for the parallel build: two execution modes (three terminals vs. one Copilot CLI driving three background subagents), contract-change protocol, failure handling.
+6. `prompts/track-backend.md`, `prompts/track-agent.md`, `prompts/track-phone.md` — one self-contained prompt per worker agent in the parallel build.
+7. `prompts/build-from-spec.md` — fallback for a sequential single-agent build.
 
 ## Layout
 
 ```
 remote-app-launcher/
-├── README.md         ← this doc
-├── idea.md           ← vision + constraints
-├── spec/             ← functional spec (APIs, schemas, config)
-├── plan/             ← task list, tools, acceptance, decisions
-├── prompts/          ← ready-to-paste agent prompt
-└── assets/           ← (empty for now)
+├── README.md                  ← this doc
+├── idea.md                    ← vision + constraints
+├── spec/
+│   ├── README.md              ← functional spec (APIs, schemas, config)
+│   └── contracts.md           ← frozen wire contract (C# + TS types)
+├── plan/
+│   ├── README.md              ← M0 → parallel tracks → M-integration → M-final
+│   └── orchestration.md       ← parallel-build runbook
+├── prompts/
+│   ├── track-backend.md       ← worker prompt for pa-backend
+│   ├── track-agent.md         ← worker prompt for pa-agent
+│   ├── track-phone.md         ← worker prompt for pa-phone
+│   └── build-from-spec.md     ← sequential single-agent fallback
+└── assets/                    ← (empty for now)
 ```
 
 ## Recent changes
 
-- _2026-06-07_ · initial scaffold + full v0 design captured
+- _2026-06-07_ · plan restructured for parallel 3-agent build (backend/agent/phone in parallel via frozen `spec/contracts.md`); per-track prompts + orchestration runbook added; sequential path retained as fallback.
+- _2026-06-07_ · initial scaffold + full v0 design captured.
