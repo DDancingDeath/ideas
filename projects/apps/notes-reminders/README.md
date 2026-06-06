@@ -7,11 +7,12 @@
 
 - **Status:** idea capture. Pivoted 2026-06-06 from a *type-classifier*
   (note/todo/reminder) to a *topic-organised knowledge base* (TableView
-  Design Review, Family/Personal Tasks, Mahua Business, …). To be built
-  as a **mobile-first app**.
+  Design Review, Family/Personal Tasks, Mahua Business, …). Moved out
+  of `projects/agents/` into `projects/apps/` because the chosen
+  delivery shape is a **mobile-first app**.
 - **Audience:** me. Personal use across work and personal life.
-- **Working title:** `notes-reminders` (folder name preserved for stable
-  links). Likely product name candidates: *Memory*, *Threads*, *Topic*.
+- **Working title:** `notes-reminders` (slug kept stable). Product-name
+  candidates: *Memory*, *Threads*, *Topic*.
 
 ---
 
@@ -146,6 +147,9 @@ memory, not in a separate todo destination.
 
 ## Recent changes
 
+- _2026-06-06_ · Moved from `projects/agents/notes-reminders/` to
+  `projects/apps/notes-reminders/` — the chosen delivery shape is a
+  mobile-first app rather than a backend agent. Slug unchanged.
 - _2026-06-06_ · **Pivot.** Reframed from a type-classifier (route to
   OneNote / Outlook / Todo) to a **topic-organised knowledge base** with
   embedding-driven routing, topic memory (summary + timeline + open

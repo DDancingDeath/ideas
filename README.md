@@ -90,6 +90,7 @@ Grouped by kind:
 | [aadhat-management](./projects/apps/aadhat-management) | Hindi/English wholesale-retail business management app (Firebase + Capacitor). | In production; spec frozen, security hardening pending. |
 | [agent-companion](./projects/apps/agent-companion) | Personal iOS app (React Native + Expo) that turns a mixed set of agent sources (Copilot CLI, GitHub Copilot, custom, ADO hooks) into one Teams-style inbox; notifies via APNs, replies routed back through a unified backend. | Idea — design captured, no prototype yet. |
 | [identityposc](./projects/apps/identityposc) | POC for shop-floor ambient identity from CCTV (camera + mic) — learns who people are by overhearing how they're addressed. | POC complete (F1 80 % on Tears of Steel, recall 100 %); next phase is production hardening. |
+| [notes-reminders](./projects/apps/notes-reminders) | Voice-first AI memory & knowledge app — speak naturally; embeddings route the note to the right topic (or create a new one), each topic keeps its own summary, timeline, open actions, related topics. No folders, no tags, no filing. | Idea pivot 2026-06-06 from type-classifier to topic-organised; mobile platform + embedding store undecided. |
 
 ### Agents — AI agent ideas
 
@@ -99,4 +100,3 @@ Grouped by kind:
 | [inbox-triage](./projects/agents/inbox-triage) | Personal AI that watches my mail, Teams, PRs, and bugs and tells me what's worth doing today (Microsoft-internal). | Early-stage idea capture; open decisions on surface + runtime. |
 | [prompt-optimizer](./projects/agents/prompt-optimizer) | An agent that makes me better at using AI — by rewriting prompts in flight, replaying my sessions, or coaching me in real time. | Early-stage idea capture; three competing shapes on the table. |
 | [ado-bugfixer](./projects/agents/ado-bugfixer) | Agency-mode agent that walks my ADO bug list and proposes fixes — draft PRs, root-cause notes, dupe calls. Personal-scope. | Early-stage idea capture; needs area allow-list + audit of existing internal tools. |
-| [notes-reminders](./projects/agents/notes-reminders) | Capture-first agent — voice/text in, auto-classified notes + scheduled reminders out — without me deciding where things go. | Early-stage idea capture; tenant + capture-surface undecided. |
