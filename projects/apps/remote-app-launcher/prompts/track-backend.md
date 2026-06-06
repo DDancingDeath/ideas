@@ -24,7 +24,7 @@ anything outside those two folders.
 
 ## What to build
 
-A .NET 9 ASP.NET Core minimal API (single `Program.cs` plus a couple of
+A .NET 10 ASP.NET Core minimal API (single `Program.cs` plus a couple of
 records) implementing the four endpoints in `docs/contracts.md`:
 
 - `POST /commands`

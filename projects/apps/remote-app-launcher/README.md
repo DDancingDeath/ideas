@@ -27,7 +27,7 @@ If that works reliably from cellular (not just on my home wifi) for two weeks, i
 ```
 ┌────────────────┐                ┌────────────────────┐                ┌──────────────────────┐
 │  iOS phone     │                │  pa-backend        │                │  pa-agent            │
-│  (Expo Go)     │                │  (.NET 9 minimal   │                │  (.NET 9 console     │
+│  (Expo Go)     │                │  (.NET 10 minimal  │                │  (.NET 10 console    │
 │                │ ── POST /cmds ─▶│   API on tunnel)   │                │   on dev box)        │
 │  "App: [____]" │ ◀ GET /cmds/id │   in-memory store  │ ◀── long-poll ─│   apps.json          │
 │  [Launch]      │                │   shared-secret    │ ── command ───▶│   Process.Start()    │
@@ -39,8 +39,8 @@ If that works reliably from cellular (not just on my home wifi) for two weeks, i
 ```
 
 1. **`pa-phone`** (React Native + Expo, runs in Expo Go on iPhone) — one screen. Hardcoded `deviceId = "my-dev-box"`, free-text `appName`, **Launch** button. On tap: POST to `/commands`, then poll `GET /commands/{id}` every 500 ms until status leaves `pending`. Show the result.
-2. **`pa-backend`** (.NET 9 ASP.NET Core minimal API) — three endpoints, in-memory `Dictionary<string, Command>`, single shared-secret auth middleware. Exposed to the internet via VS dev tunnels.
-3. **`pa-agent`** (.NET 9 console app on the Windows dev box) — runs as a console process. Long-polls `GET /commands?deviceId=my-dev-box&since=…` (30 s cycle). When it gets a `launch-app` command, looks up `appName` in `apps.json`, runs `Process.Start(exe)`, POSTs the result to `/commands/{id}/result`.
+2. **`pa-backend`** (.NET 10 ASP.NET Core minimal API) — three endpoints, in-memory `Dictionary<string, Command>`, single shared-secret auth middleware. Exposed to the internet via VS dev tunnels.
+3. **`pa-agent`** (.NET 10 console app on the Windows dev box) — runs as a console process. Long-polls `GET /commands?deviceId=my-dev-box&since=…` (30 s cycle). When it gets a `launch-app` command, looks up `appName` in `apps.json`, runs `Process.Start(exe)`, POSTs the result to `/commands/{id}/result`.
 
 That's the whole system. ~150 LoC of backend, ~150 LoC of agent, ~150 LoC of phone, ~50 LoC of shared DTOs and config.
 
@@ -63,8 +63,8 @@ Out of scope today (everything else): notifications upward, persistent storage, 
 ## Tech stack (concrete, no decisions left to make)
 
 - **Phone**: React Native + Expo SDK (TypeScript). Runs in **Expo Go** during v0 (no native modules required → no EAS Build, no TestFlight). One screen, no navigation, plain `fetch()` calls.
-- **Cloud backend**: .NET 9 ASP.NET Core minimal API, single `Program.cs` file. In-memory `Dictionary<string, Command>` keyed by command id. Single auth middleware that checks `X-Personal-Agent-Key` against an env-var-supplied secret.
-- **Device agent**: .NET 9 console application, single `Program.cs`. Loads `apps.json` at startup, long-polls the backend in a `while(true)`, runs `Process.Start(exe)` on each command, POSTs result.
+- **Cloud backend**: .NET 10 ASP.NET Core minimal API, single `Program.cs` file. In-memory `Dictionary<string, Command>` keyed by command id. Single auth middleware that checks `X-Personal-Agent-Key` against an env-var-supplied secret.
+- **Device agent**: .NET 10 console application, single `Program.cs`. Loads `apps.json` at startup, long-polls the backend in a `while(true)`, runs `Process.Start(exe)` on each command, POSTs result.
 - **Auth**: single 32-byte random shared secret. Same value on phone (`.env` baked into Expo Go) + backend (env var) + device agent (env var or CLI flag). **Explicitly insecure beyond a personal-network demo**; v1 replaces with Entra ID.
 - **Hosting**: backend runs on the dev box; exposed via **Visual Studio dev tunnels** for reachability from cellular. No cloud account needed for v0.
 - **Storage**: in-memory. Commands lost on backend restart. Acceptable because v0 commands are ephemeral by definition (user is watching for the result).

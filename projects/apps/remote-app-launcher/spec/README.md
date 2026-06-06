@@ -16,8 +16,8 @@ file should be able to produce a working v0.
 Three components:
 
 1. **`pa-phone`** — Expo (React Native + TypeScript) app, runs in **Expo Go** on iPhone.
-2. **`pa-backend`** — .NET 9 ASP.NET Core minimal API (single `Program.cs`).
-3. **`pa-agent`** — .NET 9 console application, runs on the Windows dev box.
+2. **`pa-backend`** — .NET 10 ASP.NET Core minimal API (single `Program.cs`).
+3. **`pa-agent`** — .NET 10 console application, runs on the Windows dev box.
 
 Three endpoints on the backend, one command kind, in-memory storage, shared-secret auth.
 

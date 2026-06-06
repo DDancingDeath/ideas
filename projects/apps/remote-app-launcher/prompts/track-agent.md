@@ -23,7 +23,7 @@ outside those two folders.
 
 ## What to build
 
-A .NET 9 console application that:
+A .NET 10 console application that:
 
 - Parses CLI flags: `--device-id`, `--backend`, `--apps-config`. Reads
   `PA_SECRET` from env var (never CLI — keeps it out of process listings).

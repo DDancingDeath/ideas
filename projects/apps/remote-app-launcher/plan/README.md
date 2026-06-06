@@ -33,12 +33,18 @@ done back-to-back by one agent instead of in parallel.
 
 - Windows 11 dev box.
 - iPhone with [Expo Go](https://apps.apple.com/app/expo-go/id982107779) installed.
-- .NET 9 SDK ([download](https://dotnet.microsoft.com/download)).
+- .NET 10 SDK ([download](https://dotnet.microsoft.com/download)) — target framework `net10.0`. (Plan originally said .NET 9; the Cloud-PC dev box has only .NET 10 SDK installed. If you install .NET 9 SDK side-by-side, either TFM works — the code is identical.)
 - Node 20+ and `npm`.
 - `expo` and `eas` CLIs (`npm install -g expo eas-cli` — `eas` not strictly needed for v0).
 - VS dev tunnels CLI (`winget install Microsoft.devtunnel`).
 - Git, VS Code.
 - An iCloud-signed Apple ID on the phone (just for Expo Go install — no Apple Developer Program seat needed).
+
+**Dev box environment note** — if your dev box is a Windows 365 Cloud PC (host
+name starts with `CPC-`), it sits on a private Azure subnet and a phone on
+your home WiFi **cannot reach** its LAN IP. In that case, the phone must hit
+the backend via a public VS dev tunnel **from M-integration onward** (not
+deferred to M-final). M0 step below installs the tunnel CLI for this reason.
 
 Generate the shared secret once:
 
@@ -100,6 +106,10 @@ parallel tracks need. Nobody else touches the meta-repo during this phase.
       and mark it READ-ONLY for worker agents in the root README.
 - [ ] Generate the shared secret (snippet above). Write `pa-backend/.env`,
       `pa-agent/.env`, `pa-phone/.env`.
+- [ ] Install the VS dev tunnels CLI if not present
+      (`winget install Microsoft.devtunnel`) and run `devtunnel user login`
+      once. (The tunnel itself starts in M-integration; this step just makes
+      sure the CLI is ready and authenticated.)
 - [ ] Create three feature branches off `main`: `track/backend`,
       `track/agent`, `track/phone`. Push all three.
 - [ ] Commit + push `main`.
@@ -192,25 +202,33 @@ together.
       `track/phone`. No conflicts expected (each track owns one folder).
 - [ ] Start backend (`dotnet run --project PaBackend`) and agent
       (`dotnet run --project PaAgent -- --device-id my-dev-box --backend http://localhost:5099 --apps-config .\apps.json`)
-      on the dev box. Both on `localhost`.
-- [ ] On phone (same wifi), open Expo Go with
-      `EXPO_PUBLIC_PA_BACKEND_URL=http://<dev-box-lan-ip>:5099`.
+      on the dev box. Both on `localhost:5099`.
+- [ ] Start the public tunnel: `devtunnel host -p 5099 -a`. Note the
+      `https://...devtunnels.ms` URL. (On a *physical* dev box on your home
+      LAN you can instead set `EXPO_PUBLIC_PA_BACKEND_URL=http://<lan-ip>:5099`
+      and defer the tunnel to M-final — but Cloud PCs require the tunnel from
+      this step onward.)
+- [ ] Update `pa-phone/.env`:
+      `EXPO_PUBLIC_PA_BACKEND_URL=https://...devtunnels.ms`. Restart
+      `npx expo start --tunnel` and reload Expo Go.
 - [ ] Tap **Launch** with `notepad` → confirm notepad opens on dev box →
-      confirm ✅ on phone within ~1 s.
-- [ ] If broken: bisect by which boundary fails — `curl` the backend
-      directly, then check agent's poll log, then check phone's network tab.
+      confirm ✅ on phone within ~1 s (WiFi) or ~3 s (cellular).
+- [ ] If broken: bisect by which boundary fails — `curl` the public tunnel URL,
+      then check agent's poll log, then check phone's network tab.
 
-**Done when**: real-network end-to-end works from Expo Go on the same LAN as
-the backend.
+**Done when**: real-network end-to-end works from Expo Go to the dev box
+(through the tunnel for Cloud-PC dev boxes; directly on the LAN otherwise).
 
-### M-final — Tunnel + cellular + polish + demo (~2 h, orchestrator)
+### M-final — Cellular + polish + demo (~2 h, orchestrator)
 
-- [ ] `devtunnel host -p 5099 -a` → note the public URL.
-- [ ] Update `pa-phone/.env`: `EXPO_PUBLIC_PA_BACKEND_URL=https://...devtunnels.ms`.
-      Restart `npx expo start --tunnel`. Reload Expo Go.
-- [ ] Turn off phone wifi → repeat the launch test over cellular. Measure
-      latency (phone tap → notepad visible) by stopwatch.
-- [ ] Add 3 more apps to `apps.json` (`onenote`, `code` with full path, `edge`).
+By this point the tunnel is already up from M-integration; M-final adds the
+cellular smoke test, fills out the app catalog, and starts the soak.
+
+- [ ] Turn off phone WiFi → repeat the launch test over cellular. Measure
+      latency (phone tap → notepad visible) by stopwatch. Target: < 8 s p95
+      (NFR from `../spec/contracts.md`).
+- [ ] Add 3 more apps to `apps.json` (`onenote`, `code` with full path,
+      `edge`). Re-run the smoke test for each.
 - [ ] Demo three times in a row. Start the two-week soak from here.
 - [ ] Commit.
 
@@ -263,7 +281,7 @@ Append-only. Each entry: date · decision · rationale · alternatives considere
 - _2026-06-07_ · HTTP long-poll on the agent side, HTTP short-poll on the phone side · Both are < 10 LoC of `await httpClient.GetAsync(...)`. A WebSocket / SignalR setup is ~100 LoC of lifecycle management for no measurable v0 latency win (sub-second was never the v0 target) · Considered: SignalR (planned for v1 when notifications-upward arrive and 30 s long-poll cycles become user-visible).
 - _2026-06-07_ · Expo Go (not EAS Build → TestFlight) for the phone in v0 · Avoids the whole Apple Developer Program + EAS Build + TestFlight invitation loop. v0 has no native modules (no APNs, no auth SDK). Plain `fetch()` runs fine in Expo Go · Considered: EAS Build + TestFlight (planned for v1, mandatory once APNs is added).
 - _2026-06-07_ · VS dev tunnels for backend reachability from cellular · Free, Microsoft-aligned, no signup beyond the existing work account. Stable subdomain. Outbound from the dev box, so no firewall pain · Considered: ngrok (free tier rotates URL, paid tier ~$10/mo), Cloudflare Tunnel (works but extra setup), Azure Container Apps (full deployment — defeats the point of v0).
-- _2026-06-07_ · Backend + device agent both in .NET 9 (minimal API + console) · Single language for server-side components means a shared `Command` record (zero serialisation surprises) and one toolchain to install. C# minimal API is the smallest backend that does this · Considered: Node/TS for both (rejected — more package juggling, no win), Python FastAPI (rejected — packaging story on Windows is worse than `dotnet publish`).
+- _2026-06-07_ · Backend + device agent both in .NET 10 (minimal API + console) · Single language for server-side components means a shared `Command` record (zero serialisation surprises) and one toolchain to install. C# minimal API is the smallest backend that does this · Considered: Node/TS for both (rejected — more package juggling, no win), Python FastAPI (rejected — packaging story on Windows is worse than `dotnet publish`).
 - _2026-06-07_ · `launch-app` is the only command kind in v0 · Adding `open-url` / `open-file` / `run-script` / `query-status` are each independently small, but they expand the *spec*-test surface 5× and aren't needed to answer the v0 questions (latency, reliability, friction). All four are in v1's Phase 1 · Considered: ship all 5 (rejected — spec bloat for no v0-question value).
 - _2026-06-07_ · Hardcoded single device `"my-dev-box"` · Adding device registration is ~3 h of UI + state. Pointless when I have one device · Considered: registration flow (planned for v1).
 - _2026-06-07_ · App allow-list via `apps.json`, edit-and-restart · No UI to manage; user edits a JSON file. Hot-reload deferred · Considered: `POST /apps` admin endpoint (rejected for v0; admin UI deferred to v1).
@@ -272,3 +290,5 @@ Append-only. Each entry: date · decision · rationale · alternatives considere
 - _2026-06-07_ · **Contract pinned in `spec/contracts.md` (canon) + `docs/contracts.md` (build-repo copy)** · Workers context-load only the build repo, not the ideas repo. Keeps each prompt small enough to fit in a single context window. Drift detection: orchestrator diff-checks the two contract files before M-integration · Considered: git submodule pointing the build repo at the ideas repo (rejected — submodules are friction for every collaborator), single-source-of-truth in build repo (rejected — ideas repo is the planning canon and must survive the build repo being deleted).
 - _2026-06-07_ · **Branch-per-track + PR-back-to-main, with strict folder ownership** · Each track edits exactly one folder, so merges are conflict-free by construction. PRs give the orchestrator one obvious review surface per track (the local-acceptance evidence) · Considered: trunk-based with feature flags (rejected — only 3 tracks; branch overhead is negligible), three separate repos (rejected — re-stitching at integration is more work than merging branches; loses cross-component navigation).
 - _2026-06-07_ · **Local-acceptance gates per track use mocks, not cross-track dependencies** · Backend tests with `WebApplicationFactory`, agent tests with `HttpMessageHandler` mock + a dev-mock PowerShell stub for eyeballing, phone tests with `jest.fn()`-mocked `fetch` + an optional Node dev-mock. Means each worker can pass-fail without waiting for the others; the integration test happens once, at M-integration, against the real three · Considered: WireMock-backed shared contract testing (rejected — Pact-style consumer-driven contracts are great when the contract evolves; v0's contract is frozen at M0), test against the real backend (rejected — defeats parallelism).
+- _2026-06-07_ · **`net10.0` target framework (was `net9.0` in the original plan)** · The Cloud-PC dev box has only .NET 10 SDK installed (`dotnet --list-sdks` → `10.0.204`). Bumping the TFM is one line per `.csproj` and the runtime/library surface used here (minimal API, `ConcurrentDictionary`, `HttpClient`, `Process.Start`) is unchanged · Considered: installing .NET 9 SDK side-by-side (rejected — adds a setup step with zero v0 benefit), targeting `netstandard2.1` (rejected — minimal API is not available there).
+- _2026-06-07_ · **Tunnel from M-integration onward (not deferred to M-final), because dev box is a Cloud PC** · Windows 365 Cloud PCs sit on private Azure subnets; phones on the home WiFi cannot reach the Cloud PC's LAN IP (`10.26.2.89` in this case). The "phone on same WiFi → backend LAN IP" path in the original plan implicitly assumed a physical dev box. Fix is small: install `devtunnel` in M0, start it in M-integration. M-final keeps the cellular soak + polish · Considered: ngrok (rejected — same shape, fewer benefits, free tier rotates URL), Cloudflare Tunnel (rejected — extra signup), VPN-the-phone-into-the-Cloud-PC subnet (rejected — way out of scope for v0).
