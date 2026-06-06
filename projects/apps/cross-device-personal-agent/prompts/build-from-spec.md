@@ -1,11 +1,11 @@
-# Build prompt — Cross-Device Personal Agent
+# Build prompt — Personal Agent Companion
 
 Paste this prompt to a coding agent (Copilot CLI, Cursor, Claude Code, etc.)
 to generate the application from this spec.
 
 ---
 
-You are building **Cross-Device Personal Agent**. Everything you need is in this folder.
+You are building **Personal Agent Companion**. Everything you need is in this folder.
 
 **Context loading order:**
 

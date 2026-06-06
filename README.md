@@ -88,7 +88,7 @@ Grouped by kind:
 | Slug | One-liner | Status |
 | --- | --- | --- |
 | [aadhat-management](./projects/apps/aadhat-management) | Hindi/English wholesale-retail business management app (Firebase + Capacitor). | In production; spec frozen, security hardening pending. |
-| [agent-companion](./projects/apps/agent-companion) | Personal iOS app (React Native + Expo) that turns a mixed set of agent sources (Copilot CLI, GitHub Copilot, custom, ADO hooks) into one Teams-style inbox; notifies via APNs, replies routed back through a unified backend. | Idea — design captured, no prototype yet. |
+| [cross-device-personal-agent](./projects/apps/cross-device-personal-agent) | iOS app + cloud control plane + device agents on each of my dev boxes — run commands on my machines from the phone (Phase 1), receive notifications from agents (Phase 2), drive it in natural language (Phase 3), chain into multi-agent workflows (Phase 4). | Idea — design captured (rescoped 2026-06-06 from notification inbox to cross-device personal agent; folder renamed from `agent-companion`); no prototype yet. |
 | [identityposc](./projects/apps/identityposc) | POC for shop-floor ambient identity from CCTV (camera + mic) — learns who people are by overhearing how they're addressed. | POC complete (F1 80 % on Tears of Steel, recall 100 %); next phase is production hardening. |
 | [notes-reminders](./projects/apps/notes-reminders) | Voice-first AI memory & knowledge app — speak naturally; embeddings route the note to the right topic (or create a new one), each topic keeps its own summary, timeline, open actions, related topics. No folders, no tags, no filing. | Idea pivot 2026-06-06 from type-classifier to topic-organised; mobile platform + embedding store undecided. |
 
