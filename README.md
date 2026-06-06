@@ -88,6 +88,7 @@ Grouped by kind:
 | Slug | One-liner | Status |
 | --- | --- | --- |
 | [aadhat-management](./projects/apps/aadhat-management) | Hindi/English wholesale-retail business management app (Firebase + Capacitor). | In production; spec frozen, security hardening pending. |
+| [agent-companion](./projects/apps/agent-companion) | Personal iOS app (React Native + Expo) that turns a mixed set of agent sources (Copilot CLI, GitHub Copilot, custom, ADO hooks) into one Teams-style inbox; notifies via APNs, replies routed back through a unified backend. | Idea — design captured, no prototype yet. |
 | [identityposc](./projects/apps/identityposc) | POC for shop-floor ambient identity from CCTV (camera + mic) — learns who people are by overhearing how they're addressed. | POC complete (F1 80 % on Tears of Steel, recall 100 %); next phase is production hardening. |
 
 ### Agents — AI agent ideas
