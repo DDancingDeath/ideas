@@ -36,6 +36,12 @@
    work".
 8. [`productize-later.md`](./productize-later.md) — how to extract a
    reusable product after shop-1 stabilizes, without restarting.
+9. [`release-health-gates.md`](./release-health-gates.md) — the
+   10-gate pre-release checklist (CI green, platform matrix
+   green, printer smoke, offline / reconnect smoke, migration
+   checks, no Sev-1 flags, rollback path known, brother
+   sign-off, backup verified, release notes drafted); hot-fix
+   subset; sign-off record; rollback-trigger rules.
 
 ## Relationship to the existing `plan/` files
 
@@ -53,6 +59,16 @@ the rebuild because:
 
 ## Recent changes
 
+- _2026-06-16_ · Added `release-health-gates.md` — the 10-gate
+  pre-release checklist (CI green; platform matrix green;
+  printer smoke; offline / reconnect smoke; migration checks;
+  no Sev-1 flags; rollback path known; brother sign-off;
+  backup verified; release notes drafted) with hot-fix subset,
+  sign-off record fields, and rollback-trigger rules. Pairs
+  with the new spec docs `platform-compatibility.md`,
+  `printer-compatibility.md`, `platform-test-matrix.md`,
+  `money-units-rounding.md`, `time-clock.md`, and
+  `concurrency.md`.
 - _2026-06-15_ (later same day) · Added `operations-runbook.md`
   (steady-state checklists + 12 failure procedures matched to
   `spec/rebuild/failure-modes.md` + release / rollback rules

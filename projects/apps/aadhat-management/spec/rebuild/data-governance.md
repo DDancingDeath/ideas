@@ -247,6 +247,110 @@ the exporting user; the export action is itself an event
   period) are the supported integration point.
 - No GST returns, no e-invoicing, no e-way bills in v2.0.
 
+## Validation gates
+
+Master data is the input to billing, stock, and reports. Wrong
+stock often starts as a duplicate item or an item with no
+unit. This section is the **enforcement** complement to the
+governance policies above: the rules the storage adapter
+checks at write time, and the rejection / warning codes the
+UI surfaces.
+
+These gates apply to **all** writes against `items`, `parties`,
+and rates — owner UI, import tool, programmatic admin, and
+agent-initiated writes alike.
+
+### Gate codes
+
+Adapter results match the canonical set
+(`OK, SCHEMA_INVALID, INVARIANT_VIOLATION, PERMISSION_DENIED,
+REFERENCE_INVALID, IDEMPOTENCY_CONFLICT, BLOCKED_BY_RULE,
+OUT_OF_ORDER, UNAUTHORIZED`). For master-data quality, the
+relevant codes are:
+
+| Code | When |
+|---|---|
+| `SCHEMA_INVALID` | Empty required field, malformed type, value outside permitted range |
+| `BLOCKED_BY_RULE` | Soft-uniqueness collision (duplicate item / party) when the caller has not explicitly chosen "create anyway" |
+| `INVARIANT_VIOLATION` | Hard-uniqueness collision (impossible state) or post-merge reconciliation failure |
+| `REFERENCE_INVALID` | Bill or purchase references an archived item; party reference does not exist |
+
+A `BLOCKED_BY_RULE` is intended to be **resolvable** by the
+user choosing "merge", "create anyway", or "edit existing". A
+`SCHEMA_INVALID` requires fixing the form input. A
+`REFERENCE_INVALID` requires fixing the parent record (e.g.
+unarchive the item).
+
+### Items
+
+| Rule | Code on violation | Notes |
+|---|---|---|
+| `nameEn` and `nameHi` together cannot both be empty (at least one must have a non-whitespace value) | `SCHEMA_INVALID` | UI shows: "Please enter at least one of English / Hindi name" |
+| `unit` is one of the supported units (`kg`, `piece`) at create time | `SCHEMA_INVALID` | New units require a `domainVersion` bump |
+| Rate is a positive integer in the unit's atomic representation (`paisePerKg` for weight, `paisePerPiece` for piece) | `SCHEMA_INVALID` | Zero rate is forbidden; if the item is genuinely free, use a discount, not a zero rate |
+| Rate is below the per-item sanity ceiling `shopProfile.items.rateCeilingPaise` (default `₹1,00,00,000` = `1_000_000_000` paise) | `BLOCKED_BY_RULE` | Owner can confirm-override; raises a `rate-suspicious` low-severity flag |
+| Soft-uniqueness: no other non-archived item has the same `(unit, normalize(nameEn ∪ nameHi))` where normalize is lowercase + collapse whitespace + strip common punctuation | `BLOCKED_BY_RULE` | UI shows the existing item and offers: (a) merge into existing, (b) create anyway with a `duplicate-item-confirmed` flag, (c) cancel |
+| Cannot create a sale or purchase line referencing an `archived` item | `REFERENCE_INVALID` | UI shows: "Item is archived. Unarchive first." |
+| Hard rule: every rate change appends an `item_rate_changed` event (cannot silently update the item row) | `BLOCKED_BY_RULE` | The owner's UI flow always goes through the event; programmatic updates that skip the event are refused by the adapter |
+| Cannot delete an item ever (per ownership matrix) | `PERMISSION_DENIED` | Only `item_archived` |
+
+### Parties (customers / suppliers)
+
+| Rule | Code on violation | Notes |
+|---|---|---|
+| `name` cannot be empty | `SCHEMA_INVALID` | At least one of English / Hindi name |
+| `phone` if provided is exactly 10 digits (Indian mobile format), no `+91`, no spaces | `SCHEMA_INVALID` | UI normalises to the 10-digit form before validation |
+| Soft-uniqueness on phone: no other non-archived party has the same `phone` | `BLOCKED_BY_RULE` | UI offers merge, create-anyway with flag, or cancel |
+| Soft-uniqueness on name when phone is absent: no other non-archived party has the same `normalize(name)` AND `type` (customer / supplier) | `BLOCKED_BY_RULE` | Same merge / create-anyway / cancel choice |
+| Cannot create a bill referencing an `archived` party | `REFERENCE_INVALID` | |
+| Settlement events reference a party id that exists | `REFERENCE_INVALID` | |
+
+### Rates and rate-change history
+
+| Rule | Code on violation | Notes |
+|---|---|---|
+| `item_rate_changed` carries a non-empty `reason` (free text) | `SCHEMA_INVALID` | Empty `reason` is `SCHEMA_INVALID`; generic `reason` ("update", "change", "abc") triggers a `rate-reason-generic` low-severity flag per the suspicion engine — accepted, not blocked |
+| Bill at time T uses the rate as of T, captured into the event payload | (architectural) | Enforced by domain helper; tests assert that a rate change after T does not alter T's bill replay |
+| Two rate changes within `shopProfile.items.rateChangeMinIntervalSec` (default 60 s) on the same item raise a `rate-flapping` flag | (accepted) | Low-severity; the brother sees the pattern in the Review Queue |
+
+### Merge contracts (cross-cutting)
+
+| Rule | Code on violation | Notes |
+|---|---|---|
+| Only `owner` can merge (per ownership matrix) | `PERMISSION_DENIED` | |
+| Merge `fromItemId == toItemId` is rejected | `SCHEMA_INVALID` | |
+| Merging an archived item **into** a non-archived one is allowed; the reverse is rejected | `BLOCKED_BY_RULE` | Direction must be: archived → live |
+| Post-merge stock sum equals pre-merge stock sum (`R3`) | `INVARIANT_VIOLATION` | Merge transaction is aborted; nothing is partially applied |
+| Post-merge outstanding sum equals pre-merge outstanding sum (`O3`) | `INVARIANT_VIOLATION` | Same |
+| Merge appends exactly one `item_merged` (or `party_merged`) event | (architectural) | No "shadow" updates of historical bill events; rerouting happens at projection time |
+
+### Required tests
+
+Listed in [§Required tests](#required-tests) below for the
+governance-level scenarios. The gate-level tests below
+complement them at the schema / adapter layer:
+
+- `item-empty-names-rejected` — both name fields empty →
+  `SCHEMA_INVALID`.
+- `item-zero-rate-rejected` — zero `paisePerKg` →
+  `SCHEMA_INVALID`.
+- `item-rate-above-ceiling-blocked` — over `rateCeilingPaise`
+  → `BLOCKED_BY_RULE` + flag.
+- `item-duplicate-soft-unique-blocked-suggest-merge` — case-
+  and-whitespace-insensitive match against an existing item.
+- `item-create-anyway-records-flag` — caller opts past the
+  soft block; `duplicate-item-confirmed` flag present.
+- `archived-item-in-bill-rejected` → `REFERENCE_INVALID`.
+- `party-phone-not-10-digits-rejected` → `SCHEMA_INVALID`.
+- `party-duplicate-phone-blocked-suggest-merge`.
+- `rate-change-empty-reason-rejected` → `SCHEMA_INVALID`.
+- `rate-change-generic-reason-flagged` (accepted, low flag).
+- `rate-flapping-flagged` — two changes within 60 s → flag.
+- `merge-from-equals-to-rejected` → `SCHEMA_INVALID`.
+- `merge-live-into-archived-rejected` → direction enforced.
+- `merge-stock-sum-mismatch-aborts` → `INVARIANT_VIOLATION`,
+  no partial state.
+
 ## Required tests
 
 - `merge-items-projection-stable` — pre-merge stock sum =
@@ -282,6 +386,20 @@ the exporting user; the export action is itself an event
 
 ## Recent changes
 
+## Recent changes
+
+- _2026-06-16_ · added `## Validation gates` section between
+  `## Master data governance` and `## Required tests`. Folds
+  the data-quality-gates rules (duplicate item / party
+  detection, impossible rate ceilings, empty-name rejection,
+  archived item in bill, rate-flapping flag, merge contracts)
+  into governance rather than spawning a separate file. Each
+  rule maps to the canonical adapter result code
+  (`SCHEMA_INVALID`, `BLOCKED_BY_RULE`,
+  `INVARIANT_VIOLATION`, `REFERENCE_INVALID`,
+  `PERMISSION_DENIED`) and to a UI-level recovery (merge,
+  create-anyway-with-flag, unarchive-first). Required tests
+  extended with gate-level cases.
 - _2026-06-15_ · file created. Ownership / access matrix
   (delete is forbidden; corrections are events); minimised
   PII inventory with voice-transcript discard rule;

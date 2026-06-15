@@ -38,23 +38,33 @@ owner or stop and mark `TODO(spec)`.
    `../spec/rebuild/projections.md`,
    `../spec/rebuild/data-placement.md`,
    `../spec/rebuild/offline-sync.md`,
-   `../spec/rebuild/versioning-compatibility.md` — the data
-    layer the M0 scaffold must support. M0 does not implement
-    every offline / cache / migration behaviour but the
-    scaffold's storage and outbox shapes must be compatible
-    with these contracts.
+   `../spec/rebuild/concurrency.md`,
+   `../spec/rebuild/versioning-compatibility.md`,
+   `../spec/rebuild/time-clock.md`,
+   `../spec/rebuild/money-units-rounding.md` — the data layer the
+    M0 scaffold must support. M0 does not implement every offline
+    / cache / migration / concurrency behaviour, but the
+    scaffold's primitive types, event envelopes, storage adapter,
+    and outbox shapes must be compatible with these contracts.
 7. `../spec/rebuild/ci-contract.md` — the exact CI jobs the
    scaffold must wire up.
-8. `../spec/rebuild/feature-acceptance.md` — the PR template
+8. `../spec/rebuild/platform-compatibility.md` and
+   `../spec/rebuild/printer-compatibility.md` — read once so the
+   M0 scaffold's printer-mock and platform abstractions are
+   shaped right. M0 does not ship a real printer or a Capacitor
+   build; both come later.
+9. `../spec/rebuild/feature-acceptance.md` — the PR template
    the Reviewer agent will enforce starting from your very first
    PR.
-9. `../plan/rebuild/decisions.md` — the frozen technical choices
-   for v2.0.
-10. `../plan/rebuild/roadmap.md` §M0 — the milestone scope.
-11. `../plan/rebuild/tech-candidates.md` — background on why the
+10. `../plan/rebuild/decisions.md` — the frozen technical choices
+    for v2.0.
+11. `../plan/rebuild/roadmap.md` §M0 — the milestone scope.
+12. `../plan/rebuild/tech-candidates.md` — background on why the
     `decisions.md` defaults were picked.
-12. `../plan/rebuild/migration-cutover.md` — read once so you
+13. `../plan/rebuild/migration-cutover.md` — read once so you
     know cutover gates exist; M0 does not implement them.
+14. `../plan/rebuild/release-health-gates.md` — read once so the
+    M0 CI scaffold knows which gates exist downstream.
 
 ## Step 2 — confirm decisions before any code
 
@@ -148,10 +158,14 @@ ships in M0.
 
 ### M0.1 — Primitives
 
-- `Paise` and `Mg` integer brand types.
+- `Paise` and `Mg` integer brand types. Helpers (multiply, add,
+  format) per `spec/rebuild/money-units-rounding.md` — including
+  the round-half-to-even rule.
 - `IdempotencyKey` brand type.
 - UUID v7 generator (`EventId`, `BillId`, etc.).
-- `IsoTimestamp` and time-utility helpers.
+- `IsoTimestamp` and time-utility helpers per
+  `spec/rebuild/time-clock.md` — including the two-timestamp
+  (`at` server / `clientAt` device) envelope and skew helpers.
 - Coverage: 100 % on this package.
 
 ### M0.2 — Event schemas

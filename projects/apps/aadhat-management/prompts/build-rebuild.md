@@ -98,19 +98,51 @@ or stop and mark `TODO(spec)`.
 28. `../spec/rebuild/ci-contract.md` — exact required CI jobs and
     canonical commands; the rebuild repo must wire its pipeline to
     match this contract.
-29. `../spec/page-specs/README.md` and `../spec/page-specs/00-auth.md`
+29. `../spec/rebuild/platform-compatibility.md` — per-platform
+    capability matrix (Web/PWA / Android / iOS); iOS deferred to
+    v2.1 with named gates (BLE Classic SPP, WebKit IndexedDB
+    eviction, background BLE). Read this before making any
+    platform-specific decision.
+30. `../spec/rebuild/printer-compatibility.md` — supported printer
+    profiles, ESC/POS subset, Devanagari = always bitmap, Android
+    BT Classic SPP path with foreground service + battery
+    whitelist, iOS refused in v2.0, four-layer duplicate-print
+    prevention, manual-print fallback.
+31. `../spec/rebuild/money-units-rounding.md` — atomic units
+    (paise / mg / `paisePerKg` / bps); canonical line and bill
+    total formulas with fixed application order; round-half-to-
+    even; Indian display formatting; v1 → v2 conversion. Every
+    money or weight number in the app derives from this helper.
+32. `../spec/rebuild/time-clock.md` — two-timestamp model
+    (`at` server-authoritative, `clientAt` device audit-only);
+    skew bands; backdated accepted-with-flag; future-dated
+    blocked; shop day = open cash session; reports in shop
+    timezone.
+33. `../spec/rebuild/concurrency.md` — multi-device contract.
+    Shop-wide cash session (C3); server-allocated bill numbers
+    with device-bound offline blocks; rate-snapshot-at-intent;
+    stock-race accepted-and-flagged per S2; "first server
+    commit wins" default rule.
+34. `../spec/rebuild/platform-test-matrix.md` — eight physical
+    surfaces (P1–P8); manual smoke gates (`G-PRINT-PROD`,
+    `G-OFFLINE-RECON`, `G-CASH-CYCLE`, `G-COLD-START`,
+    `G-FORCE-UPGRADE`, `G-PWA-OWNER`, `G-PWA-SAFARI`);
+    release-gate matrix by release type; release-record JSON
+    manifest.
+35. `../spec/page-specs/README.md` and `../spec/page-specs/00-auth.md`
     through `16-cash-management.md` — the v1 behavioural reference.
     Treat them as authoritative for "did v2 keep this workflow?";
     follow `../spec/rebuild/` where the two disagree (and flag the
     conflict).
-30. `../spec/firestore-rules-design.md` — data model and authorization
+36. `../spec/firestore-rules-design.md` — data model and authorization
     design for v1; useful as a starting point even if v2 picks a
     different backend.
-31. `../plan/rebuild/README.md` and the files it points to —
+37. `../plan/rebuild/README.md` and the files it points to —
     opinionated rebuild guidance (roadmap, **decisions** freeze
     list, agent roster, tech candidates, **migration & cutover**,
-    **operations runbook**, **backup & restore**, productization).
-32. `../plan/review-issues.md` — known v1 defects. Do **not**
+    **operations runbook**, **backup & restore**, **release
+    health gates**, productization).
+38. `../plan/review-issues.md` — known v1 defects. Do **not**
     reintroduce any.
 
 ## Step 2 — confirm decisions before any code

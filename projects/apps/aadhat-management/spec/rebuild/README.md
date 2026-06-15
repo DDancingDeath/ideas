@@ -20,79 +20,109 @@
 2. [`architecture.md`](./architecture.md) — the layered architecture
    (domain core → application services → storage adapters → UI →
    device integrations) and why UI must not own business truth.
+3. [`platform-compatibility.md`](./platform-compatibility.md) —
+   per-platform capability matrix (Web/PWA / Android / iOS); iOS
+   deferred to v2.1 with named gates (BLE Classic SPP, WebKit
+   IndexedDB eviction, background BLE); foreground / background /
+   suspended contract; storage limits per platform.
 
 ### Data and lifecycle
 
-3. [`event-ledger.md`](./event-ledger.md) — every business action is an
+4. [`event-ledger.md`](./event-ledger.md) — every business action is an
    immutable event; stock / cash / outstanding / reports are derived,
    not stored as authoritative numbers.
-4. [`event-schemas.md`](./event-schemas.md) — full payload shape for
+5. [`event-schemas.md`](./event-schemas.md) — full payload shape for
    each of the 22 event types, with validation rules, examples,
    invariants applied, and idempotency-key shape.
-5. [`projections.md`](./projections.md) — the contract for every
+6. [`time-clock.md`](./time-clock.md) — two-timestamp model
+   (`at` server-authoritative, `clientAt` device audit-only);
+   clock-skew tolerance bands; backdated accepted-with-flag;
+   future-dated blocked; shop day = open cash session; reports
+   always in shop timezone.
+7. [`money-units-rounding.md`](./money-units-rounding.md) — atomic
+   units (paise / mg / `paisePerKg` / bps); canonical line and bill
+   total formulas with fixed application order; round-half-to-even;
+   Indian display formatting; v1 → v2 import conversion with
+   round-trip verification.
+8. [`projections.md`](./projections.md) — the contract for every
    derived view (items, stock, cash, outstanding, history, reports,
    audit, Review Queue) and the rebuild / stale-detection process.
-6. [`data-placement.md`](./data-placement.md) — where each piece of
+9. [`data-placement.md`](./data-placement.md) — where each piece of
    data lives (authoritative location, local cache, sync rule,
    staleness tolerance, offline behaviour, read/write budgets);
    server vs app responsibility split; "local for speed, server
    for trust, shared domain for consistency" principle.
-7. [`bill-lifecycle.md`](./bill-lifecycle.md) — the bill state machine
-   and the **billing-vs-printing separation** invariant (double-tap,
-   slow Bluetooth, retry, offline — none may create duplicate sales).
-8. [`idempotency.md`](./idempotency.md) — `clientActionId` →
-   `idempotencyKey` mapping, lifetimes, and the "what happens
-   when…" cases (double-tap, offline, tab-close, conflict, etc.).
-9. [`print-queue.md`](./print-queue.md) — the background print queue
-   contract; what the UI is allowed to wait on and what it is not.
-10. [`offline-sync.md`](./offline-sync.md) — per-action offline
+10. [`bill-lifecycle.md`](./bill-lifecycle.md) — the bill state machine
+    and the **billing-vs-printing separation** invariant (double-tap,
+    slow Bluetooth, retry, offline — none may create duplicate sales).
+11. [`idempotency.md`](./idempotency.md) — `clientActionId` →
+    `idempotencyKey` mapping, lifetimes, and the "what happens
+    when…" cases (double-tap, offline, tab-close, conflict, etc.).
+12. [`print-queue.md`](./print-queue.md) — the background print queue
+    contract; what the UI is allowed to wait on and what it is not.
+13. [`printer-compatibility.md`](./printer-compatibility.md) — which
+    printers v2.0 supports, paper widths, ESC/POS command subset,
+    Devanagari-always-bitmap rule, Android BT Classic SPP pairing
+    path with foreground service + battery whitelist, iOS refused
+    in v2.0, four-layer duplicate-print prevention, manual-print
+    fallback, production-printer-smoke release gate.
+14. [`offline-sync.md`](./offline-sync.md) — per-action offline
     allowance matrix; local UI state vocabulary
     (`Saved` / `Sync pending` / `Synced` / `Sync failed
     (retrying)` / `Needs review` / `Printed` / `Print failed`);
     retry policy with backoff and budget; conflict handling;
     reconnect protocol; what the UI must show.
+15. [`concurrency.md`](./concurrency.md) — multi-device contract.
+    Cash session is shop-wide (C3); bill numbers server-allocated
+    with device-bound offline blocks; rate-snapshot-at-intent for
+    in-progress bills; concurrent-sale-into-negative-stock
+    accepted-and-flagged per S2; default rule "first server
+    commit wins, losing write surfaces in Review Queue".
 
 ### Correctness, monitoring, and access
 
-11. [`invariants.md`](./invariants.md) — the business laws the app must
-    always hold (stock, cash, udhaar, reports must reconcile against
-    the event ledger; staff cannot bypass authorization via API).
-12. [`role-permission-matrix.md`](./role-permission-matrix.md) — full
+16. [`invariants.md`](./invariants.md) — the business laws the app must
+    always hold. Opens with `## Constitution` summarising the eight
+    AC rules ("no false data") and mapping each to the
+    M / S / C / B / R label that enforces it.
+17. [`role-permission-matrix.md`](./role-permission-matrix.md) — full
     role × event-type matrix, projection-read matrix, special
     principals (`engine`, `queue worker`), API-bypass guarantee,
     and the staff edit-time-limit rule
     (`shopProfile.staff.editGraceMin`).
-13. [`suspicion-engine.md`](./suspicion-engine.md) — the anomaly
+18. [`suspicion-engine.md`](./suspicion-engine.md) — the anomaly
     detector that turns "the data looks off" into Review Queue items.
-14. [`review-queue.md`](./review-queue.md) — the page the owner /
+19. [`review-queue.md`](./review-queue.md) — the page the owner /
     brother uses to monitor and approve anomalies. New page, not in
     the v1 page-specs.
-15. [`failure-modes.md`](./failure-modes.md) — catalogue of 20 real-
+20. [`failure-modes.md`](./failure-modes.md) — catalogue of 20 real-
     world failures (app crash, battery die, wrong device clock, old
     client, cache corruption, Firebase down, lost phone…) with
     expected and forbidden system behaviour, and the pinned test
     for each.
-16. [`versioning-compatibility.md`](./versioning-compatibility.md) —
+21. [`versioning-compatibility.md`](./versioning-compatibility.md) —
     three independent versions (`appVersion`, `schemaVersion`,
     `domainVersion`); support-window with force-upgrade; additive
     vs non-additive event-schema changes and the up-migration
     contract.
-17. [`data-governance.md`](./data-governance.md) — ownership /
+22. [`data-governance.md`](./data-governance.md) — ownership /
     access matrix (delete is forbidden; corrections are events);
     PII inventory with retention; master-data governance (item /
-    party merges, rate history, archive, typos); bill-numbering
-    and legal posture (GST is out of scope for v2.0).
-18. [`observability.md`](./observability.md) — notification
+    party merges, rate history, archive, typos); `## Validation
+    gates` mapping each master-data quality rule to an adapter
+    result code; bill-numbering and legal posture (GST is out of
+    scope for v2.0).
+23. [`observability.md`](./observability.md) — notification
     catalogue with severity / channel / audience; supportability
     surface (app / device / user / network / outbox / queues /
     cache); trace ids; one-tap debug bundle with PII-exclusion
     contract.
-19. [`ai-boundaries.md`](./ai-boundaries.md) — what AI is allowed
+24. [`ai-boundaries.md`](./ai-boundaries.md) — what AI is allowed
     to do (suggest, summarise, draft, voice-fill — always
     confirmed by a human) and what AI is never allowed to do (no
     event without human confirm; no permission elevation; no
     flag resolve; no silent suppression).
-20. [`ergonomics.md`](./ergonomics.md) — shop-floor constraints
+25. [`ergonomics.md`](./ergonomics.md) — shop-floor constraints
     (one-handed, sunlight, noisy, Hindi-first, ₹15–20k phone);
     tap-target floors; WCAG AA contrast; Hindi label sizing;
     two-step confirm only for destructive actions; picker and
@@ -100,20 +130,28 @@
 
 ### Quality, perf, and definition of done
 
-21. [`scenarios.md`](./scenarios.md) — 15 named fixtures (real shop
+26. [`scenarios.md`](./scenarios.md) — 15 named fixtures (real shop
     workflows) with setup, sequence, expected projections, expected
     flags, and the test layer each one belongs to.
-22. [`performance-budgets.md`](./performance-budgets.md) — concrete UI
+27. [`performance-budgets.md`](./performance-budgets.md) — concrete UI
     / print / sync numbers, reference device, measurement
     methodology, required perf scenarios, and CI gates.
-23. [`quality-bar.md`](./quality-bar.md) — required test layers, the
+28. [`quality-bar.md`](./quality-bar.md) — required test layers, the
     "no UI hang" performance bar, and what counts as `done` for a
     feature.
-24. [`feature-acceptance.md`](./feature-acceptance.md) — per-feature
+29. [`feature-acceptance.md`](./feature-acceptance.md) — per-feature
     required-test checklist by feature kind, with PR template.
-25. [`ci-contract.md`](./ci-contract.md) — exact required CI jobs,
+30. [`ci-contract.md`](./ci-contract.md) — exact required CI jobs,
     canonical commands, artefact contract, baseline-bump protocol.
-26. [`worked-example.md`](./worked-example.md) — one retail bill
+31. [`platform-test-matrix.md`](./platform-test-matrix.md) — which
+    physical surfaces (Chromium headless / headed, Android
+    emulator / real device / real device + printer, iOS Safari /
+    Capacitor, low-end Android) run which CI jobs; manual smoke
+    gates (`G-PRINT-PROD`, `G-OFFLINE-RECON`, `G-CASH-CYCLE`,
+    `G-COLD-START`, `G-FORCE-UPGRADE`, `G-PWA-OWNER`,
+    `G-PWA-SAFARI`); release-gate matrix by release type;
+    release-record JSON manifest.
+32. [`worked-example.md`](./worked-example.md) — one retail bill
     traced end-to-end through every layer (UI intent → service →
     event → projection → print → audit → tests). Read this once
     to make every other doc click into place.
@@ -148,6 +186,35 @@ milestones" table in that file).
 
 ## Recent changes
 
+- _2026-06-16_ · Added the platform / accuracy / concurrency
+  layer in response to the owner's "web + Android + iOS, fast,
+  always accurate" review. New spec docs:
+  `platform-compatibility.md` (per-platform capability matrix
+  with iOS deferred to v2.1 and named gates),
+  `printer-compatibility.md` (supported printers, ESC/POS
+  subset, Devanagari = always bitmap, Android BT Classic SPP
+  path, four-layer duplicate-print prevention, manual-print
+  fallback), `money-units-rounding.md` (atomic units, canonical
+  formulas, round-half-to-even, v1 → v2 import conversion),
+  `time-clock.md` (two-timestamp model, skew bands, backdate
+  accepted-with-flag, future-date blocked, shop-day = open
+  cash session), `concurrency.md` (shop-wide cash session,
+  server-allocated bill numbers with device-bound offline
+  blocks, rate-snapshot-at-intent, stock-race accepted-and-
+  flagged, "first server commit wins"),
+  `platform-test-matrix.md` (eight physical surfaces, manual
+  smoke gates, release-gate matrix by release type). New plan
+  doc: `plan/rebuild/release-health-gates.md` (10-gate pre-
+  release checklist with hot-fix subset and sign-off record).
+  Extended `invariants.md` with `## Constitution — the "no
+  false data" rules` summarising AC1–AC8 and mapping each to
+  the M / S / C / B / R label that enforces it (no standalone
+  `accuracy-contract.md`, to avoid duplication drift).
+  Extended `data-governance.md` with `## Validation gates`
+  mapping master-data quality rules to adapter result codes
+  (`SCHEMA_INVALID`, `BLOCKED_BY_RULE`, `INVARIANT_VIOLATION`,
+  `REFERENCE_INVALID`, `PERMISSION_DENIED`) and UI-level
+  recoveries (merge, create-anyway-with-flag, unarchive).
 - _2026-06-15_ (later same day) · Added the operational-concerns
   layer in response to the owner's "what about offline / failure
   modes / observability / governance / ergonomics / AI?" review.

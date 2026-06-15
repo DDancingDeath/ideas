@@ -6,6 +6,31 @@
 > (see `quality-bar.md`); some are runtime assertions that raise a
 > `flag_raised` event when violated.
 
+## Constitution — the "no false data" rules
+
+Eight plain-language rules every screen, service, and event-
+write must obey. Each is restated formally in one of the
+labelled invariant tables below. Together they are the
+**accuracy contract** of the app — there is no other source.
+
+| # | Rule | Where it is enforced (labels in this file unless noted) |
+|---|---|---|
+| AC1 | No screen may show authoritative totals from UI math. | `M5` (no per-screen period math); `C5` (no per-screen cash math); `R4` (Today == Finance == Reports) |
+| AC2 | Every bill total equals the domain calculation. | `M1`–`M3` (formula); [`money-units-rounding.md`](./money-units-rounding.md) (canonical formula and rounding) |
+| AC3 | Every stock value is event-derived. | `S1` (replay formula); `S3` (retail does not move stock); architectural rule in [`architecture.md`](./architecture.md) — no UI stock guesses |
+| AC4 | Every report total reconciles with the ledger. | `R1`–`R3` (replay equality); `R4` (cross-screen agreement) |
+| AC5 | Every payment balances: `cash + online + due == grandTotal`. | `M1` |
+| AC6 | Every correction or void references the original event. | `B2` (void → existing sale); `B3` (correction → most recent non-voided version) |
+| AC7 | Every mismatch creates a Review Queue flag. | `C2` (cash mismatch); `S2` (stock-negative); `R4` (cross-screen divergence in dev); §"What to do when an invariant fails" below; [`review-queue.md`](./review-queue.md) |
+| AC8 | Projection cache may be stale, but must be labelled stale. | [`data-placement.md`](./data-placement.md) (staleness tolerance per data type); [`offline-sync.md`](./offline-sync.md) (UI state vocabulary); no row may render without its badge |
+
+The constitution is the **summary**. The labelled invariants
+below are the **enforcement** — they are the rows CI tests,
+storage adapters reject against, and the suspicion engine
+flags from. A change to AC1–AC8 means a change to one of the
+M / S / O / C / B / R / A / X / T rows; the constitution does
+not drift independently.
+
 ## Money
 
 | # | Invariant | How checked |
@@ -100,3 +125,13 @@
    the Review Queue. The user is told to retry or escalate.
 4. If a projection ever disagrees with a replay (R1–R4): the
    projection is wrong. Rebuild it from events.
+
+## Recent changes
+
+- _2026-06-16_ · added `## Constitution — the "no false data"
+  rules` section at the top. Eight AC rules (AC1–AC8) restate
+  the accuracy contract in plain language and map each to the
+  M / S / C / B / R label that enforces it. The constitution is
+  a summary, not an independent source of truth — changes flow
+  from M/S/C/B/R rows into the AC summary, never the other way.
+

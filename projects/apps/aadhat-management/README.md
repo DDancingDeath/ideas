@@ -295,19 +295,26 @@ aadhat-management/
 │   ├── voice-billing-v2.md
 │   ├── page-specs/                 ← 17 per-page contracts + README (v1)
 │   └── rebuild/                    ← v2 rebuild spec (architecture,
+│                                     platform compatibility,
 │                                     event ledger, event schemas,
-│                                     bill lifecycle, idempotency,
-│                                     print queue, projections,
-│                                     data placement, offline-sync,
-│                                     invariants, role matrix,
-│                                     suspicion engine, Review Queue,
-│                                     failure modes,
+│                                     time & clock, money/units/
+│                                     rounding, bill lifecycle,
+│                                     idempotency, print queue,
+│                                     printer compatibility,
+│                                     projections, data placement,
+│                                     offline-sync, concurrency,
+│                                     invariants (with constitution),
+│                                     role matrix, suspicion engine,
+│                                     Review Queue, failure modes,
 │                                     versioning & compatibility,
-│                                     data governance, observability,
-│                                     ai boundaries, ergonomics,
-│                                     scenarios, perf budgets,
-│                                     quality bar, feature acceptance,
-│                                     CI contract, worked example)
+│                                     data governance (with
+│                                     validation gates),
+│                                     observability, ai boundaries,
+│                                     ergonomics, scenarios, perf
+│                                     budgets, quality bar, feature
+│                                     acceptance, CI contract,
+│                                     platform test matrix, worked
+│                                     example)
 ├── plan/
 │   ├── review-issues.md
 │   ├── promotion.md
@@ -319,6 +326,7 @@ aadhat-management/
 │                                     migration & cutover,
 │                                     operations runbook,
 │                                     backup & restore,
+│                                     release health gates,
 │                                     productize-later
 ├── prompts/
 │   ├── build-from-spec.md          ← v1 reference rebuild
@@ -337,6 +345,27 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-06-16_ · Added the platform / accuracy / concurrency
+  layer to the v2 rebuild spec in response to the owner's
+  "web + Android + iOS, fast, always accurate" review. New under
+  [`spec/rebuild/`](./spec/rebuild/):
+  `platform-compatibility.md`, `printer-compatibility.md`,
+  `money-units-rounding.md`, `time-clock.md`, `concurrency.md`,
+  `platform-test-matrix.md`. New under
+  [`plan/rebuild/`](./plan/rebuild/):
+  `release-health-gates.md` (the 10-gate pre-release checklist).
+  Extended `spec/rebuild/invariants.md` with a `## Constitution`
+  section summarising AC1–AC8 and mapping each to the
+  M / S / C / B / R label that enforces it (no standalone
+  `accuracy-contract.md` — kept as a summary inside `invariants.md`
+  to avoid duplication drift). Extended
+  `spec/rebuild/data-governance.md` with a `## Validation gates`
+  section mapping master-data quality rules (duplicate item /
+  party detection, impossible rates, empty names, archived item
+  in bill, rate-flapping, merge contracts) to adapter result
+  codes and UI-level recoveries. iOS is documented as a v2.1
+  stretch target with named gates (BLE Classic SPP, WebKit
+  IndexedDB eviction, background BLE); v2.0 stays web + Android.
 - _2026-06-15_ (later same day) · Added the operational-concerns
   layer to the v2 rebuild spec in response to the owner's
   "what about offline, failures, observability, governance,

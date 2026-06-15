@@ -33,7 +33,7 @@ This is the source of truth for what the app does.
 ## Reading order — v2 (rebuild)
 
 The rebuild subtree's own README organizes its reading order in
-three groups (Foundations / Data and lifecycle / Correctness,
+four groups (Foundations / Data and lifecycle / Correctness,
 monitoring, and access / Quality, perf, and definition of done).
 The short list:
 
@@ -43,72 +43,104 @@ The short list:
    core vs configurable vs shop-custom vs not-doing.
 3. **[`rebuild/architecture.md`](./rebuild/architecture.md)** — layered
    architecture; the "UI is never the source of business truth" rule.
-4. **[`rebuild/event-ledger.md`](./rebuild/event-ledger.md)** —
+4. **[`rebuild/platform-compatibility.md`](./rebuild/platform-compatibility.md)** —
+   per-platform capability matrix (Web/PWA / Android / iOS); iOS
+   deferred to v2.1 with named gates (BLE Classic SPP, WebKit
+   IndexedDB eviction, background BLE).
+5. **[`rebuild/event-ledger.md`](./rebuild/event-ledger.md)** —
    append-only event store; everything else is a projection.
-5. **[`rebuild/event-schemas.md`](./rebuild/event-schemas.md)** — full
+6. **[`rebuild/event-schemas.md`](./rebuild/event-schemas.md)** — full
    payload shape for each of the 22 event types, with validation
    rules, examples, invariants applied, and idempotency-key shape.
-6. **[`rebuild/projections.md`](./rebuild/projections.md)** — the
+7. **[`rebuild/time-clock.md`](./rebuild/time-clock.md)** — two-
+   timestamp model (`at` server-authoritative, `clientAt` device
+   audit-only); skew bands; backdate accepted-with-flag;
+   future-date blocked; shop day = open cash session; reports in
+   shop timezone.
+8. **[`rebuild/money-units-rounding.md`](./rebuild/money-units-rounding.md)** —
+   atomic units (paise / mg / `paisePerKg` / bps); canonical line
+   and bill total formulas with fixed application order; round-
+   half-to-even; Indian display formatting; v1 → v2 conversion.
+9. **[`rebuild/projections.md`](./rebuild/projections.md)** — the
    contract for every derived view and the rebuild /
    stale-detection process.
-7. **[`rebuild/data-placement.md`](./rebuild/data-placement.md)** —
-   where each piece of data lives (authoritative location, local
-   cache, sync rule, staleness tolerance, offline behaviour);
-   server vs app responsibility split.
-8. **[`rebuild/bill-lifecycle.md`](./rebuild/bill-lifecycle.md)** — bill
-   state machine; idempotency; billing-vs-printing separation.
-9. **[`rebuild/idempotency.md`](./rebuild/idempotency.md)** —
-   `clientActionId` → `idempotencyKey` mapping, lifetimes, and the
-   "what happens when…" cases.
-10. **[`rebuild/print-queue.md`](./rebuild/print-queue.md)** — background
+10. **[`rebuild/data-placement.md`](./rebuild/data-placement.md)** —
+    where each piece of data lives (authoritative location, local
+    cache, sync rule, staleness tolerance, offline behaviour);
+    server vs app responsibility split.
+11. **[`rebuild/bill-lifecycle.md`](./rebuild/bill-lifecycle.md)** — bill
+    state machine; idempotency; billing-vs-printing separation.
+12. **[`rebuild/idempotency.md`](./rebuild/idempotency.md)** —
+    `clientActionId` → `idempotencyKey` mapping, lifetimes, and the
+    "what happens when…" cases.
+13. **[`rebuild/print-queue.md`](./rebuild/print-queue.md)** — background
     print queue; UI never waits on the printer.
-11. **[`rebuild/offline-sync.md`](./rebuild/offline-sync.md)** — per-
+14. **[`rebuild/printer-compatibility.md`](./rebuild/printer-compatibility.md)** —
+    supported printer profiles (58 mm / 80 mm BT Classic SPP),
+    ESC/POS command subset, Devanagari-always-bitmap rule, Android
+    BT pairing path with foreground service + battery whitelist,
+    iOS refused in v2.0, four-layer duplicate-print prevention,
+    manual-print fallback, production-printer-smoke release gate.
+15. **[`rebuild/offline-sync.md`](./rebuild/offline-sync.md)** — per-
     action offline allowance matrix; local UI state vocabulary;
     retry policy; conflict handling; reconnect protocol.
-12. **[`rebuild/invariants.md`](./rebuild/invariants.md)** — business
-    laws (money, stock, cash, outstanding, lifecycle, auth, reconciliation).
-13. **[`rebuild/role-permission-matrix.md`](./rebuild/role-permission-matrix.md)** —
+16. **[`rebuild/concurrency.md`](./rebuild/concurrency.md)** — multi-
+    device contract. Cash session is shop-wide (C3); bill numbers
+    server-allocated with device-bound offline blocks; rate-
+    snapshot-at-intent for in-progress bills; concurrent-sale-
+    into-negative-stock accepted-and-flagged per S2.
+17. **[`rebuild/invariants.md`](./rebuild/invariants.md)** — business
+    laws (money, stock, cash, outstanding, lifecycle, auth,
+    reconciliation, time). Opens with the `## Constitution` —
+    eight AC rules ("no false data") summarising the contract.
+18. **[`rebuild/role-permission-matrix.md`](./rebuild/role-permission-matrix.md)** —
     role × event-type matrix, projection-read matrix, special
     principals, API-bypass guarantee, staff edit-time-limit rule.
-14. **[`rebuild/suspicion-engine.md`](./rebuild/suspicion-engine.md)** —
+19. **[`rebuild/suspicion-engine.md`](./rebuild/suspicion-engine.md)** —
     anomaly rules that feed the Review Queue.
-15. **[`rebuild/review-queue.md`](./rebuild/review-queue.md)** — new
+20. **[`rebuild/review-queue.md`](./rebuild/review-queue.md)** — new
     page for the brother / owner to monitor the shop.
-16. **[`rebuild/failure-modes.md`](./rebuild/failure-modes.md)** — 20
+21. **[`rebuild/failure-modes.md`](./rebuild/failure-modes.md)** — 20
     real-world failures with expected and forbidden behaviour and
     the pinned test for each.
-17. **[`rebuild/versioning-compatibility.md`](./rebuild/versioning-compatibility.md)** —
+22. **[`rebuild/versioning-compatibility.md`](./rebuild/versioning-compatibility.md)** —
     three independent versions and the force-upgrade contract;
     additive vs non-additive event-schema changes and the
     up-migration contract.
-18. **[`rebuild/data-governance.md`](./rebuild/data-governance.md)** —
+23. **[`rebuild/data-governance.md`](./rebuild/data-governance.md)** —
     ownership / access matrix (delete is forbidden), PII
-    inventory, retention, master-data governance, bill numbering
-    and GST posture.
-19. **[`rebuild/observability.md`](./rebuild/observability.md)** —
+    inventory, retention, master-data governance, `## Validation
+    gates` mapping master-data quality rules to adapter result
+    codes, bill numbering and GST posture.
+24. **[`rebuild/observability.md`](./rebuild/observability.md)** —
     notifications catalogue (severity / channel / audience),
     supportability surface, debug bundle with PII-exclusion.
-20. **[`rebuild/ai-boundaries.md`](./rebuild/ai-boundaries.md)** —
+25. **[`rebuild/ai-boundaries.md`](./rebuild/ai-boundaries.md)** —
     suggestion-not-action contract for every AI flow; AI may
     never resolve a flag or change settings.
-21. **[`rebuild/ergonomics.md`](./rebuild/ergonomics.md)** — shop-
+26. **[`rebuild/ergonomics.md`](./rebuild/ergonomics.md)** — shop-
     floor constraints; tap targets; sunlight readability; Hindi
     label sizing; two-step confirm only for destructive actions.
-22. **[`rebuild/scenarios.md`](./rebuild/scenarios.md)** — 15 named
+27. **[`rebuild/scenarios.md`](./rebuild/scenarios.md)** — 15 named
     fixtures (real shop workflows) with expected projections and
     flags.
-23. **[`rebuild/performance-budgets.md`](./rebuild/performance-budgets.md)** —
+28. **[`rebuild/performance-budgets.md`](./rebuild/performance-budgets.md)** —
     concrete UI / print / sync numbers, reference device,
     measurement methodology, required perf scenarios, CI gates.
-24. **[`rebuild/quality-bar.md`](./rebuild/quality-bar.md)** — required
+29. **[`rebuild/quality-bar.md`](./rebuild/quality-bar.md)** — required
     test layers and "no UI hang" perf budgets.
-25. **[`rebuild/feature-acceptance.md`](./rebuild/feature-acceptance.md)** —
+30. **[`rebuild/feature-acceptance.md`](./rebuild/feature-acceptance.md)** —
     per-feature required-test checklist by feature kind, with PR
     template.
-26. **[`rebuild/ci-contract.md`](./rebuild/ci-contract.md)** —
+31. **[`rebuild/ci-contract.md`](./rebuild/ci-contract.md)** —
     exact required CI jobs, canonical commands, artefact
     contract, baseline-bump protocol.
-27. **[`rebuild/worked-example.md`](./rebuild/worked-example.md)** —
+32. **[`rebuild/platform-test-matrix.md`](./rebuild/platform-test-matrix.md)** —
+    eight physical surfaces (Chromium headless / headed, Android
+    emulator / real device / + real printer, iOS Safari /
+    Capacitor, low-end Android); manual smoke gates; release-gate
+    matrix by release type; release-record JSON manifest.
+33. **[`rebuild/worked-example.md`](./rebuild/worked-example.md)** —
     one retail bill traced end-to-end through every layer (UI
     intent → service → event → projection → print → audit →
     tests). The fastest way to understand the whole architecture.
@@ -117,7 +149,7 @@ Opinion / strategy material for the rebuild lives under
 [`../plan/rebuild/`](../plan/rebuild/) (roadmap, **decisions**
 freeze list, agent roster, tech candidates, **migration &
 cutover**, **operations runbook**, **backup / restore**,
-productization).
+**release health gates**, productization).
 
 ## Glossary
 
@@ -148,11 +180,25 @@ productization).
 
 - GST / e-invoicing.
 - Multi-tenant / multi-branch.
-- iOS.
+- iOS in v2.0. (iOS is a v2.1 **stretch target** documented in
+  [`rebuild/platform-compatibility.md`](./rebuild/platform-compatibility.md)
+  §iOS posture, gated on a real-device printer verification or
+  a Wi-Fi printer path.)
 - Desktop-only UX.
 
 ## Recent changes
 
+- _2026-06-16_ · Added the platform / accuracy / concurrency
+  layer to the v2 reading order. New under `spec/rebuild/`:
+  `platform-compatibility.md` (item 4), `time-clock.md` (7),
+  `money-units-rounding.md` (8), `printer-compatibility.md`
+  (14), `concurrency.md` (16), `platform-test-matrix.md` (32).
+  Extended `invariants.md` with a `## Constitution` section
+  (AC1–AC8) and `data-governance.md` with a `## Validation
+  gates` section. New under `plan/rebuild/`:
+  `release-health-gates.md` (10-gate pre-release checklist).
+  Updated the "Out of scope" iOS line to reflect "v2.0 not
+  v2.1" rather than "iOS forever".
 - _2026-06-15_ (later same day) · Added the operational-concerns
   layer to the v2 reading order: `data-placement.md`,
   `offline-sync.md`, `failure-modes.md`, `versioning-
