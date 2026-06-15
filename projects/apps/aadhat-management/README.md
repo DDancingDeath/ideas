@@ -316,6 +316,18 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-06-15_ (later same day) · Made the v2 rebuild spec
+  agent-ready. Added contract docs under
+  [`spec/rebuild/`](./spec/rebuild/): `event-schemas.md` (22 event
+  types with payload schemas and idempotency keys),
+  `scenarios.md` (15 fixtures), `role-permission-matrix.md`,
+  `idempotency.md`, `projections.md`, `performance-budgets.md`,
+  `feature-acceptance.md`. Added under
+  [`plan/rebuild/`](./plan/rebuild/): `decisions.md` (freeze list
+  with agent-recommended defaults), `migration-cutover.md`
+  (snapshot strategy, dual-run window, rollback). The rebuild
+  README's reading order and the `prompts/build-rebuild.md`
+  thread were updated to include the new docs.
 - _2026-06-15_ · Scoped the **v2 rebuild**. Added
   [`spec/rebuild/`](./spec/rebuild/) with architecture, event ledger,
   bill lifecycle, print queue, invariants, suspicion engine,

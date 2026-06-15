@@ -34,48 +34,74 @@ or stop and mark `TODO(spec)`.
 5. `../spec/rebuild/event-ledger.md` — every business action is an
    immutable event; stock / cash / outstanding / reports are
    projections.
-6. `../spec/rebuild/bill-lifecycle.md` — the bill state machine; the
+6. `../spec/rebuild/event-schemas.md` — payload shape for each of
+   the 22 event types, with validation rules and idempotency-key
+   shape.
+7. `../spec/rebuild/projections.md` — the contract for every derived
+   view (stock, cash, outstanding, history, reports, audit, Review
+   Queue) and the rebuild / stale-detection process.
+8. `../spec/rebuild/bill-lifecycle.md` — the bill state machine; the
    billing-vs-printing separation invariant; idempotency rules.
-7. `../spec/rebuild/print-queue.md` — background print queue
-   contract; the UI never waits on the printer.
-8. `../spec/rebuild/invariants.md` — business laws that must hold at
-   all times.
-9. `../spec/rebuild/suspicion-engine.md` — anomaly detection that
-   feeds the Review Queue.
-10. `../spec/rebuild/review-queue.md` — new page for the brother /
+9. `../spec/rebuild/idempotency.md` — `clientActionId` →
+   `idempotencyKey` mapping and the "what happens when…" cases.
+10. `../spec/rebuild/print-queue.md` — background print queue
+    contract; the UI never waits on the printer.
+11. `../spec/rebuild/invariants.md` — business laws that must hold at
+    all times.
+12. `../spec/rebuild/role-permission-matrix.md` — full role ×
+    event-type matrix and the API-bypass guarantee.
+13. `../spec/rebuild/suspicion-engine.md` — anomaly detection that
+    feeds the Review Queue.
+14. `../spec/rebuild/review-queue.md` — new page for the brother /
     owner to monitor the shop.
-11. `../spec/rebuild/quality-bar.md` — required test layers and
-    "no UI hang" perf budgets.
-12. `../spec/page-specs/README.md` and `../spec/page-specs/00-auth.md`
+15. `../spec/rebuild/scenarios.md` — 15 named fixtures (real shop
+    workflows) with expected projections and flags.
+16. `../spec/rebuild/performance-budgets.md` — concrete numbers for
+    every "no UI hang" promise, reference device, measurement
+    methodology, CI gates.
+17. `../spec/rebuild/quality-bar.md` — required test layers and the
+    definition of "done".
+18. `../spec/rebuild/feature-acceptance.md` — per-feature required
+    test layers by feature kind, plus the PR template the Reviewer
+    agent enforces.
+19. `../spec/page-specs/README.md` and `../spec/page-specs/00-auth.md`
     through `16-cash-management.md` — the v1 behavioural reference.
     Treat them as authoritative for "did v2 keep this workflow?";
     follow `../spec/rebuild/` where the two disagree (and flag the
     conflict).
-13. `../spec/firestore-rules-design.md` — data model and authorization
+20. `../spec/firestore-rules-design.md` — data model and authorization
     design for v1; useful as a starting point even if v2 picks a
     different backend.
-14. `../plan/rebuild/README.md` and the files it points to —
-    opinionated rebuild guidance (roadmap, agent roster, tech
-    candidates, productization).
-15. `../plan/review-issues.md` — known v1 defects. Do **not**
+21. `../plan/rebuild/README.md` and the files it points to —
+    opinionated rebuild guidance (roadmap, **decisions** freeze
+    list, agent roster, tech candidates, **migration & cutover**,
+    productization).
+22. `../plan/review-issues.md` — known v1 defects. Do **not**
     reintroduce any.
 
 ## Step 2 — confirm with the owner before writing code
 
-Use `../plan/rebuild/tech-candidates.md` to surface the decisions
-that need answers before M0:
+Use `../plan/rebuild/decisions.md` to surface the decisions that
+need answers before M0. Every row in that file starts as
+`tentative` with the agent's recommended default; the owner
+confirms or overrides each row. The top five (must freeze before
+M0):
 
-- UI framework: SvelteKit (recommended) or React.
-- Backend: stay on Firebase Firestore (recommended) or move to
-  Postgres-based (Supabase / self-hosted).
-- Whether `shopId` is in the schema from day one (recommended yes,
-  defaulted to `shop-1`).
-- Whether to import v1 data on cutover (snapshot vs replay).
-- Reference Android device for perf budgets.
-- Whether the brother gets a distinct `reviewer` role or stays as
-  `owner` (Review Queue spec open question).
+- UI framework: SvelteKit (recommended) or React (row 1).
+- Backend: stay on Firebase Firestore only (recommended) or move
+  to Firebase + thin server (row 2).
+- Package manager: pnpm (recommended) or npm (row 3).
+- `shopId` in the schema from day one: yes (recommended), default
+  `shop-1` (row 4).
+- Brother's role: `owner` for v2.0 (recommended), defer a
+  dedicated `reviewer` to v2.1 (row 5).
 
-Do not start coding until each is answered.
+Rows 6–10 (reference device, telemetry, weight unit, "today"
+boundary, cutover data strategy) are nice-to-freeze before M0
+but can defer until the relevant milestone. The cutover strategy
+is described in detail in `../plan/rebuild/migration-cutover.md`.
+
+Do not start coding until rows 1–5 are `confirmed`.
 
 ## Step 3 — generate code in a new location
 
@@ -120,16 +146,19 @@ which decision.
 
 - Domain unit test coverage `≥ 95%`; services `≥ 85%`.
 - Every scenario fixture's replay matches its expected projection
-  exactly.
+  exactly. See `../spec/rebuild/scenarios.md` for the catalog.
 - Every invariant in `../spec/rebuild/invariants.md` is asserted
   by an automated test.
 - Every flow in `../spec/rebuild/quality-bar.md` §7 has a Playwright
   test.
-- No UI action exceeds its budget in `../spec/rebuild/quality-bar.md`
-  §9 on the reference device.
+- No UI action exceeds its budget in
+  `../spec/rebuild/performance-budgets.md` on the reference device.
+- Every PR satisfies the per-feature checklist in
+  `../spec/rebuild/feature-acceptance.md` for its feature kind.
 - No user-controlled string is ever rendered as raw HTML.
-- Server-side rules enforce the role × event-type matrix. UI checks
-  are advisory.
+- Server-side rules enforce the role × event-type matrix in
+  `../spec/rebuild/role-permission-matrix.md`. UI checks are
+  advisory.
 
 ## What you must NOT do
 

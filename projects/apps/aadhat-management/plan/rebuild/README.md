@@ -9,13 +9,21 @@
 1. [`roadmap.md`](./roadmap.md) — proposed milestone order from M0 to
    v2.0, with rationale for why correctness-critical pieces come
    before screens.
-2. [`agent-roster.md`](./agent-roster.md) — the agents we recommend
+2. [`decisions.md`](./decisions.md) — tracker for the technical and
+   product decisions that need to be **frozen before M0**, with the
+   agent's recommended defaults (status: `tentative` until the
+   owner confirms).
+3. [`agent-roster.md`](./agent-roster.md) — the agents we recommend
    the owner stand up, the responsibility each owns, and the
    master prompt each runs with.
-3. [`tech-candidates.md`](./tech-candidates.md) — language /
+4. [`tech-candidates.md`](./tech-candidates.md) — language /
    framework / library candidates with the trade-offs called out;
    the owner picks before M0.
-4. [`productize-later.md`](./productize-later.md) — how to extract a
+5. [`migration-cutover.md`](./migration-cutover.md) — how the family
+   shop moves from v1 to v2: snapshot-import strategy, dual-run
+   window, rollback plan, and the mismatch criteria that block
+   cutover.
+6. [`productize-later.md`](./productize-later.md) — how to extract a
    reusable product after shop-1 stabilizes, without restarting.
 
 ## Relationship to the existing `plan/` files
@@ -34,4 +42,7 @@ the rebuild because:
 
 ## Recent changes
 
+- _2026-06-15_ (later same day) · Added `decisions.md` (freeze list
+  with agent-recommended defaults) and `migration-cutover.md`
+  (snapshot strategy, dual-run window, rollback, brother sign-off).
 - _2026-06-15_ · Initial draft of the rebuild plan subtree.
