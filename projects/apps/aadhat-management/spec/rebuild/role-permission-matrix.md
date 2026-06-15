@@ -122,7 +122,31 @@ For every `❌` cell above:
 
 This is asserted by the security-rule test suite cell-by-cell.
 
-## State transitions for `user_status_changed`
+## Time-limit rules for staff edits
+
+Staff-allowed edit windows resolve the recurring "can staff fix a
+typo on a bill they just made?" question without giving staff a
+back door into older history.
+
+| Action | Window when staff may act | Outside the window |
+|---|---|---|
+| Edit / void / correct a bill they themselves created | Bill is within the current cash session **and** under `shopProfile.staff.editGraceMin` (default `5 min`) from creation | Goes through 🟡 owner-approval flow per row above |
+| Edit a bill created by **another** staff in the same session | ❌ always | Owner-only |
+| Adjust stock (small) | Allowed during the staff's own session | Owner-only |
+| Receive outstanding payment that overshoots a balance | ❌ always | Owner-only |
+
+`shopProfile.staff.editGraceMin` defaults to **5 minutes** and is
+configurable by the owner. The "today's bill" gating elsewhere in
+this matrix is the **open cash session window** (recommended in
+the open question below) — the 5-minute grace is the strictly
+tighter window inside it for staff-initiated edits without
+owner approval.
+
+The window is enforced by the storage adapter (not just UI):
+events older than the grace from a `staff` principal fail with
+`PERMISSION_DENIED` regardless of UI state.
+
+
 
 | from → to | allowed by | notes |
 |---|---|---|
@@ -161,3 +185,13 @@ with `reason` required when target = `owner` or `reviewer`.
   v2.0 at all. The shop today has zero managers. Recommended:
   define the rules now (this table) but do not surface the role in
   UI until productization needs it.
+
+## Recent changes
+
+- _2026-06-15_ (later same day) · Added §Time-limit rules for
+  staff edits — staff may edit / void / correct only their own
+  bill, within the current cash session AND within
+  `shopProfile.staff.editGraceMin` (default 5 min); enforced by
+  the storage adapter, not just UI. Closes the recurring
+  "can staff fix a typo?" question without giving staff a back
+  door into older history.

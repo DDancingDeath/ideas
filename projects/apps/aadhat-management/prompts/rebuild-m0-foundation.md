@@ -35,8 +35,14 @@ owner or stop and mark `TODO(spec)`.
 6. `../spec/rebuild/event-ledger.md`,
    `../spec/rebuild/event-schemas.md`,
    `../spec/rebuild/idempotency.md`,
-   `../spec/rebuild/projections.md` — the data layer the M0
-   scaffold must support.
+   `../spec/rebuild/projections.md`,
+   `../spec/rebuild/data-placement.md`,
+   `../spec/rebuild/offline-sync.md`,
+   `../spec/rebuild/versioning-compatibility.md` — the data
+    layer the M0 scaffold must support. M0 does not implement
+    every offline / cache / migration behaviour but the
+    scaffold's storage and outbox shapes must be compatible
+    with these contracts.
 7. `../spec/rebuild/ci-contract.md` — the exact CI jobs the
    scaffold must wire up.
 8. `../spec/rebuild/feature-acceptance.md` — the PR template

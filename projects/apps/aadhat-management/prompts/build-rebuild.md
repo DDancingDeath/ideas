@@ -45,46 +45,72 @@ or stop and mark `TODO(spec)`.
 8. `../spec/rebuild/projections.md` — the contract for every derived
    view (stock, cash, outstanding, history, reports, audit, Review
    Queue) and the rebuild / stale-detection process.
-9. `../spec/rebuild/bill-lifecycle.md` — the bill state machine; the
-   billing-vs-printing separation invariant; idempotency rules.
-10. `../spec/rebuild/idempotency.md` — `clientActionId` →
+9. `../spec/rebuild/data-placement.md` — where each piece of data
+   lives (authoritative location, local cache, sync rule, staleness
+   tolerance, offline behaviour); server vs app responsibility
+   split; "local for speed, server for trust, shared domain for
+   consistency" principle.
+10. `../spec/rebuild/bill-lifecycle.md` — the bill state machine; the
+    billing-vs-printing separation invariant; idempotency rules.
+11. `../spec/rebuild/idempotency.md` — `clientActionId` →
     `idempotencyKey` mapping and the "what happens when…" cases.
-11. `../spec/rebuild/print-queue.md` — background print queue
+12. `../spec/rebuild/print-queue.md` — background print queue
     contract; the UI never waits on the printer.
-12. `../spec/rebuild/invariants.md` — business laws that must hold at
+13. `../spec/rebuild/offline-sync.md` — per-action offline
+    allowance matrix; local UI state vocabulary; retry policy;
+    conflict handling; reconnect protocol; what the UI must show.
+14. `../spec/rebuild/invariants.md` — business laws that must hold at
     all times.
-13. `../spec/rebuild/role-permission-matrix.md` — full role ×
-    event-type matrix and the API-bypass guarantee.
-14. `../spec/rebuild/suspicion-engine.md` — anomaly detection that
+15. `../spec/rebuild/role-permission-matrix.md` — full role ×
+    event-type matrix, API-bypass guarantee, and the staff
+    edit-time-limit rule (`shopProfile.staff.editGraceMin`).
+16. `../spec/rebuild/suspicion-engine.md` — anomaly detection that
     feeds the Review Queue.
-15. `../spec/rebuild/review-queue.md` — new page for the brother /
+17. `../spec/rebuild/review-queue.md` — new page for the brother /
     owner to monitor the shop.
-16. `../spec/rebuild/scenarios.md` — 15 named fixtures (real shop
+18. `../spec/rebuild/failure-modes.md` — 20 real-world failures
+    with expected and forbidden system behaviour, and the pinned
+    test for each.
+19. `../spec/rebuild/versioning-compatibility.md` — three
+    independent versions (`appVersion`, `schemaVersion`,
+    `domainVersion`); force-upgrade and event-schema migration
+    contract.
+20. `../spec/rebuild/data-governance.md` — ownership / access
+    matrix (delete is forbidden), PII inventory, retention,
+    master-data governance, bill numbering, GST posture.
+21. `../spec/rebuild/observability.md` — notifications catalogue,
+    supportability surface, trace ids, debug bundle with
+    PII-exclusion contract.
+22. `../spec/rebuild/ai-boundaries.md` — what AI may suggest, what
+    AI may never do (no event without human confirm).
+23. `../spec/rebuild/ergonomics.md` — shop-floor constraints,
+    tap targets, sunlight, Hindi label sizing, picker design.
+24. `../spec/rebuild/scenarios.md` — 15 named fixtures (real shop
     workflows) with expected projections and flags.
-17. `../spec/rebuild/performance-budgets.md` — concrete numbers for
+25. `../spec/rebuild/performance-budgets.md` — concrete numbers for
     every "no UI hang" promise, reference device, measurement
-    methodology, CI gates.
-18. `../spec/rebuild/quality-bar.md` — required test layers and the
+    methodology, required perf scenarios, CI gates.
+26. `../spec/rebuild/quality-bar.md` — required test layers and the
     definition of "done".
-19. `../spec/rebuild/feature-acceptance.md` — per-feature required
+27. `../spec/rebuild/feature-acceptance.md` — per-feature required
     test layers by feature kind, plus the PR template the Reviewer
     agent enforces.
-20. `../spec/rebuild/ci-contract.md` — exact required CI jobs and
+28. `../spec/rebuild/ci-contract.md` — exact required CI jobs and
     canonical commands; the rebuild repo must wire its pipeline to
     match this contract.
-21. `../spec/page-specs/README.md` and `../spec/page-specs/00-auth.md`
+29. `../spec/page-specs/README.md` and `../spec/page-specs/00-auth.md`
     through `16-cash-management.md` — the v1 behavioural reference.
     Treat them as authoritative for "did v2 keep this workflow?";
     follow `../spec/rebuild/` where the two disagree (and flag the
     conflict).
-22. `../spec/firestore-rules-design.md` — data model and authorization
+30. `../spec/firestore-rules-design.md` — data model and authorization
     design for v1; useful as a starting point even if v2 picks a
     different backend.
-23. `../plan/rebuild/README.md` and the files it points to —
+31. `../plan/rebuild/README.md` and the files it points to —
     opinionated rebuild guidance (roadmap, **decisions** freeze
     list, agent roster, tech candidates, **migration & cutover**,
-    productization).
-24. `../plan/review-issues.md` — known v1 defects. Do **not**
+    **operations runbook**, **backup & restore**, productization).
+32. `../plan/review-issues.md` — known v1 defects. Do **not**
     reintroduce any.
 
 ## Step 2 — confirm decisions before any code

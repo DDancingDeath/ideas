@@ -298,8 +298,13 @@ aadhat-management/
 │                                     event ledger, event schemas,
 │                                     bill lifecycle, idempotency,
 │                                     print queue, projections,
+│                                     data placement, offline-sync,
 │                                     invariants, role matrix,
 │                                     suspicion engine, Review Queue,
+│                                     failure modes,
+│                                     versioning & compatibility,
+│                                     data governance, observability,
+│                                     ai boundaries, ergonomics,
 │                                     scenarios, perf budgets,
 │                                     quality bar, feature acceptance,
 │                                     CI contract, worked example)
@@ -312,6 +317,8 @@ aadhat-management/
 │   └── rebuild/                    ← v2 roadmap, decisions, agent
 │                                     roster, tech candidates,
 │                                     migration & cutover,
+│                                     operations runbook,
+│                                     backup & restore,
 │                                     productize-later
 ├── prompts/
 │   ├── build-from-spec.md          ← v1 reference rebuild
@@ -330,6 +337,27 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-06-15_ (later same day) · Added the operational-concerns
+  layer to the v2 rebuild spec in response to the owner's
+  "what about offline, failures, observability, governance,
+  ergonomics, AI?" review. New under
+  [`spec/rebuild/`](./spec/rebuild/):
+  `data-placement.md`, `offline-sync.md`, `failure-modes.md`,
+  `versioning-compatibility.md`, `data-governance.md`,
+  `observability.md`, `ai-boundaries.md`, `ergonomics.md`.
+  New under [`plan/rebuild/`](./plan/rebuild/):
+  `operations-runbook.md` (daily / weekly / monthly checklists,
+  12 failure procedures matched to the spec catalogue, release
+  with rollback rules) and `backup-restore.md` (what / where /
+  who can restore + the monthly drill that proves restore
+  works). Extended `spec/rebuild/role-permission-matrix.md`
+  with the staff edit-time-limit rule
+  (`shopProfile.staff.editGraceMin`, default 5 min, enforced
+  by the storage adapter). Re-framed the
+  `spec/rebuild/performance-budgets.md` Save budget as three
+  explicit thresholds (UI ≤ 100 ms / bill visible locally
+  ≤ 300 ms / server-confirmed ≤ 500 ms) and added a
+  `Required perf scenarios` table.
 - _2026-06-15_ (later same day) · Added `spec/rebuild/ci-contract.md`
   (exact required CI jobs, canonical commands, baseline-bump
   protocol) and `spec/rebuild/worked-example.md` (one retail bill

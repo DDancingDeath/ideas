@@ -32,45 +32,88 @@
 5. [`projections.md`](./projections.md) — the contract for every
    derived view (items, stock, cash, outstanding, history, reports,
    audit, Review Queue) and the rebuild / stale-detection process.
-6. [`bill-lifecycle.md`](./bill-lifecycle.md) — the bill state machine
+6. [`data-placement.md`](./data-placement.md) — where each piece of
+   data lives (authoritative location, local cache, sync rule,
+   staleness tolerance, offline behaviour, read/write budgets);
+   server vs app responsibility split; "local for speed, server
+   for trust, shared domain for consistency" principle.
+7. [`bill-lifecycle.md`](./bill-lifecycle.md) — the bill state machine
    and the **billing-vs-printing separation** invariant (double-tap,
    slow Bluetooth, retry, offline — none may create duplicate sales).
-7. [`idempotency.md`](./idempotency.md) — `clientActionId` →
+8. [`idempotency.md`](./idempotency.md) — `clientActionId` →
    `idempotencyKey` mapping, lifetimes, and the "what happens
    when…" cases (double-tap, offline, tab-close, conflict, etc.).
-8. [`print-queue.md`](./print-queue.md) — the background print queue
+9. [`print-queue.md`](./print-queue.md) — the background print queue
    contract; what the UI is allowed to wait on and what it is not.
+10. [`offline-sync.md`](./offline-sync.md) — per-action offline
+    allowance matrix; local UI state vocabulary
+    (`Saved` / `Sync pending` / `Synced` / `Sync failed
+    (retrying)` / `Needs review` / `Printed` / `Print failed`);
+    retry policy with backoff and budget; conflict handling;
+    reconnect protocol; what the UI must show.
 
 ### Correctness, monitoring, and access
 
-9. [`invariants.md`](./invariants.md) — the business laws the app must
-   always hold (stock, cash, udhaar, reports must reconcile against
-   the event ledger; staff cannot bypass authorization via API).
-10. [`role-permission-matrix.md`](./role-permission-matrix.md) — full
+11. [`invariants.md`](./invariants.md) — the business laws the app must
+    always hold (stock, cash, udhaar, reports must reconcile against
+    the event ledger; staff cannot bypass authorization via API).
+12. [`role-permission-matrix.md`](./role-permission-matrix.md) — full
     role × event-type matrix, projection-read matrix, special
-    principals (`engine`, `queue worker`), API-bypass guarantee.
-11. [`suspicion-engine.md`](./suspicion-engine.md) — the anomaly
+    principals (`engine`, `queue worker`), API-bypass guarantee,
+    and the staff edit-time-limit rule
+    (`shopProfile.staff.editGraceMin`).
+13. [`suspicion-engine.md`](./suspicion-engine.md) — the anomaly
     detector that turns "the data looks off" into Review Queue items.
-12. [`review-queue.md`](./review-queue.md) — the page the owner /
+14. [`review-queue.md`](./review-queue.md) — the page the owner /
     brother uses to monitor and approve anomalies. New page, not in
     the v1 page-specs.
+15. [`failure-modes.md`](./failure-modes.md) — catalogue of 20 real-
+    world failures (app crash, battery die, wrong device clock, old
+    client, cache corruption, Firebase down, lost phone…) with
+    expected and forbidden system behaviour, and the pinned test
+    for each.
+16. [`versioning-compatibility.md`](./versioning-compatibility.md) —
+    three independent versions (`appVersion`, `schemaVersion`,
+    `domainVersion`); support-window with force-upgrade; additive
+    vs non-additive event-schema changes and the up-migration
+    contract.
+17. [`data-governance.md`](./data-governance.md) — ownership /
+    access matrix (delete is forbidden; corrections are events);
+    PII inventory with retention; master-data governance (item /
+    party merges, rate history, archive, typos); bill-numbering
+    and legal posture (GST is out of scope for v2.0).
+18. [`observability.md`](./observability.md) — notification
+    catalogue with severity / channel / audience; supportability
+    surface (app / device / user / network / outbox / queues /
+    cache); trace ids; one-tap debug bundle with PII-exclusion
+    contract.
+19. [`ai-boundaries.md`](./ai-boundaries.md) — what AI is allowed
+    to do (suggest, summarise, draft, voice-fill — always
+    confirmed by a human) and what AI is never allowed to do (no
+    event without human confirm; no permission elevation; no
+    flag resolve; no silent suppression).
+20. [`ergonomics.md`](./ergonomics.md) — shop-floor constraints
+    (one-handed, sunlight, noisy, Hindi-first, ₹15–20k phone);
+    tap-target floors; WCAG AA contrast; Hindi label sizing;
+    two-step confirm only for destructive actions; picker and
+    history row design.
 
 ### Quality, perf, and definition of done
 
-13. [`scenarios.md`](./scenarios.md) — 15 named fixtures (real shop
+21. [`scenarios.md`](./scenarios.md) — 15 named fixtures (real shop
     workflows) with setup, sequence, expected projections, expected
     flags, and the test layer each one belongs to.
-14. [`performance-budgets.md`](./performance-budgets.md) — concrete UI
+22. [`performance-budgets.md`](./performance-budgets.md) — concrete UI
     / print / sync numbers, reference device, measurement
-    methodology, and CI gates.
-15. [`quality-bar.md`](./quality-bar.md) — required test layers, the
+    methodology, required perf scenarios, and CI gates.
+23. [`quality-bar.md`](./quality-bar.md) — required test layers, the
     "no UI hang" performance bar, and what counts as `done` for a
     feature.
-16. [`feature-acceptance.md`](./feature-acceptance.md) — per-feature
+24. [`feature-acceptance.md`](./feature-acceptance.md) — per-feature
     required-test checklist by feature kind, with PR template.
-17. [`ci-contract.md`](./ci-contract.md) — exact required CI jobs,
+25. [`ci-contract.md`](./ci-contract.md) — exact required CI jobs,
     canonical commands, artefact contract, baseline-bump protocol.
-18. [`worked-example.md`](./worked-example.md) — one retail bill
+26. [`worked-example.md`](./worked-example.md) — one retail bill
     traced end-to-end through every layer (UI intent → service →
     event → projection → print → audit → tests). Read this once
     to make every other doc click into place.
@@ -105,6 +148,32 @@ milestones" table in that file).
 
 ## Recent changes
 
+- _2026-06-15_ (later same day) · Added the operational-concerns
+  layer in response to the owner's "what about offline / failure
+  modes / observability / governance / ergonomics / AI?" review.
+  New spec docs: `data-placement.md` (where each datum lives,
+  read/write budgets, staleness rules), `offline-sync.md`
+  (per-action allowance, state vocabulary, retry policy,
+  conflict handling), `failure-modes.md` (20 real-world failures
+  with expected behaviour and pinned tests), `versioning-
+  compatibility.md` (`appVersion` / `schemaVersion` /
+  `domainVersion` and force-upgrade contract), `data-
+  governance.md` (PII inventory, retention, master-data
+  governance, bill numbering, GST posture),
+  `observability.md` (notifications + supportability + debug
+  bundle with PII-exclusion), `ai-boundaries.md` (suggestion-
+  not-action contract for every AI flow), `ergonomics.md`
+  (shop-floor constraints, tap targets, sunlight, Hindi label
+  sizing). New plan docs: `plan/rebuild/operations-runbook.md`
+  (daily / weekly / monthly + 12 failure procedures + release
+  rules + escalation) and `plan/rebuild/backup-restore.md`
+  (what / where / monthly drill that turns backups into proof).
+  Extended `role-permission-matrix.md` with the staff
+  edit-time-limit rule (`shopProfile.staff.editGraceMin`,
+  default 5 min, enforced by the storage adapter). Re-framed
+  the Save perf budget as three explicit thresholds (UI ≤
+  100 ms / bill visible locally ≤ 300 ms / server-confirmed ≤
+  500 ms) and added a `Required perf scenarios` table.
 - _2026-06-15_ (later same day) · Added two more contract docs:
   `ci-contract.md` (exact required CI jobs, canonical commands,
   baseline-bump protocol) and `worked-example.md` (one retail

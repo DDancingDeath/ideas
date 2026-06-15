@@ -40,8 +40,8 @@ reflects the new state.
 
 | Action | Budget | Notes |
 |---|---|---|
-| Tap Save (online) | UI responds ≤ **100 ms** | Bill row exists in History within 500 ms |
-| Tap Save (offline) | UI responds ≤ **100 ms** | Outbox row exists locally within 100 ms |
+| Tap Save (online) | UI responds ≤ **100 ms**; bill visible locally ≤ **300 ms**; server-confirmed ≤ **500 ms** | Local-first: the bill appears in History from the local fold immediately on append; server ack is a separate badge transition (`Sync pending → Synced`) |
+| Tap Save (offline) | UI responds ≤ **100 ms**; bill visible locally ≤ **300 ms**; outbox row exists locally within 100 ms | Local fold is the user-perceived success; server ack deferred |
 | Tap Print | Button transitions to `Printing…` ≤ **100 ms** | UI thread unblocked; no input dropped during BT send |
 | Repeat tap Print (slow BT) | UI shows `Already printing…` ≤ **100 ms** | No new `print_attempt` event |
 | Add line to bill | Form re-renders ≤ **50 ms** | Totals recompute synchronously in domain |
@@ -61,6 +61,7 @@ reflects the new state.
 | Open Cash close | Current session totals ≤ **300 ms** |
 | Open Reports (last month) | First chart paints ≤ **1500 ms** |
 | Open Reports (last year) | First chart paints ≤ **3000 ms**, others stream in |
+| Reports generation > **500 ms** | Must show explicit progress (skeleton bars or "computing N of M") or run off the main thread; never freeze the UI |
 | Open Review Queue | First page paints ≤ **500 ms** |
 | Open Audit log | First 50 rows paint ≤ **500 ms** |
 
@@ -99,7 +100,32 @@ reflects the new state.
 | First parsed token to form field | ≤ **300 ms** after user stops speaking |
 | Final commit to draft | ≤ **800 ms** after user stops speaking |
 
-## Synthetic dataset
+## Required perf scenarios
+
+These are the explicit scenarios the perf suite must run on
+every PR, in addition to the per-action budgets above. They
+exist because they catch regressions the per-action budgets
+can miss.
+
+| Scenario | What it asserts |
+|---|---|
+| Item search with **2× the catalog** | Picker keystroke remains ≤ 50 ms on a 500-item master |
+| Save bill while **printer disconnected** | Save UI ≤ 100 ms even when the BT call fails; print queue drains independently |
+| Today render with **large event history** (synthetic + 6 months extra) | Today KPIs ≤ 500 ms; no long task > 50 ms |
+| Stock page **search / filter** with large item list | Each keystroke ≤ 100 ms; virtualised list re-renders in one frame |
+| App startup **cold cache** | Cold-start budget met from icon tap to Today |
+| App startup **warm cache** | Warm-start budget met; no full projection rebuild |
+| **Double-tap Save** under slow network | Exactly one sale event; second tap surfaces `Already saved` ≤ 100 ms |
+| **Offline burst** then reconnect (per [`offline-sync.md`](./offline-sync.md)) | Outbox drain ≥ 10 events / s; first item attempted ≤ 1 s after `online` |
+| **History with 1k / 5k / 20k rows** | First page paints within budget; scroll FPS holds at 60 |
+| **Long-task absence** during billing | No main-thread task > 50 ms during the active billing flow |
+| **Concurrent print retry spam** | Exactly one print delivery; no duplicate sale events |
+
+Each scenario lands as a Playwright + perf-harness test on the
+synthetic dataset described below and contributes to the
+baseline in `fixtures/perf-baseline.json`.
+
+
 
 Perf tests run against a deterministic dataset:
 
@@ -207,3 +233,19 @@ equivalent, sampled before and after the 1 h shop-day simulation.
 - `TODO(spec)`: decide if cold-start budget is wall-clock from
   app icon tap, or from the runtime's "app started" callback. The
   former is honest; the latter is portable.
+
+## Recent changes
+
+- _2026-06-15_ (later same day) · Reframed the Save budget as
+  three explicit thresholds (UI ≤ 100 ms / bill visible locally
+  ≤ 300 ms / server-confirmed ≤ 500 ms) so the local-first
+  contract from [`data-placement.md`](./data-placement.md) and
+  [`offline-sync.md`](./offline-sync.md) is measurable. Added
+  a `Required perf scenarios` table covering item-search-with-
+  large-catalog, save-while-printer-disconnected, today-render-
+  with-large-history, stock-search-with-large-items, cold-vs-
+  warm startup, double-tap-under-slow-network, offline-burst
+  reconnect, history at 1k / 5k / 20k rows, long-task-absence
+  during billing, and concurrent-print-retry. Added the
+  "Reports > 500 ms must show progress or run off-main-thread"
+  UX rule under Read pages.

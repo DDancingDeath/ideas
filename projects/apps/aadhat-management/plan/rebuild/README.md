@@ -23,7 +23,18 @@
    shop moves from v1 to v2: snapshot-import strategy, dual-run
    window, rollback plan, and the mismatch criteria that block
    cutover.
-6. [`productize-later.md`](./productize-later.md) — how to extract a
+6. [`operations-runbook.md`](./operations-runbook.md) — daily /
+   weekly / monthly procedures for brother and owner; twelve
+   failure procedures (P1–P12) matched to the spec's failure-mode
+   catalogue; release process with rollback rules; escalation
+   table and contact list template; required quarterly drills.
+7. [`backup-restore.md`](./backup-restore.md) — what is backed up
+   (events, rules, validators; never projections); where backups
+   live (primary Firebase, mandatory off-account drive); three
+   restore scenarios with verification checklist; the monthly
+   restore drill that turns "we have backups" into "we know they
+   work".
+8. [`productize-later.md`](./productize-later.md) — how to extract a
    reusable product after shop-1 stabilizes, without restarting.
 
 ## Relationship to the existing `plan/` files
@@ -42,6 +53,16 @@ the rebuild because:
 
 ## Recent changes
 
+- _2026-06-15_ (later same day) · Added `operations-runbook.md`
+  (steady-state checklists + 12 failure procedures matched to
+  `spec/rebuild/failure-modes.md` + release / rollback rules
+  + escalation table) and `backup-restore.md` (what / where /
+  who can restore + monthly drill that turns backups into
+  proof). These pair with the new `spec/rebuild/` operational
+  contracts (`offline-sync.md`, `failure-modes.md`,
+  `versioning-compatibility.md`, `observability.md`,
+  `data-governance.md`, `ergonomics.md`, `ai-boundaries.md`,
+  `data-placement.md`).
 - _2026-06-15_ (later same day) · Added `decisions.md` (freeze list
   with agent-recommended defaults) and `migration-cutover.md`
   (snapshot strategy, dual-run window, rollback, brother sign-off).
