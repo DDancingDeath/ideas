@@ -61,35 +61,22 @@ the corresponding milestone is approached.
 | M5 (retail billing) | Should the bill number be per-shop, per-counter, or per-session? | Per-shop, monotonic, transactionally allocated server-side |
 | M7 (outstanding) | Per-bill allocation UI default — auto-FIFO or manual | Auto-FIFO with manual override |
 | M8 (cash sessions) | Default cash mismatch tolerance | ₹50 hard, ₹200 review |
-
-## Deferred to v2.1 or later
-
-| # | Item | Why deferred |
-|---|---|---|
-| D1 | Multi-shop productization | Productize only after one external pilot shop runs the same engine successfully. See [`productize-later.md`](./productize-later.md). |
-| D2 | Dedicated `reviewer` role | Brother is `owner` for v2.0. Add `reviewer` once a second monitoring person exists. |
-| D3 | Full v1-event replay on cutover | Snapshot import is the v2.0 path. Replay is research-grade. |
-| D4 | Native widgets (React Native / Flutter) | Capacitor is the v2.0 path; print integration risk is too high to redo. |
-| D5 | Server-authoritative event ordering | Stay client-only on Firestore for v2.0. Re-evaluate after M5. |
-
-## Open questions that block specific milestones
-
-These are smaller than the freeze list and only need answers when
-the corresponding milestone is approached.
-
-| Blocks | Question | Recommendation |
-|---|---|---|
-| M3 (auth + roles) | Phone-OTP vs email/password for staff sign-in | Phone-OTP (matches v1 and Indian shop reality) |
-| M4 (items + purchases) | Item barcode format support | Defer scanning to v2.1; manual entry for v2.0 |
-| M5 (retail billing) | Should the bill number be per-shop, per-counter, or per-session? | Per-shop, monotonic, transactionally allocated server-side |
-| M7 (outstanding) | Per-bill allocation UI default — auto-FIFO or manual | Auto-FIFO with manual override |
-| M8 (cash sessions) | Default cash mismatch tolerance | ₹50 hard, ₹200 review |
 | M9 (reports) | Cash-flow profit formula exact equality with v1 — line-by-line | Yes; pin with a snapshot test loaded from v1 numbers |
 | M10 (printing) | ESC/POS Hindi rendering: bitmap or font | Bitmap fallback when the printer cannot render Devanagari natively |
 | M11 (offline) | Outbox retention if the device stays offline for weeks | 30 days then surface a warning, do not silently drop |
 
 ## Recent changes
 
+- 2026-06-16: cleaned up duplicate sections — `## Deferred to v2.1
+  or later` and `## Open questions that block specific milestones`
+  each appeared twice in the file (the second Open questions
+  table was the more complete one, with M9 / M10 / M11 rows the
+  first lacked). Kept the first Deferred table (D1–D5) and the
+  second, complete Open questions table (M3–M11). No content
+  was lost. User input: _"plan/rebuild/decisions.md still has
+  duplicate sections for 'Deferred to v2.1' and 'Open questions.'
+  Not harmful, but I'd clean that before giving it to agents as
+  source of truth."_
 - 2026-06-15 (later same day): owner instructed agent to freeze
   all `tentative` rows so M0 can begin. Rows 1–10 flipped to
   `confirmed` with today's date; agent recommendations stand as
