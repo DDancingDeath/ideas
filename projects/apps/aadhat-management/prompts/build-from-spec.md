@@ -3,6 +3,10 @@
 Paste this prompt to a coding agent (Copilot CLI, Cursor, Claude Code, etc.)
 to (re)build AadhatManagement from the spec in this folder.
 
+> **Building the v2 rebuild instead?** Use
+> [`build-rebuild.md`](./build-rebuild.md). This file is for the v1
+> reference rebuild (matches the live production app).
+
 ---
 
 You are building **AadhatManagement**, a bilingual (Hindi/English) business

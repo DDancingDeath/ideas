@@ -9,9 +9,11 @@
 - **Live code repo:** <https://github.com/DDancingDeath/AadhatManagementApp>
 - **Staging mirror (private):** `DDancingDeath/AadhatManagementApp-staging`
   — these docs were authored there.
-- **Status:** in production. Spec is essentially frozen; **security
+- **Status:** in production. v1 spec is essentially frozen; **security
   hardening + refactor pending** (see [`plan/review-issues.md`](./plan/review-issues.md)
   — XSS and Firestore-rule weaknesses are the priority backlog).
+  A **from-scratch v2 rebuild** is now scoped — see
+  [`spec/rebuild/`](./spec/rebuild/) and [`plan/rebuild/`](./plan/rebuild/).
 
 ---
 
@@ -105,6 +107,55 @@ Headline capabilities (full inventory in [`spec/capabilities.md`](./spec/capabil
 - **Mobile polish** — haptics, pull-to-refresh, toasts; details in
   [`spec/mobile-enhancements.md`](./spec/mobile-enhancements.md).
 
+---
+
+## What v2 (the rebuild) changes
+
+The owner is now scoping a from-scratch rebuild that takes the v1
+app as the behavioural reference but is free to change layout,
+tech, data shape, and logic where it improves correctness, speed,
+or testability. The full spec subtree is at
+[`spec/rebuild/`](./spec/rebuild/); opinionated material (roadmap,
+agent roster, tech candidates, productization) is at
+[`plan/rebuild/`](./plan/rebuild/).
+
+The non-negotiable shifts for v2:
+
+- **Test-first.** Every feature lands with unit, scenario,
+  invariant, integration, security, perf, and E2E coverage. Tests
+  are not allowed to be weakened to make implementation pass. See
+  [`spec/rebuild/quality-bar.md`](./spec/rebuild/quality-bar.md).
+- **Event ledger, projections derived.** Stock, cash, outstanding,
+  reports, and audit are folds over an append-only event log; no
+  silent edits or deletes. See
+  [`spec/rebuild/event-ledger.md`](./spec/rebuild/event-ledger.md).
+- **Billing and printing are separate.** One user intent = one
+  bill, forever. Double-tap, slow Bluetooth, retry, and offline
+  replay can never create a duplicate sale. See
+  [`spec/rebuild/bill-lifecycle.md`](./spec/rebuild/bill-lifecycle.md)
+  and [`spec/rebuild/print-queue.md`](./spec/rebuild/print-queue.md).
+- **UI never owns business truth.** A pure domain core computes all
+  money math; UI calls services and renders. See
+  [`spec/rebuild/architecture.md`](./spec/rebuild/architecture.md).
+- **Suspicious data is flagged, never silent.** A suspicion engine
+  watches every write; flags route to a new Review Queue page the
+  brother / owner uses to monitor the shop. See
+  [`spec/rebuild/suspicion-engine.md`](./spec/rebuild/suspicion-engine.md)
+  and [`spec/rebuild/review-queue.md`](./spec/rebuild/review-queue.md).
+- **Server-side authorization, always.** UI permission checks are
+  UX only. See [`spec/rebuild/invariants.md`](./spec/rebuild/invariants.md)
+  §Authorization.
+- **Shop-1 first, productize later.** Custom for the family shop
+  now; designed so generalization to other shops is a configuration
+  change, not a rewrite. See
+  [`spec/rebuild/scope-boundaries.md`](./spec/rebuild/scope-boundaries.md)
+  and [`plan/rebuild/productize-later.md`](./plan/rebuild/productize-later.md).
+
+The build prompt for v2 is
+[`prompts/build-rebuild.md`](./prompts/build-rebuild.md). For a v1
+reference rebuild, use
+[`prompts/build-from-spec.md`](./prompts/build-from-spec.md).
+
 **Pages at a glance** (17 page-specs total, full contracts in
 [`spec/page-specs/`](./spec/page-specs/)):
 
@@ -178,11 +229,16 @@ priority ones:
 
 ## Reading order for an agent
 
+> **Building v2?** Start with
+> [`prompts/build-rebuild.md`](./prompts/build-rebuild.md), which
+> threads through `spec/rebuild/` and `plan/rebuild/` in order. The
+> reading order below is for understanding the live v1 app.
+
 1. **[`idea.md`](./idea.md)** — vision in detail.
 2. **[`spec/README.md`](./spec/README.md)** — spec entry point + glossary
-   + path-remapping notes.
+   + path-remapping notes (now covers both v1 and v2 reading orders).
 3. **[`spec/capabilities.md`](./spec/capabilities.md)** — exhaustive
-   feature inventory.
+   feature inventory of the live app.
 4. **[`spec/page-specs/README.md`](./spec/page-specs/README.md)** —
    per-page contract template + page index + the `PeriodMath` table.
 5. **[`spec/page-specs/`](./spec/page-specs/)** (00-auth → 16-cash) —
@@ -195,20 +251,27 @@ priority ones:
    billing v2 design.
 9. **[`spec/mobile-enhancements.md`](./spec/mobile-enhancements.md)** —
    mobile polish (haptics, toasts, pull-to-refresh).
-10. **[`plan/review-issues.md`](./plan/review-issues.md)** — known
-    defects. Do not reintroduce.
-11. **[`plan/promotion.md`](./plan/promotion.md)** — staging → prod
-    protocol.
-12. **[`plan/staging-smoke-checklist.md`](./plan/staging-smoke-checklist.md)**
-    — manual smoke test.
-13. **[`plan/legacy-agents-orientation.md`](./plan/legacy-agents-orientation.md)**
+10. **[`spec/rebuild/`](./spec/rebuild/)** — the v2 rebuild spec
+    (architecture, event ledger, bill lifecycle, print queue,
+    invariants, suspicion engine, Review Queue, quality bar).
+11. **[`plan/rebuild/`](./plan/rebuild/)** — opinionated v2 guidance
+    (roadmap, agent roster, tech candidates, productization).
+12. **[`plan/review-issues.md`](./plan/review-issues.md)** — known
+    defects in v1. Do not reintroduce in v2.
+13. **[`plan/promotion.md`](./plan/promotion.md)** — staging → prod
+    protocol (v1).
+14. **[`plan/staging-smoke-checklist.md`](./plan/staging-smoke-checklist.md)**
+    — manual smoke test (v1).
+15. **[`plan/legacy-agents-orientation.md`](./plan/legacy-agents-orientation.md)**
     — the original `AGENTS.md` from the live repo (safety rules and
     operational workflow for code work, not spec work).
-14. **[`plan/setup/`](./plan/setup/)** — environment setup, Bluetooth
+16. **[`plan/setup/`](./plan/setup/)** — environment setup, Bluetooth
     printer config, Firebase project setup, staging mode docs. Read
     these when you actually start building or deploying.
-15. **[`prompts/build-from-spec.md`](./prompts/build-from-spec.md)** —
-    paste-ready prompt to (re)build the app.
+17. **[`prompts/build-from-spec.md`](./prompts/build-from-spec.md)** —
+    paste-ready prompt to (re)build v1.
+18. **[`prompts/build-rebuild.md`](./prompts/build-rebuild.md)** —
+    paste-ready prompt to build v2.
 
 ## Layout
 
@@ -223,15 +286,23 @@ aadhat-management/
 │   ├── firestore-rules-design.md
 │   ├── mobile-enhancements.md
 │   ├── voice-billing-v2.md
-│   └── page-specs/                 ← 17 per-page contracts + README
+│   ├── page-specs/                 ← 17 per-page contracts + README (v1)
+│   └── rebuild/                    ← v2 rebuild spec (architecture,
+│                                     event ledger, bill lifecycle,
+│                                     print queue, invariants,
+│                                     suspicion engine, Review Queue,
+│                                     quality bar)
 ├── plan/
 │   ├── review-issues.md
 │   ├── promotion.md
 │   ├── staging-smoke-checklist.md
 │   ├── legacy-agents-orientation.md
-│   └── setup/                      ← env, printer, firebase, staging
+│   ├── setup/                      ← env, printer, firebase, staging
+│   └── rebuild/                    ← v2 roadmap, agent roster,
+│                                     tech candidates, productize-later
 ├── prompts/
-│   └── build-from-spec.md
+│   ├── build-from-spec.md          ← v1 reference rebuild
+│   └── build-rebuild.md            ← v2 from-scratch build
 └── assets/                         ← mockups / screenshots / diagrams
 ```
 
@@ -245,6 +316,15 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-06-15_ · Scoped the **v2 rebuild**. Added
+  [`spec/rebuild/`](./spec/rebuild/) with architecture, event ledger,
+  bill lifecycle, print queue, invariants, suspicion engine,
+  Review Queue, and quality bar; added [`plan/rebuild/`](./plan/rebuild/)
+  with roadmap, agent roster, tech candidates, and productize-later
+  guidance; added
+  [`prompts/build-rebuild.md`](./prompts/build-rebuild.md). v1
+  page-specs are unchanged and remain the behavioural reference
+  for what runs in the family shop today.
 - _2026-05-20_ · Brought in remaining docs from the staging mirror:
   `MOBILE_ENHANCEMENTS.md` → `spec/mobile-enhancements.md`; root-level
   `AGENTS.md` → `plan/legacy-agents-orientation.md`; setup notes

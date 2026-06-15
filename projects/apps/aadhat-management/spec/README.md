@@ -2,7 +2,15 @@
 
 This is the source of truth for what the app does.
 
-## Reading order
+> **Two specs in one folder.** The page-specs and the v1 design docs
+> describe the **live production app** (what runs in the family shop
+> today). The new [`rebuild/`](./rebuild/) subtree captures the
+> **v2 rebuild** the owner is now scoping — same business, free to
+> change layout / tech / data shape where it improves correctness or
+> testability. When the two disagree, the rebuild subtree wins for v2
+> work; for the live app, the page-specs win.
+
+## Reading order — v1 (live app)
 
 1. **[`capabilities.md`](./capabilities.md)** — exhaustive feature inventory
    ("what the code does today"). Read this for breadth.
@@ -21,6 +29,33 @@ This is the source of truth for what the app does.
 6. **[`voice-billing-v2.md`](./voice-billing-v2.md)** — design doc for v2
    of the tap-to-talk voice billing feature on `02-billing.md`. V1 is live
    (commit `56e230f` on the live repo); v2 is in design.
+
+## Reading order — v2 (rebuild)
+
+1. **[`rebuild/README.md`](./rebuild/README.md)** — orientation for the
+   rebuild subtree and its relationship to the v1 page-specs.
+2. **[`rebuild/scope-boundaries.md`](./rebuild/scope-boundaries.md)** —
+   core vs configurable vs shop-custom vs not-doing.
+3. **[`rebuild/architecture.md`](./rebuild/architecture.md)** — layered
+   architecture; the "UI is never the source of business truth" rule.
+4. **[`rebuild/event-ledger.md`](./rebuild/event-ledger.md)** —
+   append-only event store; everything else is a projection.
+5. **[`rebuild/bill-lifecycle.md`](./rebuild/bill-lifecycle.md)** — bill
+   state machine; idempotency; billing-vs-printing separation.
+6. **[`rebuild/print-queue.md`](./rebuild/print-queue.md)** — background
+   print queue; UI never waits on the printer.
+7. **[`rebuild/invariants.md`](./rebuild/invariants.md)** — business
+   laws (money, stock, cash, outstanding, lifecycle, auth, reconciliation).
+8. **[`rebuild/suspicion-engine.md`](./rebuild/suspicion-engine.md)** —
+   anomaly rules that feed the Review Queue.
+9. **[`rebuild/review-queue.md`](./rebuild/review-queue.md)** — new
+   page for the brother / owner to monitor the shop.
+10. **[`rebuild/quality-bar.md`](./rebuild/quality-bar.md)** — required
+    test layers and "no UI hang" perf budgets.
+
+Opinion / strategy material for the rebuild lives under
+[`../plan/rebuild/`](../plan/rebuild/) (roadmap, agent roster, tech
+candidates, productization).
 
 ## Glossary
 
@@ -53,3 +88,11 @@ This is the source of truth for what the app does.
 - Multi-tenant / multi-branch.
 - iOS.
 - Desktop-only UX.
+
+## Recent changes
+
+- _2026-06-15_ · Added [`rebuild/`](./rebuild/) — v2 rebuild spec
+  subtree (architecture, event ledger, bill lifecycle, print queue,
+  invariants, suspicion engine, Review Queue, quality bar). v1
+  page-specs remain authoritative for the live app; rebuild docs
+  are authoritative for the v2 rebuild.
