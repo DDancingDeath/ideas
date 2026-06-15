@@ -68,6 +68,12 @@
     feature.
 16. [`feature-acceptance.md`](./feature-acceptance.md) — per-feature
     required-test checklist by feature kind, with PR template.
+17. [`ci-contract.md`](./ci-contract.md) — exact required CI jobs,
+    canonical commands, artefact contract, baseline-bump protocol.
+18. [`worked-example.md`](./worked-example.md) — one retail bill
+    traced end-to-end through every layer (UI intent → service →
+    event → projection → print → audit → tests). Read this once
+    to make every other doc click into place.
 
 ## Relationship to the v1 page-specs
 
@@ -91,25 +97,21 @@ factual.
 
 ## Open questions
 
-- `TODO(spec)`: Should v2 keep Firebase Firestore as the backend, or
-  move to a relational store (Postgres / Supabase) where the
-  event-ledger model is more natural? Architecture doc lists both as
-  candidates; pick before M0. Tracked in
-  [`../../plan/rebuild/decisions.md`](../../plan/rebuild/decisions.md)
-  row 2.
-- `TODO(spec)`: Multi-shop / productization is out of scope for v2.0
-  but the data shape should not block it. Confirm with owner whether
-  to design `shopId` into the schema from day one. Tracked as
-  [`decisions.md`](../../plan/rebuild/decisions.md) row 4.
-- `TODO(spec)`: The brother / owner monitoring role — is it the same
-  as v1's `owner` role, or a distinct `reviewer` role that can
-  approve / dismiss Review Queue items without other admin powers?
-  Default assumption in `review-queue.md` and
-  `role-permission-matrix.md`: same as `owner` for v2.0. Tracked as
-  [`decisions.md`](../../plan/rebuild/decisions.md) row 5.
+All ten freeze-list decisions in
+[`../../plan/rebuild/decisions.md`](../../plan/rebuild/decisions.md)
+were `confirmed` on 2026-06-15. The remaining open items are
+milestone-specific (see the "Open questions that block specific
+milestones" table in that file).
 
 ## Recent changes
 
+- _2026-06-15_ (later same day) · Added two more contract docs:
+  `ci-contract.md` (exact required CI jobs, canonical commands,
+  baseline-bump protocol) and `worked-example.md` (one retail
+  bill traced end-to-end through every layer). Added the
+  Foundations / Data and lifecycle / Correctness, monitoring,
+  and access / Quality, perf, and definition of done groupings
+  to the reading order.
 - _2026-06-15_ (later same day) · Added agent-ready contract docs:
   `event-schemas.md`, `scenarios.md`, `role-permission-matrix.md`,
   `idempotency.md`, `projections.md`, `performance-budgets.md`,

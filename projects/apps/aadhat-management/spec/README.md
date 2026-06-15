@@ -78,6 +78,13 @@ The short list:
 17. **[`rebuild/feature-acceptance.md`](./rebuild/feature-acceptance.md)** —
     per-feature required-test checklist by feature kind, with PR
     template.
+18. **[`rebuild/ci-contract.md`](./rebuild/ci-contract.md)** —
+    exact required CI jobs, canonical commands, artefact
+    contract, baseline-bump protocol.
+19. **[`rebuild/worked-example.md`](./rebuild/worked-example.md)** —
+    one retail bill traced end-to-end through every layer (UI
+    intent → service → event → projection → print → audit →
+    tests). The fastest way to understand the whole architecture.
 
 Opinion / strategy material for the rebuild lives under
 [`../plan/rebuild/`](../plan/rebuild/) (roadmap, **decisions**
@@ -118,6 +125,9 @@ cutover**, productization).
 
 ## Recent changes
 
+- _2026-06-15_ (later same day) · Added `ci-contract.md` (exact
+  required CI jobs and canonical commands) and `worked-example.md`
+  (one retail bill traced end-to-end) to the v2 reading order.
 - _2026-06-15_ (later same day) · Expanded the v2 rebuild reading
   order with the new contract docs (`event-schemas.md`,
   `projections.md`, `idempotency.md`, `role-permission-matrix.md`,

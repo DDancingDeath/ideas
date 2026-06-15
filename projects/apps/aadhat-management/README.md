@@ -230,9 +230,12 @@ priority ones:
 ## Reading order for an agent
 
 > **Building v2?** Start with
-> [`prompts/build-rebuild.md`](./prompts/build-rebuild.md), which
-> threads through `spec/rebuild/` and `plan/rebuild/` in order. The
-> reading order below is for understanding the live v1 app.
+> [`prompts/rebuild-m0-foundation.md`](./prompts/rebuild-m0-foundation.md)
+> for the M0 scaffolding milestone, then switch to
+> [`prompts/build-rebuild.md`](./prompts/build-rebuild.md) for
+> M1 and onward. Both prompts thread through `spec/rebuild/` and
+> `plan/rebuild/` in the right order. The reading order below is
+> for understanding the live v1 app.
 
 1. **[`idea.md`](./idea.md)** — vision in detail.
 2. **[`spec/README.md`](./spec/README.md)** — spec entry point + glossary
@@ -271,7 +274,11 @@ priority ones:
 17. **[`prompts/build-from-spec.md`](./prompts/build-from-spec.md)** —
     paste-ready prompt to (re)build v1.
 18. **[`prompts/build-rebuild.md`](./prompts/build-rebuild.md)** —
-    paste-ready prompt to build v2.
+    paste-ready prompt to build v2 (use for milestones M1 onward).
+19. **[`prompts/rebuild-m0-foundation.md`](./prompts/rebuild-m0-foundation.md)** —
+    paste-ready prompt for the very first milestone: take the
+    rebuild repo from "no code" to "M0 green" (scaffold, CI,
+    fixture runner, event schemas).
 
 ## Layout
 
@@ -288,21 +295,28 @@ aadhat-management/
 │   ├── voice-billing-v2.md
 │   ├── page-specs/                 ← 17 per-page contracts + README (v1)
 │   └── rebuild/                    ← v2 rebuild spec (architecture,
-│                                     event ledger, bill lifecycle,
-│                                     print queue, invariants,
+│                                     event ledger, event schemas,
+│                                     bill lifecycle, idempotency,
+│                                     print queue, projections,
+│                                     invariants, role matrix,
 │                                     suspicion engine, Review Queue,
-│                                     quality bar)
+│                                     scenarios, perf budgets,
+│                                     quality bar, feature acceptance,
+│                                     CI contract, worked example)
 ├── plan/
 │   ├── review-issues.md
 │   ├── promotion.md
 │   ├── staging-smoke-checklist.md
 │   ├── legacy-agents-orientation.md
 │   ├── setup/                      ← env, printer, firebase, staging
-│   └── rebuild/                    ← v2 roadmap, agent roster,
-│                                     tech candidates, productize-later
+│   └── rebuild/                    ← v2 roadmap, decisions, agent
+│                                     roster, tech candidates,
+│                                     migration & cutover,
+│                                     productize-later
 ├── prompts/
 │   ├── build-from-spec.md          ← v1 reference rebuild
-│   └── build-rebuild.md            ← v2 from-scratch build
+│   ├── build-rebuild.md            ← v2 milestones M1+
+│   └── rebuild-m0-foundation.md    ← v2 M0 foundation
 └── assets/                         ← mockups / screenshots / diagrams
 ```
 
@@ -316,6 +330,19 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-06-15_ (later same day) · Added `spec/rebuild/ci-contract.md`
+  (exact required CI jobs, canonical commands, baseline-bump
+  protocol) and `spec/rebuild/worked-example.md` (one retail bill
+  traced end-to-end). Added `prompts/rebuild-m0-foundation.md`
+  for the implementation agent to take the rebuild repo from "no
+  code" to "M0 green". Froze every row in
+  `plan/rebuild/decisions.md` (1–10) to `confirmed` so M0 can
+  begin: SvelteKit / Firebase-only / pnpm / `shopId` from day one
+  (`shop-1`) / brother stays as `owner` for v2.0 / mid-range
+  Android (₹15–20k) as perf reference / Firebase
+  Crashlytics+Analytics for telemetry / integer milligrams for
+  weight / open-session-window as the "today" boundary /
+  snapshot import as the v1→v2 cutover strategy.
 - _2026-06-15_ (later same day) · Made the v2 rebuild spec
   agent-ready. Added contract docs under
   [`spec/rebuild/`](./spec/rebuild/): `event-schemas.md` (22 event

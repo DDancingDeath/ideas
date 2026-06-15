@@ -2,9 +2,11 @@
 
 Paste this prompt to a coding agent (Copilot CLI, Cursor, Claude
 Code, etc.) to build the **rebuild (v2)** of AadhatManagement from
-the rebuild spec. For the v1 reference rebuild (same shape as the
-production app), use [`build-from-spec.md`](./build-from-spec.md)
-instead.
+the rebuild spec, for milestones **M1 onward**. For the very
+first milestone (M0 scaffolding) use
+[`rebuild-m0-foundation.md`](./rebuild-m0-foundation.md). For the
+v1 reference rebuild (same shape as the production app), use
+[`build-from-spec.md`](./build-from-spec.md) instead.
 
 ---
 
@@ -31,77 +33,86 @@ or stop and mark `TODO(spec)`.
    core → application services → storage adapters → UI → device
    integrations. Internalize the "UI is never the source of business
    truth" rule.
-5. `../spec/rebuild/event-ledger.md` — every business action is an
+5. `../spec/rebuild/worked-example.md` — one retail bill traced
+   end-to-end through every layer. Read this once before any other
+   `spec/rebuild/` doc; everything below it will then click.
+6. `../spec/rebuild/event-ledger.md` — every business action is an
    immutable event; stock / cash / outstanding / reports are
    projections.
-6. `../spec/rebuild/event-schemas.md` — payload shape for each of
+7. `../spec/rebuild/event-schemas.md` — payload shape for each of
    the 22 event types, with validation rules and idempotency-key
    shape.
-7. `../spec/rebuild/projections.md` — the contract for every derived
+8. `../spec/rebuild/projections.md` — the contract for every derived
    view (stock, cash, outstanding, history, reports, audit, Review
    Queue) and the rebuild / stale-detection process.
-8. `../spec/rebuild/bill-lifecycle.md` — the bill state machine; the
+9. `../spec/rebuild/bill-lifecycle.md` — the bill state machine; the
    billing-vs-printing separation invariant; idempotency rules.
-9. `../spec/rebuild/idempotency.md` — `clientActionId` →
-   `idempotencyKey` mapping and the "what happens when…" cases.
-10. `../spec/rebuild/print-queue.md` — background print queue
+10. `../spec/rebuild/idempotency.md` — `clientActionId` →
+    `idempotencyKey` mapping and the "what happens when…" cases.
+11. `../spec/rebuild/print-queue.md` — background print queue
     contract; the UI never waits on the printer.
-11. `../spec/rebuild/invariants.md` — business laws that must hold at
+12. `../spec/rebuild/invariants.md` — business laws that must hold at
     all times.
-12. `../spec/rebuild/role-permission-matrix.md` — full role ×
+13. `../spec/rebuild/role-permission-matrix.md` — full role ×
     event-type matrix and the API-bypass guarantee.
-13. `../spec/rebuild/suspicion-engine.md` — anomaly detection that
+14. `../spec/rebuild/suspicion-engine.md` — anomaly detection that
     feeds the Review Queue.
-14. `../spec/rebuild/review-queue.md` — new page for the brother /
+15. `../spec/rebuild/review-queue.md` — new page for the brother /
     owner to monitor the shop.
-15. `../spec/rebuild/scenarios.md` — 15 named fixtures (real shop
+16. `../spec/rebuild/scenarios.md` — 15 named fixtures (real shop
     workflows) with expected projections and flags.
-16. `../spec/rebuild/performance-budgets.md` — concrete numbers for
+17. `../spec/rebuild/performance-budgets.md` — concrete numbers for
     every "no UI hang" promise, reference device, measurement
     methodology, CI gates.
-17. `../spec/rebuild/quality-bar.md` — required test layers and the
+18. `../spec/rebuild/quality-bar.md` — required test layers and the
     definition of "done".
-18. `../spec/rebuild/feature-acceptance.md` — per-feature required
+19. `../spec/rebuild/feature-acceptance.md` — per-feature required
     test layers by feature kind, plus the PR template the Reviewer
     agent enforces.
-19. `../spec/page-specs/README.md` and `../spec/page-specs/00-auth.md`
+20. `../spec/rebuild/ci-contract.md` — exact required CI jobs and
+    canonical commands; the rebuild repo must wire its pipeline to
+    match this contract.
+21. `../spec/page-specs/README.md` and `../spec/page-specs/00-auth.md`
     through `16-cash-management.md` — the v1 behavioural reference.
     Treat them as authoritative for "did v2 keep this workflow?";
     follow `../spec/rebuild/` where the two disagree (and flag the
     conflict).
-20. `../spec/firestore-rules-design.md` — data model and authorization
+22. `../spec/firestore-rules-design.md` — data model and authorization
     design for v1; useful as a starting point even if v2 picks a
     different backend.
-21. `../plan/rebuild/README.md` and the files it points to —
+23. `../plan/rebuild/README.md` and the files it points to —
     opinionated rebuild guidance (roadmap, **decisions** freeze
     list, agent roster, tech candidates, **migration & cutover**,
     productization).
-22. `../plan/review-issues.md` — known v1 defects. Do **not**
+24. `../plan/review-issues.md` — known v1 defects. Do **not**
     reintroduce any.
 
-## Step 2 — confirm with the owner before writing code
+## Step 2 — confirm decisions before any code
 
-Use `../plan/rebuild/decisions.md` to surface the decisions that
-need answers before M0. Every row in that file starts as
-`tentative` with the agent's recommended default; the owner
-confirms or overrides each row. The top five (must freeze before
-M0):
+Open `../plan/rebuild/decisions.md`. As of 2026-06-15 every
+freeze row (1–10) is `confirmed`. Verify the value you intend to
+build against matches that row; if a row has since been
+`superseded`, follow the superseding row. If anyone has slipped a
+row back to `tentative`, **stop and ask the owner** — silent
+reverts are forbidden.
 
-- UI framework: SvelteKit (recommended) or React (row 1).
-- Backend: stay on Firebase Firestore only (recommended) or move
-  to Firebase + thin server (row 2).
-- Package manager: pnpm (recommended) or npm (row 3).
-- `shopId` in the schema from day one: yes (recommended), default
-  `shop-1` (row 4).
-- Brother's role: `owner` for v2.0 (recommended), defer a
-  dedicated `reviewer` to v2.1 (row 5).
+The frozen choices for v2.0:
 
-Rows 6–10 (reference device, telemetry, weight unit, "today"
-boundary, cutover data strategy) are nice-to-freeze before M0
-but can defer until the relevant milestone. The cutover strategy
-is described in detail in `../plan/rebuild/migration-cutover.md`.
-
-Do not start coding until rows 1–5 are `confirmed`.
+- UI framework: **SvelteKit** (row 1)
+- Backend: **Firebase (Firestore + Auth + Functions) only** (row 2)
+- Package manager: **pnpm** (row 3)
+- `shopId` in the schema from day one: **yes**, default `shop-1`
+  (row 4)
+- Brother's role: **`owner`** for v2.0; dedicated `reviewer`
+  deferred to v2.1 (row 5)
+- Reference Android device: mid-range ₹15–20k Android (row 6)
+- Telemetry: **Firebase Crashlytics + Analytics +
+  `events_audit`** (row 7)
+- Weight unit: integer **milligrams** (row 8)
+- "Today" boundary: open cash-session window, midnight fallback
+  (row 9)
+- v1 → v2 cutover: **snapshot import** (row 10); see
+  `../plan/rebuild/migration-cutover.md`.
 
 ## Step 3 — generate code in a new location
 
