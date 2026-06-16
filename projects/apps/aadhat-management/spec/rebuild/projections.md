@@ -29,6 +29,7 @@
 | Projection | Inputs (event types) | Output shape | Layer |
 |---|---|---|---|
 | Items master | `item_*` | `Map<itemId, Item>` | domain |
+| Rate history per item | `item_rate_changed`, `purchase_recorded`, `retail_sale_created`, `wholesale_sale_created` | `Map<itemId, RatePoint[]>` (chronological) | domain |
 | Live stock | `purchase_recorded`, `wholesale_sale_created`, `stock_adjustment_recorded`, `bill_voided`, `bill_correction_recorded` | `Map<itemId, { qty: Quantity; movingAvgRate: Paise }>` | domain |
 | Outstanding per party | sale events, `outstanding_payment_*`, `bill_voided`, `bill_correction_recorded` | `Map<partyId, { balance: Paise; perBill: Map<billId, Paise> }>` | domain |
 | Cash on hand | sale events (cash portion), `expense_recorded` (cash), `withdrawal_recorded` (cash), `outstanding_payment_*` (cash), `cash_session_*` | `Paise` (live), plus `Map<sessionId, CashSession>` | domain |
@@ -57,6 +58,56 @@ apply(state, event):
 
 Stale-detection: not applicable; the projection is small enough to
 recompute on every read in v2.0.
+
+### Rate history per item
+
+Tracks how an item's price moves **over time** — both the owner's
+**configured sell rate** (set-points, each with a reason) and the
+**actually transacted** buy / sell rates. This is the v2 home for
+what v1 surfaced as the Analytics "Rate Trends" subtab (see
+[`../page-specs/11-analytics.md`](../page-specs/11-analytics.md)
+§Rate Trends), now event-sourced from the ledger instead of
+re-derived ad hoc from bill rows.
+
+```
+type RatePoint = {
+  at: IsoTimestamp;
+  kind: 'master-set' | 'buy' | 'sell';   // master-set = owner changed the item's rate
+  rate: Paise;                            // ₹/kg in paise
+  fromRate?: Paise;                       // master-set only: the previous rate
+  reason?: string;                        // master-set only: mandatory reason
+  sourceEventId: string;
+};
+
+empty = { history: new Map<ItemId, RatePoint[]>() }
+
+apply(state, event):
+  case 'item_rate_changed':
+    push { at, kind: 'master-set', rate: payload.newRate,
+           fromRate: payload.oldRate, reason: payload.reason }
+  case 'purchase_recorded':
+    for each line: push { at, kind: 'buy',  rate: line.rate }
+  case 'retail_sale_created' | 'wholesale_sale_created':
+    for each line: push { at, kind: 'sell', rate: line.rate }
+```
+
+Reads: the item-detail screen shows the master-set series as a step
+chart (reason on hover) and, optionally, the transacted buy / sell
+points over a 7 / 30 / 90-day window. Margin compression (sell rate
+flat while buy rate climbs) is read directly off this series. The
+series is **append-only** and never edited — a rate correction is a
+new `item_rate_changed` event, never a rewrite, so the history is a
+faithful audit of every change.
+
+Stale-detection: not applicable; recompute on read in v2.0.
+
+`TODO(spec)` — confirm: (a) one merged projection vs separate
+master-rate and transacted-rate views; (b) retention / windowing for
+high-volume items; (c) whether a purchase that implies a new buy
+rate should also raise a `master-set` point or stay purely
+transactional. Depends on finalizing the `item_rate_changed` schema
+(still in [`event-schemas.md`](./event-schemas.md) §Referenced
+events not yet specified here).
 
 ### Live stock
 
@@ -287,6 +338,22 @@ include; replay starts strictly after.
 - For each projection: snapshot + replay-from-snapshot equals
   full replay.
 - Across projections: R1–R4 invariants hold for every fixture.
+- Rate history: a sequence of `item_rate_changed` + purchase + sale
+  events for one item yields a chronological `RatePoint[]` with the
+  correct `master-set` / `buy` / `sell` kinds; a later rate change
+  appends a new point and does **not** alter earlier points or any
+  historical bill's re-fold (rate-as-of-T holds).
 - Performance: full rebuild for the shop's expected 2-year volume
   completes within the budget in
   [`performance-budgets.md`](./performance-budgets.md).
+
+## Recent changes
+
+- _2026-06-16_ · Added the **Rate history per item** projection
+  (sources: `item_rate_changed` master set-points plus transacted
+  `buy` / `sell` rates from purchase and sale lines), giving v2 an
+  event-sourced home for tracking an item's price over time and
+  carrying forward v1's Analytics "Rate Trends" — which the
+  projection catalogue previously lacked. Added a required test. The
+  exact view shape depends on finalizing the `item_rate_changed`
+  schema (`TODO(spec)` in `event-schemas.md`).

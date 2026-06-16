@@ -143,6 +143,12 @@ contract for keeping them clean.
   totals.
 - Rate-change events have a mandatory `reason` (free text;
   flagged by suspicion engine if generic).
+- The accumulated history is surfaced as the **Rate history per
+  item** projection (see
+  [`projections.md`](./projections.md#rate-history-per-item)): the
+  owner sees the full chronological sequence of rate set-points
+  (with reasons) alongside the transacted buy / sell trend over
+  time.
 
 ### Archived items / parties
 
@@ -386,6 +392,12 @@ complement them at the schema / adapter layer:
 
 ## Recent changes
 
+- _2026-06-16_ (later) · §Rate change history now points to the new
+  **Rate history per item** projection in
+  [`projections.md`](./projections.md#rate-history-per-item), so
+  "rate history" has a defined view (rate set-points with reasons +
+  transacted buy / sell trend over time), not just the underlying
+  events.
 - _2026-06-16_ (later) · Removed a duplicated `## Recent changes`
   heading, and repointed the intro "audit log" link from the
   non-existent `review-queue.md#audit` anchor to
