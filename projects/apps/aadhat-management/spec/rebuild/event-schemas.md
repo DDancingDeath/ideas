@@ -59,7 +59,7 @@ the field documents a signed delta (e.g. `stock_adjustment_recorded.delta`).
 
 ```ts
 type Paise = number;                   // integer, >= 0 unless noted
-type Quantity = number;                // kg, two decimal places; stored as integer milligrams in v2 if precision matters — TODO(spec) confirm
+type Quantity = number;                // shown as kg (2dp) in this file's examples for readability; canonical STORAGE unit is integer milligrams (decisions row 8 / money-units-rounding.md)
 type IsoDate = string;                 // 'YYYY-MM-DD' shop-local date
 type IsoTimestamp = string;            // ISO-8601 UTC
 type ItemId = string;                  // UUID
@@ -553,6 +553,44 @@ Idempotency key: `shop.profile:{changeHash}`.
 
 ---
 
+## Referenced events not yet specified here
+
+The 22 types above are the ones with a frozen payload schema. The
+following event names are **referenced by other rebuild docs** but
+do not yet have a full schema in this file. Each must get one (a
+`###` block above, and a bump of the count) **before** the
+milestone that first emits it. Until then the storage adapter does
+not accept them. This table is the single reconciliation point so
+the registry and the prose docs do not silently drift.
+
+| Event | Referenced in | Purpose | Payload hints already stated | Status |
+|---|---|---|---|---|
+| `item_rate_changed` | [`data-governance.md`](./data-governance.md) §Rate change history | Record an item rate change as an event, never a silent edit | Mandatory non-empty `reason`; generic reason → `rate-reason-generic` flag; must carry old + new rate so bills re-fold to the rate-as-of-T | `TODO(spec)` — confirm whether this is its own type or a constrained `item_updated` |
+| `party_updated` | [`data-governance.md`](./data-governance.md) §Typo correction | Record a party (customer / supplier) field change | Carries old and new value in payload | `TODO(spec)` |
+| `item_merged` | [`data-governance.md`](./data-governance.md) §Duplicate item merge | Merge a duplicate item into a survivor; rerouting happens at projection time, never by rewriting history | Exactly one event per merge; references both ids; no shadow updates of historical bills | `TODO(spec)` |
+| `party_merged` | [`data-governance.md`](./data-governance.md) §Duplicate party merge | Same as `item_merged` for parties; survivor outstanding = pre-merge sum-of-outstanding | Same shape as `item_merged` | `TODO(spec)` |
+| `print_manual_recorded` | [`printer-compatibility.md`](./printer-compatibility.md) §Manual print fallback | Owner marks a bill "printed manually"; audit-only, does **not** modify the sale | Audit-only; low-severity flag if manual marks spike | `TODO(spec)` |
+| `shop_timezone_changed` | [`time-clock.md`](./time-clock.md) §Reports use shop timezone | Audit the owner changing the shop timezone; triggers a report-projection re-render | Old + new IANA tz; owner-only | `TODO(spec)` |
+| `overpayment_recorded` | [`concurrency.md`](./concurrency.md) §Open items | Explicit owner-recorded overpayment, distinct from a failed settlement | Owner-only; out of scope for v2.0 unless requested | **Proposed** — deferred, not in v2.0 |
+
+Also referenced but deliberately **not** ledger events (do not add
+them here):
+
+- `screen_view`, `action_started`, `action_succeeded`,
+  `action_failed` — analytics / telemetry events defined in
+  [`observability.md`](./observability.md) §Analytics, not ledger
+  appends.
+- `print_failed` — a **bill print-state** in
+  [`bill-lifecycle.md`](./bill-lifecycle.md), not an event type. A
+  failed print is a `print_attempt` outcome plus a `flag_raised`.
+
+`TODO(spec)`: parties are updated and merged above but there is no
+`party_created` event anywhere in the spec. Decide how a party
+first enters the ledger (explicit `party_created`, or implicitly on
+first sale that names it) before the party-management milestone.
+
+---
+
 ## Versioning
 
 - `schemaVersion` starts at `1` for every type.
@@ -585,9 +623,15 @@ dev / staging) a `context` blob useful for tests.
 
 ## Open questions
 
-- `TODO(spec)`: Choose between `kg as decimal number` (2dp) and
-  `mg as integer` for weights. Integer is safer; current docs use
-  decimal kg for readability. Decide before M0.
+- `TODO(spec)`: weight-unit **decision is frozen** — integer
+  milligrams (decisions row 8; formulas in
+  [`money-units-rounding.md`](./money-units-rounding.md)). What
+  remains is mechanical: the `BillLine` / `Quantity` schemas and
+  examples in **this** file still express weights as decimal kg
+  with `itemTotal = round(Σweights × rate)` (rate as ₹/kg). Migrate
+  these literal schemas and example values to the integer-mg model
+  (`itemTotal = round(Σweights_mg × paisePerKg / 1_000_000)`)
+  during M0. This is a representation change, not an open decision.
 - `TODO(spec)`: Decide the canonical case / locale for free-text
   fields (`category`, `reason`) — store as-typed, normalized
   client-side, or normalized on append? Recommend store-as-typed
@@ -595,3 +639,26 @@ dev / staging) a `context` blob useful for tests.
 - `TODO(spec)`: Decide whether `print_attempt` events live in the
   main ledger or a sibling `audit` stream. Default: main ledger,
   partitioned by `type` in queries.
+
+## Recent changes
+
+- _2026-06-16_ (later) · Reframed the stale weight-unit `TODO(spec)`
+  in §Open questions from "decide kg vs mg before M0" to "decision is
+  frozen (decisions row 8 = integer mg); migrate this file's kg
+  schemas/examples to the mg model during M0". The decision was
+  already frozen in `decisions.md` row 8 and
+  [`money-units-rounding.md`](./money-units-rounding.md); only the
+  literal schemas here still used kg. Annotated the `Quantity`
+  primitive comment accordingly. No schema values changed.
+- _2026-06-16_ · Added the `## Referenced events not yet specified
+  here` reconciliation table. It names every event referenced by
+  other rebuild docs that does not yet have a frozen schema here
+  (`item_rate_changed`, `party_updated`, `item_merged`,
+  `party_merged`, `print_manual_recorded`, `shop_timezone_changed`,
+  and the proposed `overpayment_recorded`), so the canonical
+  registry and the prose docs stop drifting. Also documented which
+  referenced names are deliberately **not** ledger events
+  (telemetry `screen_view` / `action_*`; the `print_failed` bill
+  state) and flagged the missing `party_created` event as a
+  `TODO(spec)`. No payloads were invented; all entries are
+  `TODO(spec)` / Proposed.

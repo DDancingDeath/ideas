@@ -38,7 +38,7 @@ more `references` to prior events.
 | `outstanding_payment_made` | party, amount, againstBillId?, payment | outstanding, cash |
 | `cash_session_opened` | sessionId, openingCount | cash |
 | `cash_session_closed` | sessionId, closingCount, mismatch, mismatchReason? | cash |
-| `print_attempt` | billId, attemptNo, outcome (queued / sent / failed), printerInfo | print queue (audit only) |
+| `print_attempt` | billId, attemptNo, outcome (queued / connecting / sending / failed), printerInfo | print queue (audit only) |
 | `print_succeeded` | billId, attemptNo, printerInfo | print queue (audit only) |
 | `flag_raised` | targetEventId, ruleId, severity, summary | Review Queue |
 | `flag_resolved` | flagId, resolution (approve / dismiss / correct), by | Review Queue |
@@ -121,3 +121,12 @@ the v2 event log on cutover. Two candidates:
   translated into v2 events in chronological order. Higher fidelity
   but more work; only worth it if the owner needs historical
   drill-down inside the new app.
+
+## Recent changes
+
+- _2026-06-16_ · Aligned the `print_attempt` summary row's `outcome`
+  values from `(queued / sent / failed)` to
+  `(queued / connecting / sending / failed)` so the at-a-glance
+  table matches the canonical enum in
+  [`event-schemas.md`](./event-schemas.md) §`print_attempt`. No
+  behaviour change; the summary had simply drifted.

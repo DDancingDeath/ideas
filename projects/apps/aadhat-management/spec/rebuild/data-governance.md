@@ -5,7 +5,7 @@
 > information the app stores. The compliance boundary the family
 > shop operates within. The contracts that
 > [`role-permission-matrix.md`](./role-permission-matrix.md),
-> [`audit log`](./review-queue.md#audit), and
+> [`audit log`](./projections.md#audit-log), and
 > [`failure-modes.md`](./failure-modes.md) F20 (lost phone) all
 > depend on.
 
@@ -386,8 +386,11 @@ complement them at the schema / adapter layer:
 
 ## Recent changes
 
-## Recent changes
-
+- _2026-06-16_ (later) · Removed a duplicated `## Recent changes`
+  heading, and repointed the intro "audit log" link from the
+  non-existent `review-queue.md#audit` anchor to
+  [`projections.md#audit-log`](./projections.md#audit-log), where
+  the audit-log projection is actually defined.
 - _2026-06-16_ · added `## Validation gates` section between
   `## Master data governance` and `## Required tests`. Folds
   the data-quality-gates rules (duplicate item / party

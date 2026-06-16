@@ -18,7 +18,7 @@ Two times appear on every event envelope (per
 
 [`invariants.md`](./invariants.md) T1 says event timestamps
 that affect money or stock are server-assigned; T2 says
-backdating beyond `shopProfile.backdateToleranceDays` raises a
+backdating beyond `shopProfile.time.backdateToleranceDays` raises a
 flag. This file consolidates what that means in practice when
 the device is offline, when its clock is wrong by hours, when
 the shop's day boundary doesn't match midnight, and when a
@@ -86,7 +86,7 @@ walks the owner through enabling NTP on the staff phone.
 
 ## Backdated events
 
-An event with `clientAt < (at − shopProfile.backdateToleranceDays)`
+An event with `clientAt < (at − shopProfile.time.backdateToleranceDays)`
 is **accepted but flagged**:
 
 - `flag_raised(rule: 'backdated', severity: 'high')`
@@ -97,7 +97,7 @@ is **accepted but flagged**:
 - A `bill_voided` or `bill_correction_recorded` follows the
   normal flow; the original event stays in the ledger.
 
-`backdateToleranceDays` defaults to 1 (today and yesterday).
+`shopProfile.time.backdateToleranceDays` defaults to 1 (today and yesterday).
 
 ## Future-dated events
 
@@ -150,7 +150,7 @@ midnight".
   boundaries. A staff phone set to `Asia/Dubai` does not shift
   the report.
 - The owner can override the timezone in shop profile; doing so
-  raises a `shop-timezone-changed` audit event and re-renders
+  raises a `shop_timezone_changed` audit event and re-renders
   cached report projections.
 - Times in a report are always shown in shop time; the row
   detail view shows both shop time and the original `clientAt`
@@ -180,7 +180,7 @@ The adapter is the line of truth for time:
 2. Refuses events where `clientAt − at > shopProfile.time.maxFutureMin`
    with `BLOCKED_BY_RULE`.
 3. Accepts (with `OK`) events where `at − clientAt >
-   shopProfile.backdateToleranceDays`, **and** appends a
+   shopProfile.time.backdateToleranceDays`, **and** appends a
    `flag_raised(rule: 'backdated')` in the same transaction.
 4. Records the observed skew in the device's diagnostics
    snapshot.
@@ -226,9 +226,34 @@ These adapter behaviours are part of `security` and
 - `TODO(spec)` — auto-suggest opening a session if first bill
   of the day lacks one. Default: yes, with one-tap "Open
   session" inline.
+- `TODO(spec)` — **unify the clock-skew config key.** Three docs
+  currently name what is essentially the same client-vs-server
+  skew knob differently, with different defaults:
+  `shopProfile.time.toleranceMin` (this file, 5 min silent / 30 min
+  band), `shopProfile.time.clockSkewMaxMin`
+  ([`failure-modes.md`](./failure-modes.md), default 15 min →
+  raises `T1`), and `shopProfile.time.skewToleranceSec`
+  ([`suspicion-engine.md`](./suspicion-engine.md), `bill.client-clock-skew`
+  low flag). Collapse to one key + one band model (this file's
+  band model is the most complete) and confirm the final
+  thresholds with the owner before M0. Do **not** silently pick a
+  threshold — they differ on purpose until decided.
 
 ## Recent changes
 
+- _2026-06-16_ (later) · Namespaced the backdate key to
+  `shopProfile.time.backdateToleranceDays` throughout this file (was
+  the un-prefixed `shopProfile.backdateToleranceDays`), and added an
+  Open-items `TODO(spec)` to unify the three competing clock-skew
+  keys — `time.toleranceMin` (here), `time.clockSkewMaxMin`
+  ([`failure-modes.md`](./failure-modes.md)), and
+  `time.skewToleranceSec` ([`suspicion-engine.md`](./suspicion-engine.md))
+  — without silently choosing a threshold.
+- _2026-06-16_ (later) · Renamed the timezone-override audit event
+  from `shop-timezone-changed` to `shop_timezone_changed` to match
+  the snake_case event-naming convention used by all 22 types in
+  [`event-schemas.md`](./event-schemas.md); the event is listed in
+  that file's "Referenced events not yet specified here" table.
 - _2026-06-16_ · file created. Two-timestamp model
   (`at` authoritative, `clientAt` audit-only); offline
   preservation rule; clock-skew tolerance bands; backdated

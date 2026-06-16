@@ -7,7 +7,9 @@
 
 ## Conventions
 
-- All money in paise (₹ × 100). All weights in kg (2 dp).
+- All money in paise (₹ × 100). Weights are shown in kg (2 dp) for
+  readability; the canonical storage unit is integer milligrams
+  (decisions row 8 / [`money-units-rounding.md`](./money-units-rounding.md)).
 - All `idempotencyKey` values shown are stable across replays.
 - Where a scenario depends on `shopProfile`, the relevant settings
   are listed under **Profile**.
@@ -466,3 +468,12 @@ events from `shopId = shop-B`.
    that loads it and asserts.
 
 A scenario without a corresponding test is incomplete.
+
+## Recent changes
+
+- _2026-06-16_ · Clarified the Conventions note on weights: values
+  are **shown** in kg (2 dp) for readability, but the canonical
+  storage unit is integer milligrams (decisions row 8 /
+  [`money-units-rounding.md`](./money-units-rounding.md)). Resolves
+  the contradiction with the frozen weight-unit decision; no fixture
+  values changed.

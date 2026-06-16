@@ -110,7 +110,7 @@ not drift independently.
 | # | Invariant | How checked |
 |---|---|---|
 | T1 | All event timestamps that affect money or stock are server-assigned. Client times are recorded for the audit but not authoritative. | Storage adapter |
-| T2 | Backdating an event by more than `shopProfile.backdateToleranceDays` raises a `flag_raised`. | Suspicion engine |
+| T2 | Backdating an event by more than `shopProfile.time.backdateToleranceDays` raises a `flag_raised`. | Suspicion engine |
 
 ## What to do when an invariant fails
 
@@ -128,6 +128,12 @@ not drift independently.
 
 ## Recent changes
 
+- _2026-06-16_ (later) · Namespaced the T2 backdate-tolerance key to
+  `shopProfile.time.backdateToleranceDays` (was the un-prefixed
+  `shopProfile.backdateToleranceDays`) to match the
+  `shopProfile.time.*` namespace used by the other clock keys in
+  [`time-clock.md`](./time-clock.md) and
+  [`suspicion-engine.md`](./suspicion-engine.md).
 - _2026-06-16_ · added `## Constitution — the "no false data"
   rules` section at the top. Eight AC rules (AC1–AC8) restate
   the accuracy contract in plain language and map each to the
