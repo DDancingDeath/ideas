@@ -6,19 +6,24 @@
 
 ## Contents
 
+0. [`getting-started.md`](./getting-started.md) — **start here.** The
+   Day-0 sequencer: readiness gate, prerequisites checklist, and the
+   first five steps (confirm the freeze → create the repo → run M0 →
+   pass exit criteria → stand up the agents for M1).
 1. [`roadmap.md`](./roadmap.md) — proposed milestone order from M0 to
    v2.0, with rationale for why correctness-critical pieces come
    before screens.
 2. [`decisions.md`](./decisions.md) — tracker for the technical and
-   product decisions that need to be **frozen before M0**, with the
-   agent's recommended defaults (status: `tentative` until the
-   owner confirms).
+   product decisions that needed to be **frozen before M0**. Rows
+   1–10 are now `confirmed` (frozen 2026-06-15); a milestone-scoped
+   open-questions table (M3–M11) carries the rest.
 3. [`agent-roster.md`](./agent-roster.md) — the agents we recommend
    the owner stand up, the responsibility each owns, and the
    master prompt each runs with.
 4. [`tech-candidates.md`](./tech-candidates.md) — language /
    framework / library candidates with the trade-offs called out;
-   the owner picks before M0.
+   the headline stack (SvelteKit / Firebase / pnpm) is already
+   frozen in `decisions.md` rows 1–3.
 5. [`migration-cutover.md`](./migration-cutover.md) — how the family
    shop moves from v1 to v2: snapshot-import strategy, dual-run
    window, rollback plan, and the mismatch criteria that block
@@ -59,6 +64,12 @@ the rebuild because:
 
 ## Recent changes
 
+- _2026-06-16_ (later) · Added [`getting-started.md`](./getting-started.md)
+  — the Day-0 sequencer (readiness gate + prerequisites + the first
+  five steps) — and listed it as item 0 / "start here". Refreshed
+  the `decisions.md` and `tech-candidates.md` descriptions to say
+  the freeze rows are `confirmed` (they were described as
+  `tentative` / "owner picks before M0", which was stale).
 - _2026-06-16_ · Added `release-health-gates.md` — the 10-gate
   pre-release checklist (CI green; platform matrix green;
   printer smoke; offline / reconnect smoke; migration checks;

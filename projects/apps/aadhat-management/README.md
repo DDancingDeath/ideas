@@ -14,6 +14,9 @@
   — XSS and Firestore-rule weaknesses are the priority backlog).
   A **from-scratch v2 rebuild** is now scoped — see
   [`spec/rebuild/`](./spec/rebuild/) and [`plan/rebuild/`](./plan/rebuild/).
+  To **start building v2**, begin at
+  [`plan/rebuild/getting-started.md`](./plan/rebuild/getting-started.md)
+  (the Day-0 sequencer).
 
 ---
 
@@ -258,7 +261,9 @@ priority ones:
     (architecture, event ledger, bill lifecycle, print queue,
     invariants, suspicion engine, Review Queue, quality bar).
 11. **[`plan/rebuild/`](./plan/rebuild/)** — opinionated v2 guidance
-    (roadmap, agent roster, tech candidates, productization).
+    (**start at [`getting-started.md`](./plan/rebuild/getting-started.md)**;
+    then roadmap, decisions, agent roster, tech candidates,
+    productization).
 12. **[`plan/review-issues.md`](./plan/review-issues.md)** — known
     defects in v1. Do not reintroduce in v2.
 13. **[`plan/promotion.md`](./plan/promotion.md)** — staging → prod
@@ -345,6 +350,16 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-06-16_ (later) · Added a Day-0 **getting-started**
+  sequencer at
+  [`plan/rebuild/getting-started.md`](./plan/rebuild/getting-started.md)
+  (readiness gate, prerequisites checklist, the first five steps)
+  and pointed to it from the status line and the `plan/rebuild/`
+  entry. Added a scenario `## Coverage map` and a `Rate history per
+  item` projection, and ran a spec consistency clean-up (event-
+  registry reconciliation, stale weight-unit TODO reframed, broken
+  audit-log anchor fixed, clock-skew / backdate config-key
+  drift flagged).
 - _2026-06-16_ · Added the platform / accuracy / concurrency
   layer to the v2 rebuild spec in response to the owner's
   "web + Android + iOS, fast, always accurate" review. New under
