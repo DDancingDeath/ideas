@@ -452,6 +452,91 @@ events from `shopId = shop-B`.
 
 ---
 
+## Coverage map
+
+> What the scenario layer actually exercises, and where the rest of
+> the scenario-shaped tests live. Keep this in sync when adding a
+> fixture or an event type. (Audited 2026-06-16.)
+
+**Event-type coverage (the 22 ledger types in
+[`event-schemas.md`](./event-schemas.md)).** A catalog fixture means
+a full shop-day replay here; "sibling test" means a named test in
+another doc's *Tests this spec requires* section, not a full
+replay.
+
+| Event | Catalog fixture | Sibling test / other coverage |
+|---|---|---|
+| `item_created` | — | data-governance gates (`item-empty-names-rejected`, `item-zero-rate-rejected`); projections Items-master |
+| `item_updated` | — | data-governance (typo correction, `item-rate-above-ceiling-blocked`); projections |
+| `item_archived` | — | data-governance (archived-item-in-bill gate); projections |
+| `item_rate_changed` | — | data-governance (`rate-change-empty-reason-rejected`, `rate-flapping-flagged`); projections Rate-history |
+| `purchase_recorded` | `purchase-then-sale` | money-units line-total; projections Live-stock |
+| `retail_sale_created` | `simple-retail-day`, `staff-billing-owner-review`, `double-tap-*`, … | money-units `bill-total-retail` |
+| `wholesale_sale_created` | `wholesale-credit-sale` | money-units `bill-total-wholesale-with-labor` |
+| `bill_voided` | `bill-void-after-print` | projections |
+| `bill_correction_recorded` | `bill-correction-after-print` | projections |
+| `stock_adjustment_recorded` | — | invariants S-rules; concurrency; projections |
+| `expense_recorded` | — | projections Cash-on-hand only |
+| `withdrawal_recorded` | — | projections Cash-on-hand only |
+| `outstanding_payment_received` | `customer-udhaar-settlement` | projections Outstanding |
+| `outstanding_payment_made` | — | projections Outstanding (supplier side) only |
+| `cash_session_opened` | `simple-retail-day`, `cash-shortage-day-close` | concurrency (`cash-session-second-open-blocked`) |
+| `cash_session_closed` | `simple-retail-day`, `cash-shortage-day-close` | time-clock (`session-day-not-midnight`) |
+| `print_attempt` | `bill-void-after-print`, `double-tap-print-slow-bt`, … | print-queue; printer-compatibility |
+| `print_succeeded` | (same) | print-queue |
+| `flag_raised` | `cash-shortage-day-close`, `negative-stock-attempt`, `staff-billing-owner-review`, `backdated-entry` | suspicion-engine (per rule) |
+| `flag_resolved` | `cash-shortage-day-close`, `staff-billing-owner-review` | review-queue |
+| `user_role_changed` | — | role-permission-matrix (matrix tests) |
+| `user_status_changed` | — | role-permission-matrix |
+| `shop_profile_updated` | — | suspicion-engine (config), review-queue |
+
+**13 / 22 events have a catalog fixture; 9 do not.** The nine are
+covered (if at all) only by lower-level sibling tests, never by a
+full shop-day replay.
+
+**Scenario-shaped tests that live outside this catalog.** These docs
+each carry their own *Tests this spec requires* section with named
+fixtures that are *not* registered above; treat them as part of the
+scenario surface until they are folded in or indexed here:
+`time-clock.md` (10, e.g. `future-date-blocked`,
+`drift-ema-detected`), `money-units-rounding.md` (8, e.g.
+`rounding-half-to-even-runs`, `migration-roundtrip-equality`),
+`concurrency.md` (e.g. `bill-number-server-allocated-online`,
+`double-tap-during-reconnect`), `data-governance.md` (the validation
+gates), `projections.md` (per-projection + Rate-history),
+`offline-sync.md`, `idempotency.md`, `suspicion-engine.md`,
+`failure-modes.md` (20 pinned tests).
+
+**Known scenario gaps (no full shop-day fixture yet) — `TODO(spec)`,
+in rough priority order:**
+
+1. `rate-change-day` — `item_rate_changed` mid-day; a bill before
+   the change keeps the old rate (rate-as-of-T), a bill after uses
+   the new rate; the Rate-history projection shows both points.
+2. `expenses-and-withdrawals-day` — `expense_recorded` +
+   `withdrawal_recorded` reduce cash-on-hand; day-close reconciles.
+3. `supplier-payment` — `outstanding_payment_made` against a
+   purchase credit; supplier outstanding goes to zero.
+4. `item-master-lifecycle` — `item_created` → `item_updated` →
+   `item_archived`; an archived item is then refused in a new bill.
+5. `two-device-concurrency` — shop-wide session + server bill-number
+   allocation + stock-race-accepted-flagged per
+   [`concurrency.md`](./concurrency.md), as a single replay.
+6. `future-dated-block-day` — a future-dated bill is refused at the
+   adapter, draft preserved (promote time-clock's
+   `future-date-blocked` to a shop-day replay).
+7. `rounding-boundary-day` — a bill that lands on the half-to-even
+   boundary; Today / Reports / Finance totals all reconcile.
+8. `data-quality-gates-day` — duplicate item/party, rate-above-
+   ceiling, and empty-name attempts in one flow (promote the
+   data-governance gate tests to a replay).
+9. `role-change` — owner promotes staff to manager; the new
+   permission takes effect and the change is audited
+   (`user_role_changed`).
+
+When one of these is written, move it into the Catalog table and
+delete its line here.
+
 ## How to add a new scenario
 
 1. Pick a name; add a row to the catalog above.
@@ -471,6 +556,16 @@ A scenario without a corresponding test is incomplete.
 
 ## Recent changes
 
+- _2026-06-16_ (later) · Added a `## Coverage map` section: an
+  event-type → fixture table (13 / 22 events have a catalog fixture;
+  9 do not), a register of the scenario-shaped tests that live in
+  sibling docs (time-clock, money-units, concurrency,
+  data-governance, projections, failure-modes, …) so the catalog
+  indexes them, and a prioritised list of 9 known `TODO(spec)`
+  scenario gaps (rate-change-day, expenses-and-withdrawals-day,
+  supplier-payment, item-master-lifecycle, two-device-concurrency,
+  future-dated-block-day, rounding-boundary-day,
+  data-quality-gates-day, role-change). No fixture values changed.
 - _2026-06-16_ · Clarified the Conventions note on weights: values
   are **shown** in kg (2 dp) for readability, but the canonical
   storage unit is integer milligrams (decisions row 8 /
