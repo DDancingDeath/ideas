@@ -235,6 +235,15 @@ compares the three callers' outputs.
 day / week / month depending on UI selection. Each bucket is just
 the period report applied to that bucket's range.
 
+This is only the **binning primitive**. The forward-looking and
+comparative insights built on top of it (today / month-end
+forecasts, profit and margin trends, items-to-focus, dead stock,
+receivables / payables aging, customer concentration, payment-mix
+and peak-hour trends, smart suggestions) and the events each reads
+from are specified in [`analytics.md`](./analytics.md). Analytics
+reads projections only — it never owns an authoritative total
+(`M5`, `R4`).
+
 ### Audit log
 
 Every event, oldest to newest within the configured retention

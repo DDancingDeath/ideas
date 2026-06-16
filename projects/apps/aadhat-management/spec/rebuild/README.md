@@ -45,8 +45,10 @@
    Indian display formatting; v1 → v2 import conversion with
    round-trip verification.
 8. [`projections.md`](./projections.md) — the contract for every
-   derived view (items, stock, cash, outstanding, history, reports,
-   audit, Review Queue) and the rebuild / stale-detection process.
+   derived view (items, **rate history**, stock, cash, outstanding,
+   history, reports, audit, Review Queue) and the rebuild /
+   stale-detection process. The business insights on top of these
+   are in [`analytics.md`](./analytics.md) (#26).
 9. [`data-placement.md`](./data-placement.md) — where each piece of
    data lives (authoritative location, local cache, sync rule,
    staleness tolerance, offline behaviour, read/write budgets);
@@ -128,22 +130,30 @@
     two-step confirm only for destructive actions; picker and
     history row design.
 
+26. [`analytics.md`](./analytics.md) — the business insights built
+    on the projections (today / month-end forecasts, profit and
+    margin trends, items-to-focus, dead stock, receivables /
+    payables aging, customer concentration, payment-mix and
+    peak-hour trends, smart suggestions); each mapped to the events
+    and projections it reads, with the retail-attribution data limit
+    called out. Analytics never owns an authoritative total.
+
 ### Quality, perf, and definition of done
 
-26. [`scenarios.md`](./scenarios.md) — 15 named fixtures (real shop
+27. [`scenarios.md`](./scenarios.md) — 15 named fixtures (real shop
     workflows) with setup, sequence, expected projections, expected
     flags, and the test layer each one belongs to.
-27. [`performance-budgets.md`](./performance-budgets.md) — concrete UI
+28. [`performance-budgets.md`](./performance-budgets.md) — concrete UI
     / print / sync numbers, reference device, measurement
     methodology, required perf scenarios, and CI gates.
-28. [`quality-bar.md`](./quality-bar.md) — required test layers, the
+29. [`quality-bar.md`](./quality-bar.md) — required test layers, the
     "no UI hang" performance bar, and what counts as `done` for a
     feature.
-29. [`feature-acceptance.md`](./feature-acceptance.md) — per-feature
+30. [`feature-acceptance.md`](./feature-acceptance.md) — per-feature
     required-test checklist by feature kind, with PR template.
-30. [`ci-contract.md`](./ci-contract.md) — exact required CI jobs,
+31. [`ci-contract.md`](./ci-contract.md) — exact required CI jobs,
     canonical commands, artefact contract, baseline-bump protocol.
-31. [`platform-test-matrix.md`](./platform-test-matrix.md) — which
+32. [`platform-test-matrix.md`](./platform-test-matrix.md) — which
     physical surfaces (Chromium headless / headed, Android
     emulator / real device / real device + printer, iOS Safari /
     Capacitor, low-end Android) run which CI jobs; manual smoke
@@ -151,7 +161,7 @@
     `G-COLD-START`, `G-FORCE-UPGRADE`, `G-PWA-OWNER`,
     `G-PWA-SAFARI`); release-gate matrix by release type;
     release-record JSON manifest.
-32. [`worked-example.md`](./worked-example.md) — one retail bill
+33. [`worked-example.md`](./worked-example.md) — one retail bill
     traced end-to-end through every layer (UI intent → service →
     event → projection → print → audit → tests). Read this once
     to make every other doc click into place.
@@ -186,6 +196,17 @@ milestones" table in that file).
 
 ## Recent changes
 
+- _2026-06-16_ (later) · Added [`analytics.md`](./analytics.md) (#26)
+  — the v2 business-analytics contract (forecasts, profit/margin
+  trends, items-to-focus, dead stock, receivables/payables aging,
+  customer concentration, payment-mix and peak-hour trends, smart
+  suggestions), each mapped to the events/projections it reads, with
+  the retail-attribution data limit called out. Re-homes v1's
+  forward-looking Analytics page on the ledger; replaces the bare
+  period-binning stub in `projections.md`. Also added a
+  `## Calculation integrity` section to `invariants.md` and expanded
+  the `scenarios.md` Coverage-map gap list from 9 to 31 scenarios
+  (calculation-edge + adversarial/fraud classes added).
 - _2026-06-16_ · Added the platform / accuracy / concurrency
   layer in response to the owner's "web + Android + iOS, fast,
   always accurate" review. New spec docs:

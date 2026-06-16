@@ -307,8 +307,10 @@ aadhat-management/
 │                                     idempotency, print queue,
 │                                     printer compatibility,
 │                                     projections, data placement,
-│                                     offline-sync, concurrency,
-│                                     invariants (with constitution),
+│                                     analytics, offline-sync,
+│                                     concurrency,
+│                                     invariants (with constitution
+│                                     and calculation integrity),
 │                                     role matrix, suspicion engine,
 │                                     Review Queue, failure modes,
 │                                     versioning & compatibility,
@@ -350,6 +352,16 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-06-16_ (later, 3) · Added a v2 **analytics** spec
+  ([`spec/rebuild/analytics.md`](./spec/rebuild/analytics.md)) —
+  forecasts, profit/margin trends, items-to-focus, dead stock,
+  receivables/payables aging, customer concentration, payment-mix
+  and peak-hour trends, smart suggestions — re-homing v1's
+  forward-looking Analytics page on the ledger. Added a
+  `## Calculation integrity` section to `invariants.md` (what does
+  and does not catch a wrong number) and expanded the scenario
+  Coverage-map gap list from 9 to 31 (calculation-edge and
+  adversarial/fraud classes).
 - _2026-06-16_ (later, 2) · Added an agent **orchestration** layer at
   [`plan/rebuild/agent-orchestration.md`](./plan/rebuild/agent-orchestration.md)
   — Orchestrator role, task-ticket format (one ticket = one branch =

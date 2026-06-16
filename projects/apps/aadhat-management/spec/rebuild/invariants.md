@@ -112,6 +112,62 @@ not drift independently.
 | T1 | All event timestamps that affect money or stock are server-assigned. Client times are recorded for the audit but not authoritative. | Storage adapter |
 | T2 | Backdating an event by more than `shopProfile.time.backdateToleranceDays` raises a `flag_raised`. | Suspicion engine |
 
+## Calculation integrity — what catches a wrong number
+
+A direct answer to "could a calculation be wrong, and would the
+system flag it?" There are two different failure classes and the
+defences differ.
+
+**Class 1 — an *inconsistent* number (a total that disagrees with
+the events, a projection that drifted, an unbalanced payment). These
+are caught, at multiple layers:**
+
+- **Rejected at write:** `M1` (payment balance), `M2`/`M3` (bill
+  total = Σ lines ∓ labor), and schema validation (`M4`, `X3`) are
+  domain assertions; the storage adapter refuses the append.
+- **Reconciled in the background:** `recon.report-vs-ledger` and
+  `recon.projection-mismatch` (both `high`, see
+  [`suspicion-engine.md`](./suspicion-engine.md)) recompute from
+  events and flag any divergence from the cached projection.
+- **Proven by property test:** the suspicion-engine suite generates
+  random sale / purchase / payment / void / correction sequences and
+  asserts **no invariant is ever violated without a corresponding
+  `flag_raised` or `block`**. An inconsistency that escaped flagging
+  fails CI.
+
+So an inconsistent number is either refused, flagged `high`, or
+fails the build. The system does **not** silently accept it.
+
+**Class 2 — a *consistently wrong* shared formula (the domain
+function itself computes the wrong rounding, discount order, labor
+order, or moving-average, and every layer uses that one function).
+This is the real residual risk, and the drift detectors above will
+NOT catch it** — UI, projection, report, and reconciliation all call
+the same wrong function and therefore agree with each other. The
+guards are necessarily *external*:
+
+- **Scenario fixtures with externally-known-correct expected
+  numbers** — the replay is checked against hand-verified totals, not
+  against the code's own output. This is why the
+  [`scenarios.md`](./scenarios.md) §Coverage-map **calculation-edge**
+  fixtures (rounding boundary, labor order, discount-then-rounding,
+  100 %-discount, multi-bag weight) matter: each one pins a formula
+  the code cannot self-check.
+- **The independent closed-form rounding test**
+  (`rounding-half-to-even-runs` in
+  [`money-units-rounding.md`](./money-units-rounding.md)) compares
+  10 000 randomised bills against a closed-form expectation derived
+  *independently of the domain function*.
+- **The worked example** ([`worked-example.md`](./worked-example.md))
+  traces one bill end-to-end against fixed expected values.
+
+**Bottom line:** inconsistency is flagged automatically; a wrong
+shared formula is only as well-guarded as the fixture coverage of
+that formula. Fixture completeness is therefore a correctness
+control, not just a test-hygiene nicety — which is why the
+calculation-edge scenarios are tracked as gaps to close, not
+optional extras.
+
 ## What to do when an invariant fails
 
 1. In **tests**: the test fails. The implementation is the bug, not
@@ -128,6 +184,13 @@ not drift independently.
 
 ## Recent changes
 
+- _2026-06-16_ (later) · Added `## Calculation integrity — what
+  catches a wrong number`: an honest split between an *inconsistent*
+  number (caught by reject-at-append + `recon.*` + the property test)
+  and a *consistently-wrong shared formula* (caught only by fixtures
+  with externally-known numbers + the independent closed-form
+  rounding test). Makes explicit that calculation-edge fixture
+  coverage is a correctness control, not just test hygiene.
 - _2026-06-16_ (later) · Namespaced the T2 backdate-tolerance key to
   `shopProfile.time.backdateToleranceDays` (was the un-prefixed
   `shopProfile.backdateToleranceDays`) to match the

@@ -507,8 +507,12 @@ gates), `projections.md` (per-projection + Rate-history),
 `offline-sync.md`, `idempotency.md`, `suspicion-engine.md`,
 `failure-modes.md` (20 pinned tests).
 
-**Known scenario gaps (no full shop-day fixture yet) — `TODO(spec)`,
-in rough priority order:**
+**Known scenario gaps (no full shop-day fixture yet) — `TODO(spec)`.**
+The 9 original gaps plus the categories below; each is a one-line
+intent until the Test agent authors the fixture in its milestone.
+Grouped so the riskiest classes (calculation, fraud) are visible.
+
+**Core lifecycle (the original 9):**
 
 1. `rate-change-day` — `item_rate_changed` mid-day; a bill before
    the change keeps the old rate (rate-as-of-T), a bill after uses
@@ -534,6 +538,70 @@ in rough priority order:**
    permission takes effect and the change is audited
    (`user_role_changed`).
 
+**Calculation edges (guard the "wrong-but-consistent formula" risk —
+see [`invariants.md`](./invariants.md) §Calculation integrity):**
+
+10. `hundred-percent-discount` — full discount → `grandTotal == 0`;
+    `M1` still balances with `due == 0`; no divide-by-zero downstream.
+11. `multi-bag-weight-sum` — wholesale line with many bag weights;
+    `itemTotal == round(Σweights × rate)` exactly.
+12. `labor-deduction-order` — purchase with labor; `M3`
+    `grandTotal == Σitems − labor`, proving labor is applied **after**
+    the line sum, not per line.
+13. `discount-then-rounding` — line discount + bill discount + rounding
+    in the fixed order from [`money-units-rounding.md`](./money-units-rounding.md);
+    pins the application order.
+14. `crore-scale-bill` — a very large bill; integer-paise math, no
+    overflow, totals still reconcile.
+15. `mixed-payment-split` — one bill paid cash + online + due all
+    non-zero; `M1` holds.
+
+**Adversarial / fraud (the "staff can't quietly cheat" trust bar):**
+
+16. `staff-skims-cash` — sale rung, cash pocketed; close mismatch
+    raises `cash.mismatch.*`.
+17. `void-after-cash-handout` — cash sale completed and printed, then
+    voided to pocket cash; `auth.staff-edits-old-bill` +
+    void-references-original (`B2`).
+18. `phantom-discount` — staff over-discounts for a friend;
+    `price.discount.large` / `…exceeds-limit` (`block`).
+19. `below-cost-sale` — sell under moving-average cost;
+    `price.below-cost`.
+20. `backdate-to-closed-session` — bill backdated into a closed
+    session; `time.backdated` + `bill-outside-session`.
+21. `stock-adjustment-cover` — downward adjustment used to hide
+    shrinkage; `stock.adjustment.large`.
+22. `duplicate-bill-skim` — same bill rung twice quickly;
+    `bill.duplicate.window`.
+
+**Outstanding & counterparty:**
+
+23. `multi-bill-FIFO-settlement` — one payment clears several bills
+    oldest-first; per-bill allocation correct (`O3`).
+24. `overpayment-settlement` — pays more than owed;
+    `outstanding.settlement-overpayment`.
+25. `receivables-aging` — dues at 10 / 40 / 70 / 100 days land in the
+    four aging buckets in [`analytics.md`](./analytics.md) §D.
+
+**Operational & resilience:**
+
+26. `printer-fails-then-manual` — retries exhaust →
+    `print_manual_recorded`; `print.exhausted`; no duplicate sale.
+27. `power-cut-mid-bill` — process killed between append and print;
+    on relaunch the sale exists once and the print resumes (`B1`,
+    `failure-modes.md`).
+28. `day-close-with-pending-sync` — close cash while the outbox is not
+    drained; close is consistent after drain.
+29. `festival-rush` — 150+ bills in an hour; counter stays monotonic
+    and perf budgets hold.
+
+**Multi-day & period (guard `R1`–`R4`):**
+
+30. `void-in-next-period` — a bill from yesterday voided today; the
+    reversal lands in the right period and Reports reconcile.
+31. `month-spanning-report` — activity across a month boundary;
+    period totals equal replay; analytics month projection is sane.
+
 When one of these is written, move it into the Catalog table and
 delete its line here.
 
@@ -556,6 +624,13 @@ A scenario without a corresponding test is incomplete.
 
 ## Recent changes
 
+- _2026-06-16_ (later, 2) · Expanded the Coverage-map gap list from 9
+  to 31 named scenarios, grouped by class — core lifecycle,
+  **calculation edges** (guarding the wrong-but-consistent-formula
+  risk), **adversarial / fraud** (the trust bar), outstanding &
+  counterparty, operational & resilience, and multi-day / period
+  (guarding `R1`–`R4`). Still intent-level; the Test agent authors
+  each fixture in its milestone.
 - _2026-06-16_ (later) · Added a `## Coverage map` section: an
   event-type → fixture table (13 / 22 events have a catalog fixture;
   9 do not), a register of the scenario-shaped tests that live in

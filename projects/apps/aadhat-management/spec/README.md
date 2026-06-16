@@ -144,6 +144,14 @@ The short list:
     one retail bill traced end-to-end through every layer (UI
     intent → service → event → projection → print → audit →
     tests). The fastest way to understand the whole architecture.
+34. **[`rebuild/analytics.md`](./rebuild/analytics.md)** — the
+    business insights built on the projections (read with #9): today
+    / month-end forecasts, profit and margin trends, items-to-focus,
+    dead stock, receivables / payables aging, customer concentration,
+    payment-mix and peak-hour trends, smart suggestions — each mapped
+    to the events and projections it reads, with the retail-customer-
+    attribution data limit called out. Never owns an authoritative
+    total.
 
 Opinion / strategy material for the rebuild lives under
 [`../plan/rebuild/`](../plan/rebuild/) (roadmap, **decisions**
@@ -188,6 +196,14 @@ cutover**, **operations runbook**, **backup / restore**,
 
 ## Recent changes
 
+- _2026-06-16_ (later) · Added `rebuild/analytics.md` (#34) — the v2
+  business-analytics contract (forecasts, profit/margin trends,
+  items-to-focus, dead stock, receivables/payables aging, customer
+  concentration, payment-mix and peak-hour trends, smart
+  suggestions) re-homing v1's forward-looking Analytics page on the
+  ledger. Also added a `## Calculation integrity` section to
+  `rebuild/invariants.md` and grew the `rebuild/scenarios.md`
+  Coverage-map gap list from 9 to 31 scenarios.
 - _2026-06-16_ · Added the platform / accuracy / concurrency
   layer to the v2 reading order. New under `spec/rebuild/`:
   `platform-compatibility.md` (item 4), `time-clock.md` (7),
