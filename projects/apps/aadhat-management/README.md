@@ -262,8 +262,8 @@ priority ones:
     invariants, suspicion engine, Review Queue, quality bar).
 11. **[`plan/rebuild/`](./plan/rebuild/)** — opinionated v2 guidance
     (**start at [`getting-started.md`](./plan/rebuild/getting-started.md)**;
-    then roadmap, decisions, agent roster, tech candidates,
-    productization).
+    then roadmap, decisions, agent roster, **agent orchestration**,
+    tech candidates, productization).
 12. **[`plan/review-issues.md`](./plan/review-issues.md)** — known
     defects in v1. Do not reintroduce in v2.
 13. **[`plan/promotion.md`](./plan/promotion.md)** — staging → prod
@@ -350,6 +350,13 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-06-16_ (later, 2) · Added an agent **orchestration** layer at
+  [`plan/rebuild/agent-orchestration.md`](./plan/rebuild/agent-orchestration.md)
+  — Orchestrator role, task-ticket format (one ticket = one branch =
+  one PR), sub-agent fan-out / fan-in, the `paths` collision rule,
+  the parallelization model, the milestone loop, and a recommended
+  Copilot CLI host — resolving the roster's open "where the agents
+  live" question.
 - _2026-06-16_ (later) · Added a Day-0 **getting-started**
   sequencer at
   [`plan/rebuild/getting-started.md`](./plan/rebuild/getting-started.md)

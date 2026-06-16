@@ -202,9 +202,16 @@ Follow `../plan/rebuild/roadmap.md` M0 → M12. For each milestone:
 
 ## Step 5 — stand up the agent roster
 
-`../plan/rebuild/agent-roster.md` defines six agent roles (Spec,
+`../plan/rebuild/agent-roster.md` defines seven agent roles (Spec,
 Test, Implementation, Performance, QA, Security, Reviewer). The
 master prompt is in that file. Stand them up before milestone M1.
+
+**How they are driven** — the Orchestrator role, the task-ticket
+format (one ticket = one branch = one PR), sub-agent fan-out / fan-in,
+the `paths` collision rule, the parallelization model, and the
+human-in-the-loop seams — is in
+`../plan/rebuild/agent-orchestration.md`. Read it before standing up
+more than one agent.
 
 If a single human / agent will play multiple roles for now, the
 roles still apply — switch hats explicitly and record which hat made

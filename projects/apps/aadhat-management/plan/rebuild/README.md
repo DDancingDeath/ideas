@@ -20,33 +20,39 @@
 3. [`agent-roster.md`](./agent-roster.md) — the agents we recommend
    the owner stand up, the responsibility each owns, and the
    master prompt each runs with.
-4. [`tech-candidates.md`](./tech-candidates.md) — language /
+4. [`agent-orchestration.md`](./agent-orchestration.md) — **how the
+   agents are driven**: the Orchestrator role, the task-ticket format
+   (one ticket = one branch = one PR), sub-agent fan-out / fan-in,
+   the `paths` collision rule, the parallelization model, the
+   orchestrated milestone loop, the human-in-the-loop seams, and the
+   recommended host (Copilot CLI).
+5. [`tech-candidates.md`](./tech-candidates.md) — language /
    framework / library candidates with the trade-offs called out;
    the headline stack (SvelteKit / Firebase / pnpm) is already
    frozen in `decisions.md` rows 1–3.
-5. [`migration-cutover.md`](./migration-cutover.md) — how the family
+6. [`migration-cutover.md`](./migration-cutover.md) — how the family
    shop moves from v1 to v2: snapshot-import strategy, dual-run
    window, rollback plan, and the mismatch criteria that block
    cutover.
-6. [`operations-runbook.md`](./operations-runbook.md) — daily /
+7. [`operations-runbook.md`](./operations-runbook.md) — daily /
    weekly / monthly procedures for brother and owner; twelve
    failure procedures (P1–P12) matched to the spec's failure-mode
    catalogue; release process with rollback rules; escalation
    table and contact list template; required quarterly drills.
-7. [`backup-restore.md`](./backup-restore.md) — what is backed up
+8. [`backup-restore.md`](./backup-restore.md) — what is backed up
    (events, rules, validators; never projections); where backups
    live (primary Firebase, mandatory off-account drive); three
    restore scenarios with verification checklist; the monthly
    restore drill that turns "we have backups" into "we know they
    work".
-8. [`productize-later.md`](./productize-later.md) — how to extract a
+9. [`productize-later.md`](./productize-later.md) — how to extract a
    reusable product after shop-1 stabilizes, without restarting.
-9. [`release-health-gates.md`](./release-health-gates.md) — the
-   10-gate pre-release checklist (CI green, platform matrix
-   green, printer smoke, offline / reconnect smoke, migration
-   checks, no Sev-1 flags, rollback path known, brother
-   sign-off, backup verified, release notes drafted); hot-fix
-   subset; sign-off record; rollback-trigger rules.
+10. [`release-health-gates.md`](./release-health-gates.md) — the
+    10-gate pre-release checklist (CI green, platform matrix
+    green, printer smoke, offline / reconnect smoke, migration
+    checks, no Sev-1 flags, rollback path known, brother
+    sign-off, backup verified, release notes drafted); hot-fix
+    subset; sign-off record; rollback-trigger rules.
 
 ## Relationship to the existing `plan/` files
 
@@ -64,6 +70,15 @@ the rebuild because:
 
 ## Recent changes
 
+- _2026-06-16_ (later, 2) · Added
+  [`agent-orchestration.md`](./agent-orchestration.md) — the
+  orchestration layer the roster implied but never specified
+  (Orchestrator role, task-ticket format, sub-agent fan-out / fan-in,
+  `paths` collision rule, parallelization model, milestone loop, HITL
+  seams, recommended host). Resolved the `agent-roster.md` "where the
+  agents live" `TODO(plan)` into a recommended Copilot CLI host and
+  fixed the "six roles" miscount in `prompts/build-rebuild.md` (there
+  are seven).
 - _2026-06-16_ (later) · Added [`getting-started.md`](./getting-started.md)
   — the Day-0 sequencer (readiness gate + prerequisites + the first
   five steps) — and listed it as item 0 / "start here". Refreshed

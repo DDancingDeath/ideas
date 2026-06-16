@@ -163,15 +163,36 @@ break ties between agents; when you override one, you record why
 in the merge commit.
 ```
 
+## Orchestration
+
+This file is **who** the agents are. How they are driven — the
+Orchestrator role, the task-ticket format, sub-agent fan-out,
+coordination, parallelization, and the human-in-the-loop seams —
+lives in [`agent-orchestration.md`](./agent-orchestration.md). Read
+that next; the linear `Spec → … → Reviewer` workflow above is the
+per-task pipeline it coordinates.
+
 ## Where the agents live
 
-`TODO(plan)`: pick a host. Candidates:
+The recommended host is settled in
+[`agent-orchestration.md`](./agent-orchestration.md) §Where the
+agents run: **Copilot CLI** — one Orchestrator session + one session
+per role sharing the session-store, sub-agents via the Task tool,
+GitHub Issues/PRs as the board, scheduled prompts for the recurring
+cadence. A lighter solo-owner split (owner as Orchestrator +
+Reviewer) is the early-milestone alternative.
 
-- All agents as Copilot CLI sessions with a shared session-store and
-  scheduled prompts.
-- Spec / Reviewer as humans; Test / Implementation / QA / Security /
-  Performance as agents.
-- Self-host on the owner's box; each agent is a long-running
-  session with a defined `agent_name`.
+The exact tooling is less important than the role separation and the
+task format. Whatever the host, do not collapse the roles into one
+"do everything" agent — that collapse is what the rebuild exists to
+escape.
 
-The exact tooling is less important than the role separation.
+## Recent changes
+
+- _2026-06-16_ · Added an `## Orchestration` pointer to the new
+  [`agent-orchestration.md`](./agent-orchestration.md) (Orchestrator
+  role, task-ticket format, sub-agent fan-out, coordination,
+  parallelization, HITL seams), and replaced the `## Where the agents
+  live` `TODO(plan)` with the settled recommended host (Copilot CLI:
+  Orchestrator + role sessions sharing the session-store, sub-agents
+  via the Task tool, GitHub Issues/PRs as the board).

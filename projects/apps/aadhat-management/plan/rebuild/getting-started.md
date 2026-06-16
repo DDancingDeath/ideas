@@ -77,8 +77,10 @@ and plan rows are done; the prerequisites are the owner's to tick.
    green; domain coverage ≥ 95 %). File `M0: foundation green`.
 5. **Stand up the agents and start M1.** Switch to
    [`../../prompts/build-rebuild.md`](../../prompts/build-rebuild.md)
-   and the roster in [`agent-roster.md`](./agent-roster.md). From
-   here every milestone follows the same loop: spec → fixtures →
+   and the roster in [`agent-roster.md`](./agent-roster.md), driven
+   by [`agent-orchestration.md`](./agent-orchestration.md) (the
+   Orchestrator, the task-ticket format, and sub-agent fan-out).
+   From here every milestone follows the same loop: spec → fixtures →
    tests → implementation → UI → release note
    ([`roadmap.md`](./roadmap.md) §Sequencing principle).
 
@@ -103,10 +105,11 @@ the v1 → v2 switch in
 These are captured so they are not forgotten; none of them stop you
 from starting M0 today.
 
-- **Where the agents run** is still a `TODO(plan)` in
-  [`agent-roster.md`](./agent-roster.md) §Where the agents live
-  (Copilot CLI sessions vs a mix of humans and agents). Pick a host
-  before you scale past one agent; a single builder can start M0.
+- **How the agents are driven** is settled in
+  [`agent-orchestration.md`](./agent-orchestration.md) (Orchestrator
+  role, task-ticket format, sub-agent fan-out, recommended Copilot
+  CLI host). A single builder can still start M0 solo; read the
+  orchestration doc before scaling past one agent.
 - **The 9 scenario-fixture gaps** in
   [`../../spec/rebuild/scenarios.md`](../../spec/rebuild/scenarios.md)
   §Coverage map (rate-change-day, expenses-and-withdrawals-day,
@@ -122,6 +125,10 @@ from starting M0 today.
 
 ## Recent changes
 
+- _2026-06-16_ (later) · Pointed step 5 and the "known open items" at
+  the new [`agent-orchestration.md`](./agent-orchestration.md); the
+  agent-host item is no longer a `TODO(plan)` (a recommended Copilot
+  CLI host is now settled there).
 - _2026-06-16_ · File created. Consolidates the previously scattered
   start steps (prerequisites, freeze check, repo creation, the M0
   prompt, exit criteria, agent standup) into one Day-0 sequencer so
