@@ -98,6 +98,10 @@ reference customer** until at least one other shop is piloted.
 - `TODO(spec)`: Voice billing v2 (see `../voice-billing-v2.md`) —
   Core or Configurable? Default assumption: Configurable, off by
   default for shops without a Hindi-capable mic environment.
+  Zero-touch / hands-free **activation** (no-touch app launch + full
+  bill by voice) is a v2.1 sub-goal recorded in
+  `../voice-billing-v2.md` §9; mechanism `TODO(spec)` (OS-assistant
+  launch recommended over an always-listening in-app wake-word).
 - `TODO(spec)`: AI Assistant chat tab (see `../chat-design.md`) —
   Core or Not-doing for v2.0? Default assumption: defer to v2.1,
   ship the rest first.
@@ -163,6 +167,10 @@ do not re-add them:
 
 ## Recent changes
 
+- _2026-06-17_ (later) · Noted under the Voice-billing disputed item
+  that **zero-touch / hands-free activation** (no-touch app launch +
+  full bill by voice) is now a recorded v2.1 sub-goal — full spec in
+  `../voice-billing-v2.md` §9, mechanism `TODO(spec)`.
 - _2026-06-17_ · Added §v1 parity gaps — a full v1↔v2 feature audit
   (~248 v1 features) confirmed the rebuild covers every core domain
   and recorded the four v1 features that had no bucket

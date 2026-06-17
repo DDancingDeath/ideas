@@ -30,8 +30,12 @@ What V2 must NOT do:
 
 - **No new tabs.** Voice on chat, cash management, items, expenses are
   out of scope for V2. Each is a future ask.
-- **No wake-word.** No always-listening mic; drains battery, raises
-  privacy questions, and isn't free in any browser STT API.
+- **No wake-word in v2.0.** No always-listening mic in the v2.0 cut;
+  it drains battery, raises privacy questions, and isn't free in any
+  browser STT API. **Zero-touch / hands-free activation is a
+  deliberate v2.1 goal** — recorded with two candidate approaches and
+  a recommendation in §9 below (the owner's "I don't touch my mobile
+  and can still activate the app and create a bill" ask).
 - **No server-side STT.** Voice samples never leave the device.
   We use `webkitSpeechRecognition` only.
 - **No custom Hindi STT model.** Chrome's `hi-IN` is good enough when
@@ -420,7 +424,77 @@ Production-repo files (owner action, not this clone):
 |---|---|
 | `android/app/src/main/AndroidManifest.xml` | Add `<uses-permission android:name="android.permission.RECORD_AUDIO" />` (C12) |
 
-## 9. Glossary
+## 9. Future: zero-touch / hands-free activation (v2.1)
+
+> **Status:** `TODO(spec)` — v2.1 goal, post-cutover. Records the
+> owner's explicit ask: *"I don't touch my mobile and can still
+> activate the app and create a bill."* v2.0 stays tap-to-talk (§1);
+> this section is the agreed **direction** for v2.1, with the
+> **mechanism** still to be chosen.
+
+### The goal
+
+Fully hands-free billing for when the shopkeeper's hands are full of
+goods or on the scale. Two things must work without a touch:
+
+1. **Activation** — bring the app to the billing page and start
+   listening without tapping the screen.
+2. **Full bill by voice** — already designed for v2.1: multi-item
+   (A2), customer name (A3), TTS readback (A1), confirm-by-voice
+   (A6), continuous dictation (B7), voice undo (B8), edit-row (B9).
+   Once activation is solved, these chain into a complete no-touch
+   bill.
+
+So the **only** missing piece for true zero-touch is *activation* —
+everything after "start listening" is already on the v2.1 plan.
+
+### Why v2.0 excluded it (so we reverse this deliberately, not by accident)
+
+The v2.0 "No wake-word" boundary (§1) was chosen for real reasons: an
+always-listening mic drains battery, raises privacy questions (a hot
+mic in a shop), and browser STT (`webkitSpeechRecognition`) is
+neither free-running nor continuous by default. Any v2.1 activation
+path **must answer all three**, or it does not ship.
+
+### Two approaches — pick one (`TODO(spec)`)
+
+| | **A. OS-assistant launch** | **B. In-app wake-word (foreground mode)** |
+|---|---|---|
+| How | *"Hey Google, open Bahi and start a bill"* via **Android App Actions / shortcuts**; the OS does the wake-word, deep-links into the billing page, then in-app **dictation mode (B7)** takes over. | Owner turns on a **"listening" foreground service**; a local wake-word (*"Bahi"* / *"बही"*) opens billing + starts dictation. Needs a native wake-word lib (e.g. Porcupine) or Android `SpeechRecognizer`, not browser STT. |
+| Always-on mic *in our app* | **No** — the OS owns it until launch | **Yes** — while the mode is on |
+| Battery | Low (no app-side mic until launched) | Higher (foreground service + live mic) |
+| Privacy | Better (no app-side hot mic) | Needs a visible "listening" banner + explicit opt-in; mic is hot |
+| Platform | Android + Google Assistant only | Android only (foreground service + `RECORD_AUDIO`); not web/PWA |
+| Effort | Medium — App Actions intent + deep link + chain to B7 | High — native wake-word, service lifecycle, battery tuning |
+| Fallback | Assistant unavailable → tap-to-talk | Service killed by battery saver → tap-to-talk |
+
+**Recommendation:** start with **A (OS-assistant launch)**. It
+offloads the always-on mic and wake-word to the OS — which directly
+answers the v2.0 battery/privacy/cost objections — and then reuses
+the already-planned dictation mode (B7) for the rest of the bill.
+Keep **B** as a fallback only for devices without a usable assistant,
+and only behind an explicit, clearly-indicated opt-in.
+
+### Acceptance (whichever approach)
+
+- From a home-screen / awake state, a single spoken command lands the
+  user on the billing page in **listening** state with **zero taps**.
+- The full bill (customer + ≥2 items) can then be completed by voice
+  using the v2.1 dictation grammar, with **TTS readback (A1)** so the
+  user never needs to look at the screen.
+- A visible indicator shows when the mic is live; the owner can turn
+  the whole capability off in Settings (extends A5).
+- If activation fails (no assistant, permission denied, service
+  killed), the app degrades gracefully to v2.0 tap-to-talk — never a
+  dead end.
+
+### Depends on
+
+B7 (continuous dictation), A1 (TTS readback), A5 (settings / opt-out),
+C12 (`RECORD_AUDIO`). Sequenced **after** the v2.0 cutover, with the
+rest of voice v2 (roadmap Phase 4 / §v2.1 candidates).
+
+## 10. Glossary
 
 - **Intent** — the structured object the parser returns:
   `{kind: 'add'|'commit'|'clear'|'unknown', weight?, rate?, itemName?, itemIndex?, raw}`.
@@ -429,3 +503,16 @@ Production-repo files (owner action, not this clone):
   user says *stop* or 30 s silence.
 - **STT** — Speech-to-text (the browser's `webkitSpeechRecognition`).
 - **TTS** — Text-to-speech (`window.speechSynthesis`).
+
+## Recent changes
+
+- _2026-06-17_ · Added §9 *Future: zero-touch / hands-free activation
+  (v2.1)* capturing the owner's "I don't touch my mobile and can
+  still activate the app and create a bill" ask. Reframed the §1
+  "No wake-word" boundary as a **v2.0-only** cut and pointed it at
+  §9. Recorded two candidate activation mechanisms — (A) OS-assistant
+  launch via Android App Actions, recommended; (B) in-app wake-word
+  foreground mode, fallback — with battery/privacy/platform/effort
+  tradeoffs, acceptance criteria, and dependencies (B7/A1/A5/C12).
+  Mechanism left as `TODO(spec)` for owner sign-off; full bill-by-voice
+  was already designed for v2.1, so activation is the only new piece.

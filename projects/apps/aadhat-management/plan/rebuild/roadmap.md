@@ -31,7 +31,7 @@ ending at a natural trust gate:
 | **1 — Engine** | M0–M5 | the business core is headless, fully tested, and cannot produce wrong data | scenarios + invariants + suspicion all green; the worked-example canary passes — no screens yet |
 | **2 — App** | M6–M10 | every screen works on a phone over the green engine | all Playwright flows + visual snapshots green; Today/Finance/Reports agree (R4) |
 | **3 — Ship** | M11–M12 | the family is actually running v2 | real-printer smoke passes; snapshot import + dual-run + cutover with rollback ([`migration-cutover.md`](./migration-cutover.md)) |
-| **4 — Grow** | v2.1 | (optional, after cutover) | AI assistant, voice v2, camera/barcode, productization for shop-2 |
+| **4 — Grow** | v2.1 | (optional, after cutover) | AI assistant, voice v2, hands-free voice activation, camera/barcode, productization for shop-2 |
 
 **Why four, not fewer or more.** Fewer phases would blur the one gate
 that matters most — *the engine is provably correct before any
@@ -153,6 +153,9 @@ yet)
 
 - AI Assistant chat tab.
 - Voice billing v2 (multi-item single-utterance).
+- Zero-touch / hands-free voice activation (no-touch app activation +
+  full bill by voice; see `../../spec/voice-billing-v2.md` §9 —
+  mechanism `TODO(spec)`, OS-assistant launch recommended).
 - Camera / barcode scan.
 - Productization for shop-2 (see `productize-later.md`).
 - WhatsApp share polish.
@@ -173,6 +176,13 @@ yet)
 
 ## Recent changes
 
+- _2026-06-17_ (later) · Added **zero-touch / hands-free voice
+  activation** to the v2.1 candidates and the Phase 4 "Grow" row —
+  the owner's "don't touch my mobile, still create a bill" ask. Full
+  bill-by-voice was already designed for v2.1; the new piece is
+  no-touch **activation**, specified with two candidate mechanisms in
+  `../../spec/voice-billing-v2.md` §9 (OS-assistant launch
+  recommended; mechanism `TODO(spec)`).
 - _2026-06-17_ · Added a `## Phases (the big picture)` overview
   grouping the thirteen M0–M12 milestones into four delivery phases
   (Engine M0–M5 / App M6–M10 / Ship M11–M12 / Grow v2.1), each with
