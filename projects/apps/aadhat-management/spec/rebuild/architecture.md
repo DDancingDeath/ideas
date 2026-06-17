@@ -162,9 +162,54 @@ exists. The bill exists the moment step 3 succeeds.
 - Security tests run against the storage adapter's authorization
   layer directly, with no need to spin up a real backend.
 
-## Open questions
+## Engineering conventions
 
-- `TODO(spec)`: Decide whether the rebuild stays single-process
+Cross-cutting rules every layer and every agent follows. They are
+not business invariants (those live in [`invariants.md`](./invariants.md));
+they are how the code is built so the invariants are cheap to keep.
+
+### Entity identity — reference by stable id, never by name
+
+- Every entity (item, party, bill, cash session, user, flag) has a
+  **stable, opaque, immutable id** (`itemId`, `partyId`, `billId`,
+  `sessionId`, `userId`, `flagId`) assigned once at creation. That id
+  is the only key.
+- **A name is display data, never a key.** Names are mutable, can
+  repeat, exist in Hindi *and* English, and are corrected over time.
+  Keying by name is the v1 mistake that produced ghost stock rows
+  under `itemName` while the canonical key was `itemId`
+  ([`../../plan/review-issues.md`](../../plan/review-issues.md)
+  WALK-27) and forced `05-items.md` to call the English name the
+  "canonical key". v2 does not repeat it.
+- Projections key by id (`Map<itemId, …>`); event payloads carry ids;
+  the UI resolves a name → id **once** at pick time and then carries
+  the id. A rename is an `item_updated` / `party_updated` event — the
+  id is unchanged, so history and stock stay intact.
+- Ids are opaque: do not encode meaning in them, do not parse them,
+  and do not use them for business ordering (use `at` / `seq`).
+
+### Robust data structures and algorithms
+
+- **Pick the structure that makes the wrong state unrepresentable and
+  the invariant cheap.** Keyed maps (by id) for O(1) lookup; never an
+  array scan by name on a hot path.
+- **No super-linear work on the hot paths** (bill create, projection
+  fold, append). Folds are O(events); lookups are O(1)/O(log n);
+  avoid nested scans of the log. If a path needs more, memoize a
+  projection — never recompute per render.
+- **Exact integer arithmetic** for money/weight (paise/mg), with
+  BigInt wherever a product can exceed 2^53 (e.g. crore-scale line
+  totals). No floating-point money, ever (`M4`).
+- **Algorithms are deterministic and total** — defined for empty,
+  single, duplicate, and very large inputs; no `NaN` / `undefined`
+  leaks (v1's divide-by-zero chart bug, WALK-38). Any randomness in a
+  test runs under a fixed seed (`ci-contract.md` §invariant).
+- **Append-only, immutable data wins.** Corrections and voids are new
+  events; never mutate history in place.
+- **Bound everything** — outbox retention, list sizes, retry counts.
+  No unbounded growth, no unbounded loops.
+
+
   (offline-first with sync) or splits a small server component for
   authoritative event ordering. Default assumption: client-only with
   Firestore / backend-as-a-service, matching v1.
@@ -172,3 +217,15 @@ exists. The bill exists the moment step 3 succeeds.
   database (server-side) or computed in the client on subscription.
   Default assumption: client-side projections in v2.0, with the
   option to move to server-side later.
+
+## Recent changes
+
+- _2026-06-17_ · Added `## Engineering conventions` — two cross-cutting
+  guidelines the agents and code follow: (1) **entity identity** —
+  reference every entity by a stable opaque id (`itemId`, `partyId`,
+  `billId`, …), never by name (names are mutable display data; keying
+  by name caused the v1 WALK-27 ghost-stock bug); (2) **robust data
+  structures and algorithms** — keyed maps over name scans, no
+  super-linear work on hot paths, exact integer money math with
+  BigInt, deterministic/total algorithms (no NaN leaks), append-only
+  immutable data, bound everything.

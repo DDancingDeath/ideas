@@ -84,6 +84,13 @@ Rules:
 - The bill is the sale event. The print job is a separate concern
   with its own state machine, queue, and audit; it can never create
   or modify a sale.
+- Reference every entity by its **stable id** (`itemId`, `partyId`,
+  `billId`, …), **never by name** — names are mutable display data
+  (architecture.md §Engineering conventions).
+- Choose **robust data structures and algorithms**: keyed maps over
+  name/field scans, no super-linear work on hot paths, exact integer
+  money math (BigInt where needed), deterministic/total algorithms
+  (no `NaN`/`undefined` leaks), append-only data, bound everything.
 - If a `TODO(spec)` blocks you, stop and ask the owner; do not
   invent the answer.
 
@@ -189,6 +196,11 @@ escape.
 
 ## Recent changes
 
+- _2026-06-17_ · Added two rules to the master prompt: reference every
+  entity by its **stable id, never by name**, and choose **robust data
+  structures and algorithms** (detailed in
+  [`../../spec/rebuild/architecture.md`](../../spec/rebuild/architecture.md)
+  §Engineering conventions).
 - _2026-06-16_ · Added an `## Orchestration` pointer to the new
   [`agent-orchestration.md`](./agent-orchestration.md) (Orchestrator
   role, task-ticket format, sub-agent fan-out, coordination,
