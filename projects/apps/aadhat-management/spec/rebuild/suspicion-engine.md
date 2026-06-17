@@ -26,12 +26,56 @@
 
 ## Severities
 
-| Severity | Behaviour |
-|---|---|
-| `low` | Logged, shown as info on the bill, listed in the daily digest |
-| `medium` | Visible Review Queue entry, shows on Today's "Needs review" widget |
-| `high` | Prominent Review Queue entry; brother is notified (notification mechanism: `TODO(spec)`) |
-| `block` | The event is rejected; the user is told why and offered an override path that requires owner approval |
+What each severity does at the three places a flag must be visible —
+the counter (while the bill is being made), the Review Queue, and the
+daily report.
+
+| Severity | At billing time (inline) | After the bill | In the daily report |
+|---|---|---|---|
+| `low` | info note on the line | logged | listed |
+| `medium` | **inline confirm before save** | Review Queue entry + Today "Needs review" widget | listed, grouped by rule |
+| `high` | **inline confirm before save** | prominent Review Queue entry; brother notified (mechanism: `TODO(spec)`) | listed at the top, highlighted |
+| `block` | **save refused inline**; owner-approval override path | the override attempt shows in the Review Queue | listed |
+
+## When and where a flag surfaces
+
+A flag is not only a Review-Queue row created after the fact. For the
+rules a cashier can trip by hand — rate sanity (`price.*`), discount,
+zero-rate, stock-negative, unit / archived-item — it must surface **at
+the moment of billing** and again **in the daily report**.
+
+**1. At billing time — inline, before the bill is saved.** The rules
+that can be evaluated from client-visible state run as a
+**client-side advisory pre-check** while the bill is entered. When a
+line trips one (e.g. `price.unusually-low`, `price.unusually-high`,
+`price.below-cost`, `price.zero-rate`, `price.discount.large`):
+
+- the offending field shows an inline warning as it is typed, and
+- on **Save**, a confirm dialog names the issue and the expected
+  range — e.g. *"Aloo: rate ₹6/kg is unusually low (typical ≈ ₹60).
+  Fix the rate, or save and flag for review?"* — offering **Fix** and
+  **Save anyway** (for a `block` rule, only **Fix** plus an
+  owner-approval override).
+
+This pre-check is **advisory only** (like the stock pre-flight in
+[`concurrency.md`](./concurrency.md)); it never replaces the rule.
+The application service **re-runs the engine server-side and appends
+the authoritative `flag_raised`** in the same transaction, so an
+offline or tampered client cannot suppress it. "Save anyway" means
+*proceed and record the flag*, never *skip the flag*.
+
+**2. In the Review Queue** — every `medium` / `high` flag persists
+for the brother / owner to approve / dismiss / correct
+([`review-queue.md`](./review-queue.md)).
+
+**3. In the daily report / digest** — the day-close digest on the
+Today page (and the brother's daily routine in
+[`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md)
+§Daily) lists **every flag raised that day, grouped by severity**,
+unresolved ones highlighted. A `medium` rate flag therefore appears
+at day-close even if it was "saved anyway" at the counter and never
+fired an individual notification — nothing a cashier waved through is
+invisible to the owner at the end of the day.
 
 ## Rules (v2.0, initial set)
 
@@ -196,9 +240,26 @@ disabled — only their thresholds tuned.
   void / correction sequences; assert that no invariant is ever
   violated without a corresponding `flag_raised` (or a `block`
   rejection).
+- Surfacing (billing time): a line that trips a cashier-facing rule
+  (e.g. `price.unusually-low`) raises the inline confirm before
+  save; **Save anyway** appends the sale **and** the `flag_raised`
+  in the same transaction; a bypassed client still gets the
+  server-appended flag.
+- Surfacing (daily report): every flag raised on a given day appears
+  in that day's digest grouped by severity, unresolved highlighted —
+  asserted on a fixture where a `medium` rate flag was saved-anyway.
 
 ## Recent changes
 
+- _2026-06-17_ (later) · Specified **where a flag surfaces**: a
+  cashier-triggerable flag (rate sanity, discount, zero-rate,
+  stock-negative) now shows **inline at billing time** as a
+  client-side advisory pre-check with a Save-anyway / Fix confirm
+  (server still appends the authoritative flag — "save anyway"
+  records it, never skips it), **and** appears in the **daily
+  report** grouped by severity even if waved through at the counter.
+  Reworked the Severities table into counter / Review-Queue / daily-
+  report columns.
 - _2026-06-17_ · Closed the manually-entered-rate gap. Added
   `price.unusually-low` (a sale rate above cost but far below the
   item's typical sell rate — the fat-finger ₹6-for-₹60 case, which

@@ -60,6 +60,19 @@ are all read off the print queue's view of the bill. The bill itself
 remains `created` (or `voided` / `corrected`) at the ledger level —
 print state is not a property of the sale.
 
+### The `draft → created` transition runs the suspicion pre-check
+
+On **Save / Create**, before the sale event is appended, the
+cashier-facing suspicion rules run as a client-side **advisory
+pre-check** (rate sanity, discount, zero-rate, stock-negative). If a
+line trips one, an inline confirm appears — *"…rate is unusually low;
+Fix or Save anyway?"* — and **Save anyway proceeds and records the
+flag**, never skips it (a `block` rule refuses the save, with an
+owner-approval override). The server re-runs the engine and appends
+the authoritative `flag_raised` in the same transaction. The full
+contract is in [`suspicion-engine.md`](./suspicion-engine.md) §When
+and where a flag surfaces.
+
 ## Idempotency
 
 ### When the idempotency key is generated

@@ -35,8 +35,11 @@ Each procedure below is structured the same way:
 
 ### Daily — brother (≤ 5 min)
 
-1. Open the Review Queue. Resolve any **low** / **medium**
-   flags from the previous day.
+1. Open the Review Queue / the day's flag digest. Resolve any
+   **low** / **medium** flags from the previous day — this includes
+   any **rate anomaly** a cashier "saved anyway" at the counter
+   (`price.unusually-low` / `…-high` / `below-cost`), which the
+   daily report lists by severity.
 2. Skim Today's cash close summary. If it shows mismatch,
    confirm with staff and resolve or escalate per §Cash close
    mismatch.
