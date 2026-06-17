@@ -104,8 +104,73 @@ reference customer** until at least one other shop is piloted.
 - `TODO(spec)`: WhatsApp share of bill PDF — Core or Configurable?
   Default assumption: Core (every shop wants it).
 
+## v1 parity gaps (2026-06-17 audit)
+
+A full feature-parity audit (v1 repo `AadhatManagementApp`, ~248
+features, vs the rebuild spec) confirmed the rebuild covers every
+core domain — auth, purchase / retail / wholesale billing, drafts +
+auto-save, derived stock + adjustments, item master, cash sessions,
+outstanding, expenses + withdrawals, reports, finance, analytics,
+today, Bluetooth printing, admin / settings, diagnostics + audit,
+offline / PWA, the notification contract, WhatsApp share, and data
+export (see `data-governance.md` §Export). Four v1 features were
+present in the v1 inventory (`../capabilities.md`) but had **no
+bucket here**. They are recorded below with a recommended bucket;
+each is `TODO(spec)` until the owner confirms.
+
+- `TODO(spec)`: **Frequency-sorted item dropdown / "most-used"
+  badges** (v1 `itemFrequency`, 90-day half-life decay). The
+  `itemFrequency` collection already survives in v2
+  (`firestore-rules-design.md` §4.8), but the dropdown-sort /
+  most-used behaviour is unspecified. Recommended bucket: **Core**
+  (a billing-speed feature; the data plumbing is already kept). Needs
+  the sort/score behaviour written into the billing/items rebuild
+  contract.
+- `TODO(spec)`: **Bulk item import + item-master export (Excel /
+  CSV)** (v1 SheetJS `xlsx`: export the catalog, import to replace
+  it). v2 `data-governance.md` §Export covers bills / stock /
+  outstanding / reports / audit / ledger export but **not** an
+  item-master export row, and there is no ongoing bulk-import tool
+  (the one-time v1→v2 item import lives in `migration-cutover.md`,
+  not a reusable feature). Recommended bucket: **Configurable** —
+  add an "Item master (CSV)" export row to §Export and an owner-only
+  bulk-import tool that runs every row through the normal
+  `item_created` / `item_updated` validation gates.
+- `TODO(spec)`: **Custom finance accounts** (v1
+  `customFinanceAccounts`: owner-defined asset / liability accounts
+  that feed the Assets / net-worth view). Not modelled in the
+  rebuild Finance / analytics spec. Recommended bucket:
+  **Configurable**, off by default (owner-only manual net-worth
+  adjustment line items, audited like any other config).
+- `TODO(spec)`: **Native contact picker** (v1 Capacitor Contacts API
+  to fill the customer / supplier name on billing forms). Not in
+  `platform-compatibility.md` (which lists WhatsApp share and file
+  export as native capabilities, but not Contacts). Recommended
+  bucket: **Configurable**, Android-only, off by default (a typing
+  shortcut, not a data-integrity feature).
+
+Deliberate v2 simplifications that look like gaps but are **not** —
+do not re-add them:
+
+- Orphan / "unmatched" stock buckets (v1 keyed stock by item *name*)
+  are designed out by the entity-by-id rule (`architecture.md`
+  §Engineering conventions); there is no name-keyed bucket to orphan.
+- Full v1-event-history replay is deferred to v2.1 (decision D3); the
+  v2.0 cutover is a snapshot import of opening balances.
+- Voice billing, barcode scan, and an LLM chat were **not** in v1
+  (v1's chat is local rule-based); they are new-or-deferred, tracked
+  in `roadmap.md` §v2.1, not parity gaps.
+
 ## Recent changes
 
+- _2026-06-17_ · Added §v1 parity gaps — a full v1↔v2 feature audit
+  (~248 v1 features) confirmed the rebuild covers every core domain
+  and recorded the four v1 features that had no bucket
+  (frequency-sorted dropdown, Excel item import/export, custom
+  finance accounts, native contact picker) with a recommended bucket
+  and `TODO(spec)` for owner sign-off. Also pinned three deliberate
+  simplifications (orphan stock buckets, full-history replay, voice /
+  barcode / LLM-chat) so they are not mistaken for gaps.
 - _2026-06-17_ · Added "Per-role page visibility and optional
   capabilities" to the **Configurable** bucket — owner-editable at
   runtime from Admin → Roles & Visibility, narrowing (never widening)

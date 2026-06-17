@@ -199,6 +199,15 @@ milestones" table in that file).
 
 ## Recent changes
 
+- _2026-06-17_ · Ran a full **v1 ↔ v2 feature-parity audit** (~248 v1
+  features in `AadhatManagementApp` vs this rebuild spec). Result:
+  the rebuild covers every core domain. Recorded the four v1 features
+  that had no bucket — frequency-sorted item dropdown, Excel item
+  import/export, custom finance accounts, native contact picker — in
+  [`scope-boundaries.md`](./scope-boundaries.md) §v1 parity gaps with
+  a recommended bucket and `TODO(spec)` for owner sign-off, plus
+  three deliberate simplifications pinned so they are not re-added as
+  "gaps".
 - _2026-06-17_ · Extended [`role-permission-matrix.md`](./role-permission-matrix.md)
   with §Owner-configurable role visibility & capabilities — the
   in-product control the owner asked for. The role × permission
