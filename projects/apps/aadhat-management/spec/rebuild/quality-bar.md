@@ -127,6 +127,16 @@ Mandatory flows:
 - Today / Finance / Reports agree on the same period (R4)
 - Hindi / English labels render and fit on phone viewport
 
+**Selector convention.** E2E flows select elements by a stable
+`data-testid` (or ARIA role + an `aria-label` key) — **never by
+visible text.** The UI is Hindi/English bilingual and labels switch
+by mode, so a text selector (`getByText('Save' / 'सहेजें')`) is
+inherently flaky and would force a separate selector per language.
+The *same* flow must pass unchanged in both language modes by keying
+on language-independent test-ids. Every interactive control a flow
+touches carries a `data-testid`; adding one is part of building the
+feature, not an afterthought in the test.
+
 ### 8. Visual regression tests
 
 Screenshot the following at the phone viewport (configured exact
@@ -250,3 +260,12 @@ real phone with a real printer:
 
 This is the only place hardware is touched; everything else is
 mocked in CI.
+
+## Recent changes
+
+- _2026-06-17_ · Added a **selector convention** to §7 (E2E):
+  Playwright flows select by stable `data-testid` / ARIA role, never
+  by visible text, so the same flow passes unchanged in both
+  Hindi-leading and English-leading label modes (the bilingual UI
+  would otherwise make text selectors flaky). Every interactive
+  control carries a `data-testid` as part of the feature.
