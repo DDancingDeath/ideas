@@ -18,6 +18,32 @@ For each milestone the order inside is always:
 6. **Audit + release note** — every milestone produces a short note
    for the owner and the brother.
 
+## Phases (the big picture)
+
+The thirteen milestones below are the **execution granularity** —
+small enough that one Orchestrator can drive each to a green build
+(see [`agent-orchestration.md`](./agent-orchestration.md)). For the
+owner's mental model they cluster into **four delivery phases**, each
+ending at a natural trust gate:
+
+| Phase | Milestones | Ends when… | Gate |
+|---|---|---|---|
+| **1 — Engine** | M0–M5 | the business core is headless, fully tested, and cannot produce wrong data | scenarios + invariants + suspicion all green; the worked-example canary passes — no screens yet |
+| **2 — App** | M6–M10 | every screen works on a phone over the green engine | all Playwright flows + visual snapshots green; Today/Finance/Reports agree (R4) |
+| **3 — Ship** | M11–M12 | the family is actually running v2 | real-printer smoke passes; snapshot import + dual-run + cutover with rollback ([`migration-cutover.md`](./migration-cutover.md)) |
+| **4 — Grow** | v2.1 | (optional, after cutover) | AI assistant, voice v2, camera/barcode, productization for shop-2 |
+
+**Why four, not fewer or more.** Fewer phases would blur the one gate
+that matters most — *the engine is provably correct before any
+screen exists* (the whole point of the "rules before screens"
+sequencing). More phases would just rename the milestones; thirteen
+is already the build granularity. Phase 1 is where the test-first
+discipline and agent roster pay for themselves; Phases 2–3 are
+"downhill work" precisely because Phase 1 made the safety net real.
+
+Do **not** start a later phase to escape a red gate in an earlier one
+— a screen on a wrong engine is worse than no screen.
+
 ## Milestones
 
 ### M0 — Foundation (no screens yet)
@@ -144,3 +170,13 @@ yet)
 - Cutting over in M12 without a dual-run window. v1 is in
   production every day; the bar for switching is the bar for
   trust.
+
+## Recent changes
+
+- _2026-06-17_ · Added a `## Phases (the big picture)` overview
+  grouping the thirteen M0–M12 milestones into four delivery phases
+  (Engine M0–M5 / App M6–M10 / Ship M11–M12 / Grow v2.1), each with
+  its trust gate, plus the rationale for four (keep the
+  engine-correct-before-screens gate; don't start a later phase to
+  escape an earlier red gate). The milestones themselves are
+  unchanged — this is the owner-facing altitude above them.
