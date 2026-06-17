@@ -602,6 +602,17 @@ see [`invariants.md`](./invariants.md) §Calculation integrity):**
 31. `month-spanning-report` — activity across a month boundary;
     period totals equal replay; analytics month projection is sane.
 
+**Rate sanity (manually-entered rate too low / too high):**
+
+32. `fat-finger-low-rate` — a sale rate **above cost** but ~1/10 the
+    item's typical sell rate raises `price.unusually-low` (not
+    `price.below-cost`); a correct rate at the same item raises
+    nothing.
+33. `purchase-rate-typo` — a manually-entered purchase rate far from
+    the item's recent purchase rate raises `price.purchase-rate-unusual`
+    and the bad rate does not silently shift the moving-average that
+    `price.below-cost` / `unusually-high` / `unusually-low` depend on.
+
 When one of these is written, move it into the Catalog table and
 delete its line here.
 
@@ -624,6 +635,11 @@ A scenario without a corresponding test is incomplete.
 
 ## Recent changes
 
+- _2026-06-17_ · Added a `Rate sanity` scenario group (32
+  `fat-finger-low-rate`, 33 `purchase-rate-typo`) alongside the new
+  `price.unusually-low` / `price.purchase-rate-unusual` suspicion
+  rules, so a manually-entered rate that is too low (above cost) or a
+  bad purchase rate is covered by a fixture.
 - _2026-06-16_ (later, 2) · Expanded the Coverage-map gap list from 9
   to 31 named scenarios, grouped by class — core lifecycle,
   **calculation edges** (guarding the wrong-but-consistent-formula

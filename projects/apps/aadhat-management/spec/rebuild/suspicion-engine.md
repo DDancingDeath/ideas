@@ -56,6 +56,22 @@
 | `price.discount.exceeds-limit` | Discount exceeds the absolute discount limit for the user's role | `block` |
 | `price.zero-rate` | Sale rate == 0 with non-zero quantity | `medium` |
 | `price.unusually-high` | Sale rate > `shopProfile.pricing.maxRateMultiple` × moving-average for that item | `medium` |
+| `price.unusually-low` | Sale rate is **above cost** (so `price.below-cost` does not fire) but below `(1 / shopProfile.pricing.maxRateMultiple)` × the item's **typical sell rate** — catches a fat-finger such as ₹6 entered for a ₹60 item | `medium` |
+| `price.purchase-rate-unusual` | A manually-entered **purchase** rate deviates from the item's recent purchase rate by more than `shopProfile.pricing.maxRateMultiple`× in **either** direction — protects the moving-average cost baseline that the rules above all anchor on | `medium` |
+
+> **Baseline and new items.** The high/low *sale*-rate rules need a
+> reference. They anchor on the item's **typical sell rate** — its
+> configured master rate, else the recent median from the
+> [`projections.md`](./projections.md#rate-history-per-item)
+> Rate-history projection; the cost-based rules anchor on the
+> moving-average purchase rate. An item's **first-ever** transaction
+> has neither baseline, so its rate is then guarded only by the item
+> master's `rateCeilingPaise` ceiling
+> ([`data-governance.md`](./data-governance.md) §Validation gates)
+> and `price.zero-rate`. `TODO(spec)`: add a symmetric
+> `shopProfile.items.rateFloorPaise` (or require owner-confirm on the
+> first sale of a never-sold item) to cover the weakest case — a
+> brand-new item priced far too low with no history to compare to.
 
 ### Duplicate / replay rules
 
@@ -180,3 +196,16 @@ disabled — only their thresholds tuned.
   void / correction sequences; assert that no invariant is ever
   violated without a corresponding `flag_raised` (or a `block`
   rejection).
+
+## Recent changes
+
+- _2026-06-17_ · Closed the manually-entered-rate gap. Added
+  `price.unusually-low` (a sale rate above cost but far below the
+  item's typical sell rate — the fat-finger ₹6-for-₹60 case, which
+  `price.below-cost` and `price.unusually-high` both miss) and
+  `price.purchase-rate-unusual` (a manually-entered purchase rate
+  far from recent, in either direction — protects the moving-average
+  cost baseline the other rate rules anchor on). Documented the
+  baseline each rule uses and flagged the brand-new-item-no-history
+  case as the weakest spot (`TODO(spec)`: `rateFloorPaise` or
+  first-sale owner-confirm).
