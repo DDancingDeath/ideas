@@ -52,6 +52,11 @@ reference customer** until at least one other shop is piloted.
 - Discount limit per role (staff / manager / owner).
 - Item units allowed (kg, packet, piece, …).
 - Wholesale vs retail availability per role.
+- Per-role page visibility and optional capabilities, owner-editable
+  at runtime from Admin → Roles & Visibility (see
+  `role-permission-matrix.md` §Owner-configurable role visibility &
+  capabilities). The fixed matrix is the ceiling; this config only
+  narrows it, never widens it.
 - Printer model / connection profile.
 - Currency / locale (defaults to `en-IN`, `₹`).
 - Audit log retention window (v1 = 90 days; configurable in v2).
@@ -98,3 +103,13 @@ reference customer** until at least one other shop is piloted.
   ship the rest first.
 - `TODO(spec)`: WhatsApp share of bill PDF — Core or Configurable?
   Default assumption: Core (every shop wants it).
+
+## Recent changes
+
+- _2026-06-17_ · Added "Per-role page visibility and optional
+  capabilities" to the **Configurable** bucket — owner-editable at
+  runtime from Admin → Roles & Visibility, narrowing (never widening)
+  the fixed role × permission ceiling. Generalises the existing
+  "Wholesale vs retail availability per role" and "Discount limit per
+  role" lines. Full contract in `role-permission-matrix.md`
+  §Owner-configurable role visibility & capabilities.

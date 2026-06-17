@@ -90,8 +90,11 @@
 17. [`role-permission-matrix.md`](./role-permission-matrix.md) — full
     role × event-type matrix, projection-read matrix, special
     principals (`engine`, `queue worker`), API-bypass guarantee,
-    and the staff edit-time-limit rule
-    (`shopProfile.staff.editGraceMin`).
+    the staff edit-time-limit rule
+    (`shopProfile.staff.editGraceMin`), and the **owner-configurable
+    role-visibility layer** (`shopProfile.roleConfig`) that lets the
+    owner hide pages / switch off capabilities per role at runtime,
+    narrowing the fixed matrix ceiling without ever widening it.
 18. [`suspicion-engine.md`](./suspicion-engine.md) — the anomaly
     detector that turns "the data looks off" into Review Queue items.
 19. [`review-queue.md`](./review-queue.md) — the page the owner /
@@ -196,6 +199,21 @@ milestones" table in that file).
 
 ## Recent changes
 
+- _2026-06-17_ · Extended [`role-permission-matrix.md`](./role-permission-matrix.md)
+  with §Owner-configurable role visibility & capabilities — the
+  in-product control the owner asked for. The role × permission
+  matrices become the fixed **ceiling**; `shopProfile.roleConfig`
+  lets the owner, from Admin → Roles & Visibility, hide pages and
+  switch off optional within-ceiling capabilities per non-owner role
+  at runtime. Config **narrows, never widens** (no escalation), with
+  hard floors (owner immutable, structural owner-only powers
+  unreachable, audit/block-rules immovable, visibility ⊇ action,
+  don't-lock-out-billing), enforced server-side on the same path as
+  the base matrix. Cross-referenced from
+  [`scope-boundaries.md`](./scope-boundaries.md) (Configurable
+  bucket) and [`event-schemas.md`](./event-schemas.md)
+  (`shop_profile_updated` validation). Default config reproduces the
+  spec cell-for-cell.
 - _2026-06-16_ (later) · Added [`analytics.md`](./analytics.md) (#26)
   — the v2 business-analytics contract (forecasts, profit/margin
   trends, items-to-focus, dead stock, receivables/payables aging,

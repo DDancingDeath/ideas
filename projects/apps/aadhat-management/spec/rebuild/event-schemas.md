@@ -548,6 +548,12 @@ payload: {
 
 Validation: only owner principal. `changes` non-empty. Disabling a
 `block`-severity rule is rejected (`suspicion-engine.md` §Configurability).
+When `changes.roleConfig` is present it is validated against the
+**hard floors** in `role-permission-matrix.md` §Owner-configurable
+role visibility & capabilities — any grant beyond the matrix ceiling
+is clamped, and a config that violates a floor (escalation, owner
+key, visibility ⊇ action, lock-out-billing) is rejected with
+`SCHEMA_INVALID`.
 
 Idempotency key: `shop.profile:{changeHash}`.
 
@@ -642,6 +648,13 @@ dev / staging) a `context` blob useful for tests.
 
 ## Recent changes
 
+- _2026-06-17_ · Extended `shop_profile_updated` validation for the
+  new owner-configurable role layer: a `changes.roleConfig` patch is
+  validated against the hard floors in `role-permission-matrix.md`
+  §Owner-configurable role visibility & capabilities (grants beyond
+  the matrix ceiling are clamped; floor violations are rejected with
+  `SCHEMA_INVALID`). No new event type — role visibility rides the
+  existing owner-only `shop_profile_updated`.
 - _2026-06-16_ (later) · Reframed the stale weight-unit `TODO(spec)`
   in §Open questions from "decide kg vs mg before M0" to "decision is
   frozen (decisions row 8 = integer mg); migrate this file's kg
