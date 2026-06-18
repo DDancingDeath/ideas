@@ -39,8 +39,14 @@ reference customer** until at least one other shop is piloted.
 - Period math: every "total for a period" goes through one helper.
   v1 calls this `PeriodMath`; the rebuild keeps the single-source-of-
   truth rule but may rename or split it.
-- Hindi + English UI labels in the same render (inline bilingual,
-  not a locale toggle — matches v1).
+- **Full Hindi/English UI localization with a single app-wide toggle**
+  (instant, no reload, Hindi-first) — see `localization.md`. All chrome
+  comes from a message catalog; item/party names remain bilingual data.
+  (This supersedes the earlier "inline bilingual, not a locale toggle"
+  scope; the owner asked for a real language switch.)
+- **Production-grade UI quality** — the v1 app is the *floor*, not the
+  ceiling. Design tokens, reusable components, mobile bottom-nav,
+  every-state coverage, accessibility. See `ui-standards.md`.
 
 ## Configurable (per-shop profile)
 
@@ -166,6 +172,14 @@ do not re-add them:
   in `roadmap.md` §v2.1, not parity gaps.
 
 ## Recent changes
+
+- _2026-06-18_ · Replaced the "inline bilingual, not a locale toggle"
+  Core line with **full Hindi/English localization via a single
+  app-wide toggle** (new `localization.md`) and added a
+  **production-grade UI quality** Core line (new `ui-standards.md`),
+  both driven by the owner's "make it production, not POC" +
+  "localization support" asks. Item/party names stay bilingual data;
+  app chrome is now catalog-driven and toggle-switched.
 
 - _2026-06-17_ (later) · Noted under the Voice-billing disputed item
   that **zero-touch / hands-free activation** (no-touch app launch +

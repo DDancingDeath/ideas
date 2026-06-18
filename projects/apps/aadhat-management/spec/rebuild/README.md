@@ -168,6 +168,14 @@
     traced end-to-end through every layer (UI intent → service →
     event → projection → print → audit → tests). Read this once
     to make every other doc click into place.
+34. [`ui-standards.md`](./ui-standards.md) — the production-grade UI
+    bar (v1 as the *floor*): design tokens, reusable components, mobile
+    bottom-nav, every-state coverage, accessibility, UI definition-of-
+    done. The visual quality counterpart to `quality-bar.md`.
+35. [`localization.md`](./localization.md) — full Hindi/English app
+    localization via a single runtime toggle: message catalog, Hindi-
+    first authoring, adopt-v1-terminology rule, data-vs-chrome split,
+    number/currency/date handling, and the tests it requires.
 
 ## Relationship to the v1 page-specs
 
@@ -198,6 +206,17 @@ milestone-specific (see the "Open questions that block specific
 milestones" table in that file).
 
 ## Recent changes
+
+- _2026-06-18_ · Added two production docs and indexed them (34, 35):
+  [`ui-standards.md`](./ui-standards.md) (production-grade UI bar — v1
+  is the floor, with tokens/components/nav/states/accessibility) and
+  [`localization.md`](./localization.md) (full Hindi/English app toggle
+  via a message catalog, Hindi-first, adopt-v1-terminology). Updated
+  [`scope-boundaries.md`](./scope-boundaries.md) Core: replaced the old
+  "inline bilingual, not a locale toggle" line with the real
+  language-switch requirement and a production-UI-quality line. Driven
+  by the owner's "make it production, not POC" and "localization
+  support" asks.
 
 - _2026-06-17_ · Ran a full **v1 ↔ v2 feature-parity audit** (~248 v1
   features in `AadhatManagementApp` vs this rebuild spec). Result:
