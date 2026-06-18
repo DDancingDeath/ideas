@@ -47,24 +47,26 @@ and English-leading label modes".
 The catalog's English column uses the **v1 app's established terms**
 — the owner prefers them and the staff already know them — not
 invented words. The rebuild must not introduce ad-hoc names (e.g.
-"udhaar") where v1 used a specific term. The canonical EN/HI term for
-every concept lives in the catalog; representative entries (to be
-finalized against the v1 app's labels):
+"udhaar") where v1 used a specific term. Confirmed verbatim from the v1
+app's navigation (`DDancingDeath/AadhatManagementApp`,
+`www/templates/navigation.html`):
 
-| Concept | English (per v1) | Hindi |
+| Concept | English (v1 nav label) | Hindi (catalog) |
 |---|---|---|
-| Daily home | `TODO(spec)` — confirm v1 ("Day"/"Today") | आज / दिन |
+| Daily home | Today | आज |
 | Retail billing | Billing | बिलिंग |
-| Wholesale | `TODO(spec)` — v1 ("Sales"/"Wholesale") | थोक |
+| Wholesale sale | **Sales** (v1 calls wholesale "Sales") | बिक्री |
 | Purchase | Purchase | खरीद |
-| Live stock | Stock | स्टॉक |
-| Money owed/owing | `TODO(spec)` — v1 ("Due"/"Outstanding") | बकाया |
-| Item catalogue | Items | आइटम / सामान |
+| Live stock | **Stocks** (plural in v1 nav) | स्टॉक |
+| Money owed/owing | **Outstanding** (not "Udhaar"/"Due") | बकाया |
+| Item catalogue | Items | सामान |
 | Cash session | Cash | नकद |
-| Reports/analytics | `TODO(spec)` — v1 names | रिपोर्ट |
+| Reports/analytics | Reports | रिपोर्ट |
 
-> `TODO(spec)`: fill this table verbatim from the v1 app's navigation
-> and screen titles (research task) before the i18n work lands.
+> Note: in v1, retail "Sale" lives inside the Billing tab as a mode
+> switch, while the **Sales** nav tab is wholesale-only — the rebuild
+> keeps wholesale under "Sales". These names are implemented in
+> `apps/web/src/lib/messages.ts` and asserted by `apps/web/test/i18n.test.ts`.
 
 ## Data vs UI chrome (reconciling the old decision)
 
@@ -134,3 +136,9 @@ handling.
   localized), number/currency/date handling, the toggle's behaviour
   and default, and the required tests. Cross-references
   `ui-standards.md`, `quality-bar.md`, `ergonomics.md`.
+- _2026-06-18_ (later) · Filled the canonical terminology table verbatim
+  from the v1 app's `navigation.html` (Today, Billing, **Sales** =
+  wholesale, Purchase, **Stocks**, **Outstanding**, Items, Cash,
+  Reports) — the `TODO(spec)` is closed. These names + the EN↔HI toggle
+  are implemented in the `bahi` web app (`apps/web/src/lib/messages.ts`,
+  `i18n.svelte.ts`) and locked by `apps/web/test/i18n.test.ts`.
