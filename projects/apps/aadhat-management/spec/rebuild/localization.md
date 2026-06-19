@@ -79,6 +79,36 @@ app's navigation (`DDancingDeath/AadhatManagementApp`,
   other shown inline where helpful (e.g. dropdowns, receipts). An
   item with no Hindi name still shows its English name in Hindi mode.
 
+### Item-name entry: auto-transliterate the other field
+
+Because every item carries both an English and a Hindi name, the
+add/edit-item form must **reduce double typing**: as the user types one
+name, the **other field is auto-filled by transliteration**, and the
+suggestion remains **freely editable**.
+
+Requirements:
+
+1. **Both directions.** Typing the English name fills the Hindi name
+   (e.g. `Mahua` → `महुआ`); typing the Hindi name fills the English name.
+2. **Best-effort suggestion, never authoritative.** Phonetic
+   transliteration of casual spellings is imperfect (`Atta` may suggest
+   a rough `अत्त` rather than `आटा`). The auto-filled value is only a
+   starting point — the owner can overwrite it, and the stored name is
+   always whatever is in the field.
+3. **Never clobber a manual edit.** Once the user edits a field by hand,
+   typing in the *other* field must **not** overwrite their edit. (Track
+   per-field "auto vs manual"; the field the user is actively typing
+   drives the other only while the other is still auto-derived.) Reset
+   to auto on a new item.
+4. **Offline.** Transliteration runs client-side (no network) so it
+   works in the PWA's offline mode — a rule-based library with light
+   cleanup (e.g. strip a trailing virama so `दल्` → `दल`).
+
+This is item-entry UX, not chrome localization — it is independent of the
+EN/HI toggle and applies in either UI language. Implemented in the web
+app's Items screen; covered by a unit test (type English → Hindi
+auto-fills; a manual Hindi edit survives further English typing).
+
 ## Numbers, currency, dates
 
 - **Currency**: always `₹`, Indian digit grouping (`₹1,24,500.00`),
@@ -142,3 +172,9 @@ handling.
   Reports) — the `TODO(spec)` is closed. These names + the EN↔HI toggle
   are implemented in the `bahi` web app (`apps/web/src/lib/messages.ts`,
   `i18n.svelte.ts`) and locked by `apps/web/test/i18n.test.ts`.
+- _2026-06-19_ · Added §"Item-name entry: auto-transliterate the other
+  field" — typing one item name auto-fills the other (EN↔HI) as an
+  **editable, best-effort** suggestion that never clobbers a manual edit;
+  runs offline. Owner request ("if I added Mahua in English, Hindi should
+  default to महुआ … should be modifiable"). Implemented in the Bahi Items
+  screen with a unit test.
