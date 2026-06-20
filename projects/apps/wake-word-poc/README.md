@@ -91,6 +91,7 @@ Next: wire Porcupine with a custom `Hey Laddu` keyword for production-grade alwa
 
 ## Recent changes
 
+- _2026-06-21_ · **Always-on (background) listening** added via a microphone foreground service (`WakeWordService`) + ongoing notification; the *Simulate wake word* button now triggers directly; added Robolectric + detector tests (24 pass). APK refreshed at the [v1.0.0-poc release](https://github.com/DDancingDeath/wake-word-poc-app/releases/tag/v1.0.0-poc).
 - _2026-06-20_ · **Debug APK built & released** — `gradlew :app:assembleDebug` green (AGP 8.7.2 / Android SDK 35 / JDK 17) and all 18 unit tests pass; downloadable APK at the [v1.0.0-poc release](https://github.com/DDancingDeath/wake-word-poc-app/releases/tag/v1.0.0-poc).
 - _2026-06-20_ · **Built the POC** — Android (Kotlin) app implementing the full Detection Behavior + 5 s cooldown, with Manual and SpeechRecognizer detectors and a documented Porcupine stub; pure-Kotlin core unit-tested. Code: [DDancingDeath/wake-word-poc-app](https://github.com/DDancingDeath/wake-word-poc-app).
 - _2026-06-20_ · Spec authored — Detection Behavior, Text-to-Speech requirements, 5 s cooldown, expected flow; future per-keyword responses noted; wake-word engine left open.
