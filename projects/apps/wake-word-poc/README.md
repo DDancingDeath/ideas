@@ -44,11 +44,15 @@ This README stays conceptual. The exact detection behavior, Text-to-Speech contr
 
 ## What it does today (and what's next)
 
-Status: **design / spec only, no code yet.**
+Status: **POC implemented.** The Android app lives in its own repo:
+[`DDancingDeath/wake-word-poc-app`](https://github.com/DDancingDeath/wake-word-poc-app)
+— this repo stays docs-only.
 
-The functional spec is complete for the MVP loop: Detection Behavior, Android Text-to-Speech requirements, 5 s cooldown, expected flow, data model, permissions, offline/privacy baseline, and future per-keyword responses are captured. The central undecided piece is the wake-word engine.
+The functional spec is complete for the MVP loop: Detection Behavior, Android Text-to-Speech requirements, 5 s cooldown, expected flow, data model, permissions, offline/privacy baseline, and future per-keyword responses are captured.
 
-Next: pick the engine, then build a walking skeleton that proves the keyword can fire a detection callback. After that, wire the fixed response routine end-to-end.
+**Built:** the full response routine (counter, timestamp, vibrate, toast, 3 s indicator, TTS `Hey Hitesh`) and the 5 s cooldown, behind an engine-agnostic `WakeWordDetector`. Shipped detectors: **Manual** (default, keyless test trigger) and **SpeechRecognizer** (free, real spoken-phrase); **Porcupine** is a documented production stub. The pure-Kotlin core (counter + cooldown state machine, phrase matcher) is unit-tested.
+
+Next: wire Porcupine with a custom `Hey Laddu` keyword for production-grade always-on detection; optional persistence + foreground service (see open questions).
 
 ---
 
@@ -87,5 +91,6 @@ Next: pick the engine, then build a walking skeleton that proves the keyword can
 
 ## Recent changes
 
+- _2026-06-20_ · **Built the POC** — Android (Kotlin) app implementing the full Detection Behavior + 5 s cooldown, with Manual and SpeechRecognizer detectors and a documented Porcupine stub; pure-Kotlin core unit-tested. Code: [DDancingDeath/wake-word-poc-app](https://github.com/DDancingDeath/wake-word-poc-app).
 - _2026-06-20_ · Spec authored — Detection Behavior, Text-to-Speech requirements, 5 s cooldown, expected flow; future per-keyword responses noted; wake-word engine left open.
 - _2026-06-20_ · initial scaffold

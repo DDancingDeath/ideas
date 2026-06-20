@@ -5,7 +5,7 @@ For "what to build", see `../spec/`.
 
 ## Current status
 
-Design only. The functional spec is complete for the fixed wake-word response loop — Detection Behavior, Android Text-to-Speech requirements, cooldown, expected flow, non-goals, and open questions are captured. There is no application code yet, and the wake-word engine decision is still pending.
+POC built. The Android app ([DDancingDeath/wake-word-poc-app](https://github.com/DDancingDeath/wake-word-poc-app)) implements the full response loop (M1 + M2): counter, timestamp, vibrate, toast, 3 s indicator, TTS `Hey Hitesh`, and the 5 s cooldown, behind an engine-agnostic `WakeWordDetector`. Shipped detectors are Manual (default) and SpeechRecognizer (free, real); Porcupine remains the production engine to wire (M3).
 
 ## Roadmap
 
@@ -24,7 +24,7 @@ Design only. The functional spec is complete for the fixed wake-word response lo
 
 ## Known issues / debt
 
-- None yet — new project, no code.
+- SpeechRecognizer detector is POC-grade — continuous recognition is battery-heavy and is not a true always-on hotword engine; production needs Porcupine. Config-change/rotation resets the in-session counter (acceptable per spec; persistence is an open question).
 - Spec wording mismatch: Detection Behavior says toast plus in-app indicator, while Expected Flow says "shows notification". MVP treats these as the same toast + in-app indicator, not a status-bar notification. `TODO(spec)`: confirm whether a persistent Android status-bar notification is also required, especially if the always-on foreground service path is chosen.
 
 ## Decision log
@@ -33,3 +33,4 @@ Append-only. Each entry: date · decision · rationale · alternatives considere
 
 - 2026-06-20 · Scope the MVP to a single fixed `Hey Hitesh` response and defer speech-to-text plus personalization · Rationale: verify the wake-word pipeline cheaply end-to-end before building command or billing behavior on top of it · Considered: jumping straight to multi-keyword / personalized responses.
 - 2026-06-20 · Leave the wake-word engine undecided, with Porcupine the leading candidate · Rationale: the spec is engine-agnostic after the detection callback, so the choice can be made at build time; Porcupine is already named in the aadhat-management voice-billing spec and supports custom on-device keywords · Considered: committing to Android `SpeechRecognizer`, rejected for now because it is not a true always-on wake-word engine.
+- 2026-06-20 · Build the POC with an engine-agnostic `WakeWordDetector`, a Manual (keyless) default detector, and a free, real `SpeechRecognizer` detector; ship Porcupine as a documented stub · Rationale: delivers a fully working, testable response loop today with no paid key or custom keyword model, while keeping the production engine swap-in trivial · Considered: blocking the build on a Porcupine access key + a custom `Hey Laddu.ppn` model (deferred to production).
