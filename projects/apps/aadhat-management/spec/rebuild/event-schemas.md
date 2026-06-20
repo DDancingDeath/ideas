@@ -303,7 +303,8 @@ payload: {
   amount: Paise;
   kind: 'business' | 'personal';
   payment: Payment;                    // due is normally 0 for expenses
-  note?: string;
+  payee?: string;                      // optional: who was paid (v1 04-expenses "payee/person")
+  note?: string;                       // optional: reason / memo for the spend
   occurredAt: IsoDate;
 }
 ```

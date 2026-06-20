@@ -352,6 +352,10 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-06-20_ · `event-schemas.md` · added optional `payee` (who was paid) to
+  `expense_recorded`, alongside the existing `note?`, to support v1's Expenses
+  payee/person + reason fields (page-spec `04-expenses`); mirrors
+  `withdrawal_recorded.payee`. Implemented in bahi v2.
 - _2026-06-20_ · Mined the (now-deleted) `AadhatManagementApp-staging` repo's
   May-2026 audit/fix pass for v2-relevant findings (most were already covered).
   Added the carried-over spec rules: **no ad-hoc date parsing**
