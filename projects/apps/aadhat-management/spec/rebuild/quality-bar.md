@@ -201,6 +201,15 @@ sampling, long-task counting) on a defined synthetic dataset.
 
 (Lower priority than business correctness, but in scope for v2.0.)
 
+## Usage-driven test priority
+
+- **Usage-driven test priority.** Once usage analytics exist, a PR
+  touching a feature in the top traffic tier (for example,
+  `≥50 uses/week`) must add or update tests for it.
+- Work on a zero-use surface emits a review warning.
+- High-traffic paths, including billing and voice, always require
+  tests.
+
 ## Definition of done
 
 A feature ships when:

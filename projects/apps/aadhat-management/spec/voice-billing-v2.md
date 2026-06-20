@@ -125,6 +125,8 @@ confirmation via `window.speechSynthesis`.
 - Clear: *"cleared"* / *"साफ़ कर दिया"*.
 - Unknown utterance: no TTS (a toast is enough; avoid spamming).
 - Respect the **TTS toggle** from A5; default on.
+- Cancel any in-flight TTS before speaking the next readback, so stale
+  audio does not overlap the current confirmation.
 
 **Why this first:** biggest UX gain per line of code. A shopkeeper holding
 a scale can't glance at the phone every utterance.
@@ -134,17 +136,20 @@ a scale can't glance at the phone every utterance.
 - Pick a `hi-IN` voice from `speechSynthesis.getVoices()` once on init;
   cache; fall back to default.
 - Call `speak()` from `_handleUtterance` after each success branch.
+- `speak()` calls `speechSynthesis.cancel()` before `speechSynthesis.speak()`.
 
-**Test:** mock `window.speechSynthesis` in jest, assert `.speak()` was
-called with the expected utterance string for each branch.
+**Test:** mock `window.speechSynthesis` in jest, assert `.cancel()` runs
+before `.speak()` and `.speak()` receives the expected utterance string
+for each branch.
 
 **Depends on:** A5 (so the toggle exists). Build A5 first → A1.
 
 ---
 
 #### A2. Multi-item utterance
-**What:** Parser learns separators `and` / `aur` / `और` / `,` / `;` and
-returns an **array** of `add` intents rather than a single intent.
+**What:** Parser learns separators `and` / `aur` / `phir` / `और` / `,` /
+`;` and returns an **array** of `add` intents rather than a single
+intent.
 *"10 kilo aloo at 30 and 5 kilo pyaaz at 25"* → two rows staged.
 
 **Implementation:**
@@ -160,6 +165,7 @@ returns an **array** of `add` intents rather than a single intent.
 **Test:** at least 10 new cases:
 - 2-item English with `and`
 - 2-item Hindi with `aur`
+- 2-item Hinglish with `phir`
 - 2-item Devanagari with `और`
 - Comma-separated, 3 items
 - Mixed: `"10 kg aloo 30, pyaaz 25"` (item-without-weight middle slot)
@@ -170,23 +176,27 @@ returns an **array** of `add` intents rather than a single intent.
 
 #### A3. Customer-name dictation
 **What:** A trigger word (`customer` / `ग्राहक` / `naam`) followed by 1–3
-tokens fills the customer name field.
+tokens fills the customer name field. Also support the suffix form
+`<name> ke liye` / `<name> के लिए`.
 - *"customer Ramesh Kumar, 10 kilo aloo at 30"*
   → `customerName` = "Ramesh Kumar", then row added.
 - *"ग्राहक रमेश, दस किलो आलू"*  → same.
+- *"Ramesh ke liye 10 kilo aloo"* / *"रमेश के लिए दस किलो आलू"*
+  → same suffix-form capture.
 - Capture stops at the first number, separator, or unit word — so a name
   never leaks into item-match territory.
 
 **Implementation:**
 - New `extractCustomerName(text)` runs **before** item-match, removes the
   matched span from the working text so item-match isn't confused.
-- New trigger word list `CUSTOMER_PHRASE_LIST` in voice-billing.js.
+- New trigger word list `CUSTOMER_PHRASE_LIST` in voice-billing.js, plus
+  suffix matching for `ke liye` / `के लिए`.
 - Manager fills `customerName` (purchase) or `saleCustomerName` (sale)
   depending on `_mode`.
 
-**Test:** ≥6 cases covering English/Hindi triggers, multi-word names,
-name with item in same utterance, name only, no trigger (must not
-match).
+**Test:** ≥6 cases covering English/Hindi triggers, suffix `ke liye` /
+`के लिए`, multi-word names, name with item in same utterance, name only,
+no trigger (must not match).
 
 ---
 

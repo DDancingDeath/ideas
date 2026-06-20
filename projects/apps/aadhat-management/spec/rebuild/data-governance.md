@@ -218,6 +218,15 @@ cost is trivial relative to the value of an honest history.
   [`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md)
   §Lost phone.
 
+## Security and abuse prevention
+
+- **App Check is a production gate.** Firebase App Check is
+  required in production for every Firebase client: reCAPTCHA v3
+  on web and Play Integrity on Android.
+- App Check is enforced alongside strict Firestore rules.
+  Possession of the public web config alone is not sufficient to
+  issue Firestore requests.
+
 ## Export
 
 The owner can export:

@@ -156,6 +156,21 @@ midnight".
   detail view shows both shop time and the original `clientAt`
   for traceability.
 
+## Date parsing
+
+- **No ad-hoc date parsing.** Every module, including billing UI,
+  chat, and support, produces and compares shop-local dates only
+  through the single shared clock / date adapter using the shop
+  timezone (`shopProfile.timezone`, default `Asia/Kolkata`).
+- Modules must not call `new Date(str)`,
+  `toISOString().slice(0,10)`, or per-module parsers for business
+  dates.
+- An absent or unparseable date is rejected or flagged. It is never
+  silently defaulted via `new Date()`.
+- v1 staging audit finding: module-local parsers and
+  `parseDate || new Date` fallbacks caused off-by-one /
+  wrong-day bugs across reports, finance, cash, and chat.
+
 ## Display rules
 
 | Surface | Time shown | Notes |

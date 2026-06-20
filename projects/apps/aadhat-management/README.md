@@ -352,6 +352,23 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-06-20_ · Mined the (now-deleted) `AadhatManagementApp-staging` repo's
+  May-2026 audit/fix pass for v2-relevant findings (most were already covered).
+  Added the carried-over spec rules: **no ad-hoc date parsing**
+  ([`spec/rebuild/time-clock.md`](./spec/rebuild/time-clock.md)), **mutate-by-id,
+  not by rendered index** ([`spec/rebuild/ergonomics.md`](./spec/rebuild/ergonomics.md)),
+  **App Check as a production gate**
+  ([`spec/rebuild/data-governance.md`](./spec/rebuild/data-governance.md)),
+  **usage-driven test priority** ([`spec/rebuild/quality-bar.md`](./spec/rebuild/quality-bar.md)),
+  a **performance-diagnostics panel + local-first usage analytics**
+  ([`spec/rebuild/observability.md`](./spec/rebuild/observability.md),
+  [`spec/rebuild/performance-budgets.md`](./spec/rebuild/performance-budgets.md)),
+  a **`users/{uid}/preferences`** Firestore rule
+  ([`spec/firestore-rules-design.md`](./spec/firestore-rules-design.md)), and three
+  voice-grammar refinements ([`spec/voice-billing-v2.md`](./spec/voice-billing-v2.md)).
+  The v2-side correctness gaps it surfaced (caller-supplied bill numbers, UTC
+  bill-date defaults, unpersisted per-bill settlement allocations, receipt ESC/POS
+  hygiene) are tracked in the bahi repo's `PENDING-ITEMS.md`.
 - _2026-06-16_ (later, 3) · Added a v2 **analytics** spec
   ([`spec/rebuild/analytics.md`](./spec/rebuild/analytics.md)) —
   forecasts, profit/margin trends, items-to-focus, dead stock,

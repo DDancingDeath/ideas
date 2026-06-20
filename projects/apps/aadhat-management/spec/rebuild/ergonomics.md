@@ -103,6 +103,16 @@ desktop" is not a target.
 - Long-press gestures are reserved for diagnostics and copy-id
   actions; never for primary write actions.
 
+## List mutations
+
+- **Mutate by id, not by index.** Destructive and list-mutating
+  actions (edit, delete, settle) reference an entity by its stable
+  id, never by a rendered array index.
+- An invalid or absent id is a no-op with a traceable error. It
+  never falls back to an index-based mutation.
+- v1 staging audit finding: `parseInt(...) → NaN` followed by
+  `splice(NaN, 1)` silently deleted row 0.
+
 ## Confirmations only where they matter
 
 - Confirm dialogs are a **tax** on the staff. They must exist

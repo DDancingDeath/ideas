@@ -212,6 +212,10 @@ equivalent, sampled before and after the 1 h shop-day simulation.
 
 ## What is required when a budget is at risk
 
+At-risk budgets are caught not only by CI profiling but by the in-app
+performance diagnostic (ranked local probes + suspect ids), so the
+owner can self-diagnose field slowness.
+
 1. Profile under the synthetic dataset and identify the hot
    function.
 2. If domain code: optimize the algorithm or move to a worker.

@@ -94,6 +94,17 @@ on the app version badge, or Settings → Diagnostics):
 | Cache health | each projection's name, last update, size |
 | Active draft (if any) | bill draft id and last save time |
 | Trace id | per UI action that wrote an event; visible to expand in the History row |
+| Performance diagnostics panel | severity-ranked local probes with evidence, suspect ids, and suggested fixes; no PII |
+
+### Performance diagnostics panel
+
+- A user-facing diagnostic in Settings → Diagnostics ranks local
+  probes — memory, long tasks, storage / IndexedDB quota, network,
+  service-worker / cache version, event-log size, projection-cache
+  health, and outbox depth / age — into severity-ranked suspects.
+- Each suspect includes evidence and a suggested fix, with no PII.
+- The panel is linkable from the debug bundle so a support report can
+  point directly to the ranked suspect list.
 
 ### Action ids and trace ids
 
@@ -116,6 +127,7 @@ on the app version badge, or Settings → Diagnostics):
     outbox events, print events, errors)
   - last 100 trace ids
   - cache health snapshot
+  - performance diagnostics panel link / suspect ids
   - the active draft snapshot (if any)
 - The bundle **never** contains: customer/supplier names,
   phone numbers, transcripts, free-form notes, raw bill totals.
@@ -143,6 +155,12 @@ on the app version badge, or Settings → Diagnostics):
   user id and the trace id; no PII.
 - Forbidden events: anything carrying customer names, item
   names with prices, raw amounts, or voice transcripts.
+- **Local-first usage analytics** are distinct from business analytics:
+  the app keeps a no-PII, no-free-text event taxonomy locally in
+  IndexedDB (for example `billing.bill_saved`, `voice.*`, `perf.*`).
+  Settings → Usage shows summaries that help prioritise tests and
+  surface unused features. These events must never record business
+  values, names, or free text.
 
 ## Forbidden patterns
 

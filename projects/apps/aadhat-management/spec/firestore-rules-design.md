@@ -304,6 +304,17 @@ match /users/{userId} {
 }
 ```
 
+Per-user preferences are an explicit subcollection because v2 syncs
+preferences that v1 kept in localStorage only, including custom finance
+accounts:
+
+```javascript
+match /users/{userId}/preferences/{prefId} {
+  allow read, write: if isSignedIn()
+    && (request.auth.uid == userId || isOwner());
+}
+```
+
 ### 4.6 `auditLogs` (already correct, document the invariant)
 No change. `update, delete: if false` is the right answer.
 Recommend adding a payload validator anyway:
@@ -731,6 +742,12 @@ service cloud.firestore {
             && request.resource.data.status == resource.data.status)
       );
       allow delete: if isOwner() && !isStagingReadOnly();
+
+      match /preferences/{prefId} {
+        allow read: if isSignedIn() && (request.auth.uid == userId || isOwner());
+        allow write: if isSignedIn() && !isStagingReadOnly()
+          && (request.auth.uid == userId || isOwner());
+      }
     }
 
     // -- Audit logs (append-only) -----------------------------------
