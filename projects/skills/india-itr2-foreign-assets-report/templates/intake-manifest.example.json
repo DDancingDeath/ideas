@@ -1,0 +1,33 @@
+{
+  "assessmentYear": "2026-27",
+  "financialYear": "2025-26",
+  "taxpayerName": "Example Taxpayer",
+  "residentialStatus": "Resident and Ordinarily Resident",
+  "scope": "full-itr2",
+  "taxDirectory": "C:\\Tax\\AY-2026-27",
+  "files": {
+    "ais": "AIS.pdf",
+    "form16PartA": "Form16-PartA.pdf",
+    "form16PartB": "Form16-PartB.pdf",
+    "form12BA": "Form12BA.pdf",
+    "priorScheduleFA": "Prior-Year-ITR.pdf",
+    "fidelityYearEnd": "Fidelity-Year-End.pdf",
+    "fidelityTransactionSummary": "Fidelity-Transaction-Summary.pdf",
+    "fidelityJanuary": "Fidelity-Jan.pdf",
+    "fidelityFebruary": "Fidelity-Feb.pdf",
+    "fidelityMarch": "Fidelity-Mar.pdf",
+    "openLots": "View-open-lots.csv",
+    "closedLots": "View-closed-lots.csv"
+  },
+  "facts": {
+    "fidelityOpeningDate": "YYYY-MM-DD",
+    "esppDiscountPercent": 10,
+    "esppDiscountTaxedAsSalaryPerquisite": true,
+    "openLotsCurrency": "USD",
+    "closedLotsCurrency": "USD"
+  },
+  "notes": [
+    "Do not store passwords or PAN in this manifest."
+  ]
+}
+
