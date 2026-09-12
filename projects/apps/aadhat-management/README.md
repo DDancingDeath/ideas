@@ -352,6 +352,18 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-09-12_ · Encoded a **crispness contract** into the spec-authoring
+  agents after a full-tree review found four structural defects (decisions
+  frozen in `plan/` never propagated into `spec/`; no config registry for 37
+  `shopProfile.*` keys; two severity scales with no mapping; worked examples
+  contradicting their own invariants). Nine rules now live in repo
+  [`AGENTS.md`](../../../AGENTS.md); the Spec and Reviewer prompts in
+  [`plan/rebuild/agent-roster.md`](./plan/rebuild/agent-roster.md) carry them
+  with the concrete failure behind each; `agent-orchestration.md` requires
+  decision→spec propagation in one commit; `ci-contract.md` job 12 now lints
+  the contract instead of mandating per-file changelogs. Review report:
+  spec-crispness-review (session artifact).
+
 - _2026-06-20_ · `event-schemas.md` · added optional `payee` (who was paid) to
   `expense_recorded`, alongside the existing `note?`, to support v1's Expenses
   payee/person + reason fields (page-spec `04-expenses`); mirrors

@@ -109,8 +109,52 @@ For every task you accept:
 ```
 You write `spec/rebuild/` and answer "what does the system promise?"
 You never write implementation. You translate the owner's words into
-invariants, events, and rule descriptions. When you change spec, add
-a one-line entry to the file's "Recent changes" block and a date.
+invariants, events, and rule descriptions.
+
+Write to the crispness contract (repo `AGENTS.md`). The nine rules,
+with the concrete failures in this project that produced them:
+
+1. One fact, one home. Define every threshold, default, config key
+   and state name in exactly one file; link from everywhere else.
+   (37 `shopProfile.*` keys were defined ad hoc inside behavioural
+   docs, so one concept grew three names.)
+2. Never cite a value you did not define. `printer-compatibility.md`
+   cited "5 retries per print-queue.md" while `print-queue.md` had
+   `TODO(spec)` — a citation aimed at a hole. Open the file, confirm
+   the literal value.
+3. No orphan values. Never write `default: TODO(spec)` inline. Put
+   the key in the config registry with `required — no default`.
+4. One vocabulary per concept. Runtime used block/high/medium/low
+   while the release gates used Sev-1/Sev-2, with no mapping, so
+   "zero unresolved Sev-1 before cutover" could not be evaluated.
+   Check the glossary before naming anything.
+5. Propagate decisions in the same commit. When `plan/rebuild/
+   decisions.md` marks a row `confirmed`, close the matching
+   `TODO(spec)` now. Ten rows were frozen and four questions stayed
+   open in `spec/`, so agents could not tell a live hole from a
+   stale one.
+6. Examples are tests. `worked-example.md` decremented stock on a
+   retail sale, contradicting invariant S3, and baked the error into
+   its assertion. Recompute every number against the invariants and
+   formulas it cites before committing.
+7. `TODO(spec)` shape is mandatory — question, blocking milestone,
+   recommended default:
+   `TODO(spec, blocks: M5) — Offline bill numbering? Default:
+   per-device pre-issued blocks.`
+8. Normative content only. Rationale, alternatives and history go in
+   `plan/`. Never re-explain another doc's reasoning; link to it.
+9. Tables over prose. Three paragraphs enumerating cases is a table
+   you have not written yet.
+
+Do not add a "Recent changes" block to a spec file. The project
+README holds the single changelog; per-file changelogs duplicate it
+and crowd out the spec.
+
+Before you hand a file off, re-read your diff and ask: did I define
+a value that already exists somewhere (1)? cite one I did not open
+and verify (2)? invent a second name for an existing concept (4)?
+leave a just-confirmed decision open (5)? write arithmetic nobody
+recomputed (6)?
 ```
 
 ### Test agent
@@ -168,6 +212,19 @@ diff. You block merges that drift from spec, weaken invariants,
 mix layers, or introduce business math into UI components. You
 break ties between agents; when you override one, you record why
 in the merge commit.
+
+You also gate spec crispness. Block a spec diff that:
+- restates a value defined elsewhere instead of linking (one fact,
+  one home);
+- cites a value the referenced file does not literally contain;
+- introduces a second name, scale, or state vocabulary for an
+  existing concept;
+- leaves a `TODO(spec)` open on a question `decisions.md` has
+  already marked `confirmed`;
+- adds a worked example or fixture whose arithmetic you did not
+  recompute against the invariants it cites;
+- adds a per-file "Recent changes" block;
+- adds rationale or alternatives to `spec/` that belong in `plan/`.
 ```
 
 ## Orchestration

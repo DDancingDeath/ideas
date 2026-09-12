@@ -173,6 +173,12 @@ For any milestone **M-N**:
 1. **Plan** — Orchestrator opens the tickets and the dependency graph.
 2. **Spec** — Spec agent resolves any `TODO(spec)` for M-N (or
    escalates to the owner). No code starts on an ambiguous spec.
+   Resolving means the spec now **asserts the answer**: delete the
+   `TODO`, state the fact, and — if the answer came from a
+   `decisions.md` row — do both in the same commit that marks the
+   row `confirmed`. A `confirmed` row with a matching `TODO(spec)`
+   still open is the defect that makes a later agent invent a third
+   answer.
 3. **Test (fan-out)** — Test agent spawns a sub-agent per fixture /
    per invariant and lands the **failing** tests first.
 4. **Implement** — Implementation agent makes them pass with the
@@ -180,8 +186,9 @@ For any milestone **M-N**:
 5. **Harden (parallel)** — Performance, QA, and Security run
    concurrently against the green build (perf budgets, Playwright
    flows, rule/role-matrix tests).
-6. **Gate** — Reviewer checks spec-fidelity, layering, and the `dod`
-   jobs, then merges or bounces.
+6. **Gate** — Reviewer checks spec-fidelity, layering, the crispness
+   contract (roster §Reviewer agent), and the `dod` jobs, then
+   merges or bounces.
 7. **Close** — Orchestrator writes the release note and, at a real
    release, walks [`release-health-gates.md`](./release-health-gates.md).
 

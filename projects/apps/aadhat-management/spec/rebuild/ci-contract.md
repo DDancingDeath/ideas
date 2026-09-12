@@ -19,7 +19,7 @@
 | 9 | `visual` | Phone-viewport snapshot diff for changed pages | Snapshot diff above tolerance and not reviewer-accepted |
 | 10 | `perf` | Budgets from [`performance-budgets.md`](./performance-budgets.md) on the synthetic dataset against the reference profile | Any budget regresses > **10 %** vs `fixtures/perf-baseline.json` |
 | 11 | `rules` | Backend security-rules tests (Firestore emulator or chosen backend's test mode) | Any rule from [`role-permission-matrix.md`](./role-permission-matrix.md) misbehaves |
-| 12 | `docs` | Markdown link-check + dated `Recent changes` entry presence for every spec file touched | Any broken relative link; any modified `spec/rebuild/**` file missing a `Recent changes` entry for the PR's date |
+| 12 | `docs` | Markdown link-check + crispness-contract lint (repo [`AGENTS.md`](../../../../../AGENTS.md)) | Any broken relative link; any `spec/**` file containing a `## Recent changes` block (the project README holds the single changelog); any inline `default: TODO(spec)` (rule 3 — orphan value); any `TODO(spec)` missing `blocks:` and `Default:` (rule 7); the PR missing a dated entry in the project README |
 
 All 12 jobs run in parallel on every PR. A PR cannot merge with
 any required job failing.

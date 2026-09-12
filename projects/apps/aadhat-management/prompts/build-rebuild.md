@@ -19,7 +19,9 @@ layout, tech, data shape, and logic where it improves correctness,
 speed, or testability.
 
 **Do not invent behaviour.** If something is unclear, ask the owner
-or stop and mark `TODO(spec)`.
+or stop and mark it in the required shape — question, blocking
+milestone, recommended default:
+`TODO(spec, blocks: M<N>) — <question>? Default: <recommendation>.`
 
 ## Step 1 — load context (read in this order)
 
