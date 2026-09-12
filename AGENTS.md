@@ -55,13 +55,56 @@ projects/<kind>/<slug>/
 - **Never delete user-authored content** without confirmation. Move it to a
   `archive/` subfolder inside the project instead.
 - **Spec changes need a one-line entry** in the project README under a
-  "Recent changes" list with a date.
+  "Recent changes" list with a date. **One changelog per project, in the
+  README — never a `## Recent changes` block in each spec file.** Per-file
+  changelogs duplicate the README, age badly, and crowd out the spec.
 - **Plans may be opinionated**; specs must stay factual. Don't smuggle
   opinions into `spec/`.
 - **Mockups go in `assets/`**, never inline base64. Reference them with
   relative paths: `![Login mock](../assets/login-mock.png)`.
 - **No secrets** — API keys, connection strings, internal URLs. If you find
   any, redact and warn.
+
+## The crispness contract (every spec, every edit)
+
+A spec is read by an agent that cannot ask a follow-up question. These nine
+rules exist because a real spec in this repo broke each one. Apply them when
+writing a spec and when reviewing one.
+
+1. **One fact, one home.** Every constant, threshold, default, config key,
+   severity name, and state vocabulary is *defined* in exactly one file.
+   Everywhere else links to it. Restating a value is how two copies drift.
+2. **Never cite a value you did not define.** If you write "5 retries per
+   `print-queue.md`", open `print-queue.md` and confirm the literal `5` is
+   there. A citation pointing at a `TODO` is worse than no citation.
+3. **No orphan values.** Never write `default: TODO(spec)` inline. A setting
+   with no agreed default belongs in the config registry with status
+   `required — no default`, so it is countable.
+4. **One vocabulary per concept.** One severity scale, one state machine, one
+   key-naming convention, project-wide. A second name for an existing concept
+   is a spec bug, not a synonym. Check the glossary before inventing a term.
+5. **Decisions propagate in the same commit.** When a decision is confirmed in
+   `plan/`, close the matching `TODO(spec)` in `spec/` *in that commit*. A
+   `confirmed` decision and an open question on the same subject must never
+   coexist — that is what makes an agent invent a third answer.
+6. **Examples are tests.** Every worked example, scenario and fixture must
+   obey the invariants and formulas it cites. Recompute the arithmetic before
+   committing. Examples get copied into code, so a wrong example ships.
+7. **`TODO(spec)` has a required shape** — the question, the milestone it
+   blocks, and a recommended default:
+   `TODO(spec, blocks: M5) — Offline bill numbering? Default: per-device
+   pre-issued blocks.` A bare `TODO(spec)` is not reviewable.
+8. **Normative content only.** Specs state what the system promises. Cut
+   rationale, alternatives considered, and history — those belong in `plan/`.
+   Never re-explain another document's reasoning; link to it.
+9. **Prefer a table to a paragraph.** Rules, thresholds, states and
+   permissions are tabular data. If a section is three paragraphs of prose
+   describing cases, it is a table that has not been written yet.
+
+**Reviewer check before accepting any spec edit:** does it define a value that
+already exists elsewhere (1)? cite a value it did not verify (2)? introduce a
+second name for an existing concept (4)? leave a just-confirmed decision open
+(5)? contain arithmetic nobody recomputed (6)?
 
 ## When the user says "add an idea / skill / agent"
 
@@ -110,3 +153,10 @@ Read the spec end-to-end. Produce findings as a markdown report. Do not
 modify spec files unless explicitly asked. If asked to update, preserve the
 original wording where possible and call out every behavioral change in a
 "Changes" list at the top of the file.
+
+Review against the crispness contract above. Beyond per-file readability, the
+defects that actually cost an implementer time are cross-file: the same value
+defined twice and drifted, a citation pointing at a `TODO`, two names for one
+concept, a decision confirmed in `plan/` but still open in `spec/`, and a
+worked example that violates its own invariants. Grep the whole tree for each
+rather than reading file by file.

@@ -15,7 +15,9 @@ You are the **Implementation agent**. You are starting M0 of the
 v2 rebuild of AadhatManagement.
 
 **Do not invent behaviour.** If something is unclear, ask the
-owner or stop and mark `TODO(spec)`.
+owner or stop and mark it in the required shape — question,
+blocking milestone, recommended default:
+`TODO(spec, blocks: M<N>) — <question>? Default: <recommendation>.`
 
 ## Step 1 — load context (read in this order)
 
