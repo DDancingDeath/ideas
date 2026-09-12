@@ -331,6 +331,21 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-09-12_ · Reconciled [`spec/rebuild/configuration.md`](./spec/rebuild/configuration.md)
+  against the **implementation** in [`DDancingDeath/bahi`](https://github.com/DDancingDeath/bahi)
+  (`DEFAULT_SHOP_PROFILE`, `packages/domain/src/suspicion.ts`, at `6d21b41`). The
+  registry had been populated from spec and plan prose, which diverged from shipped
+  code in six keys — and because bahi's rule is "the spec wins", those values would
+  have driven an agent to change working, tested behaviour. Corrected to match code:
+  `time.maxFutureMin` 5→60, `pricing.maxRateMultiple` 2→5, `printer.maxRetries` now
+  3 retries (4 attempts), `stock.adjustmentLargeMg` 10→20 kg, and
+  `stock.negativeBlockMg` 5 kg promoted from open question to confirmed default.
+  Two genuine conflicts are now open questions rather than silent wrong numbers:
+  `cash.mismatchLarge` (code ₹500 vs `decisions.md` M8 ₹200) and
+  `pricing.maxDiscountPctByRole` (spec's per-role map vs the code's flat
+  `maxDiscountBps`). Ten reconciled keys are marked ✅; fourteen unimplemented keys
+  are listed as forward-looking.
+
 - _2026-09-12_ · Encoded a **crispness contract** into the spec-authoring
   agents after a full-tree review found four structural defects (decisions
   frozen in `plan/` never propagated into `spec/`; no config registry for 37
