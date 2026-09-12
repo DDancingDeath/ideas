@@ -6,7 +6,10 @@
 > live financial plan that tells me whether my current savings actually
 > get us there.
 
-- **Status:** idea capture. No code.
+- **Status:** v1 planning landed. **Build target repo:**
+  [`DDancingDeath/parenting-companion`](https://github.com/DDancingDeath/parenting-companion)
+  (private). This directory stays the idea-of-record; the build repo
+  owns code, milestones, ADRs, and the knowledge base.
 - **Audience:** me. Indian parents with school-age and pre-school
   children. Single-user (per family) for v1.
 - **Working title:** `parenting-companion`. Product-name candidates:
@@ -120,4 +123,12 @@ suggestions and re-rank the financial scenarios.
 
 ## Recent changes
 
+- _2026-07-26_ · v1 plan landed in the build repo
+  [`DDancingDeath/parenting-companion`](https://github.com/DDancingDeath/parenting-companion):
+  Flutter + local-first + sqlcipher; M0-M5 milestones; multi-agent
+  orchestration (9 roles, hub-spoke, state machine, 7 quality gates);
+  knowledge-base layer with ~30 vetted sources (T1 WHO/IAP/AAP/Indian
+  govt → T4 vetted blogs) and CI-enforced citations on every shipped
+  artifact. Open decisions above are now resolved as ADR-001..015 in
+  that repo's `docs/decisions.md`.
 - _2026-06-06_ · Idea captured. No code.
