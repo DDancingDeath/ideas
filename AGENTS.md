@@ -106,6 +106,37 @@ already exists elsewhere (1)? cite a value it did not verify (2)? introduce a
 second name for an existing concept (4)? leave a just-confirmed decision open
 (5)? contain arithmetic nobody recomputed (6)?
 
+## The dependency runs one way
+
+**A project references its idea. An idea never references a project.**
+
+An idea folder here is the source; the repositories that build from it are
+consumers. Keep the arrow pointing one way:
+
+- **A spec is normative on its own authority.** It must be complete and
+  understandable without opening any implementation. Never write "matches the
+  code", "reconciled against `<repo>` at `<sha>`", or "not yet implemented" in
+  `spec/` — those make the spec a description of something else instead of a
+  definition.
+- **Never cite an implementation as the reason for a value.** State the value
+  and, if it needs justification, justify it in `plan/`. A commit SHA in a spec
+  is a dependency on a moving target.
+- **Don't track build status here.** "Implemented in X", "tracked in X's issue
+  list", "X is on milestone 4" all belong in that project, not in the idea.
+- **Fixing the idea from what you learn downstream is correct and expected.**
+  If building something reveals the spec is wrong, fix the spec — just record
+  the corrected value on its own terms, not as "code says so".
+- **Conflicts are the idea's to settle.** When a project disagrees with the
+  spec, that is an open question for the owner, recorded as a `TODO(spec)` with
+  a recommended default. Do not resolve it by pointing at whichever side
+  currently exists.
+- **`plan/` may name a project** where it genuinely helps (migration, cutover,
+  operations). `spec/` may not.
+
+The reason is practical: an idea outlives any one attempt to build it, and
+several projects may build from the same idea. The moment the spec cites a
+repository, it rots when that repository moves.
+
 ## When the user says "add an idea / skill / agent"
 
 There are three canonical scripts in [`tools/`](./tools). Use them

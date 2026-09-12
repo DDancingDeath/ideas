@@ -4,12 +4,9 @@
 > name; they never restate its value. If you need a threshold, add it here
 > first. (Repo `AGENTS.md` → crispness contract, rules 1 and 3.)
 >
-> **Reconciled against the implementation.** Values marked ✅ below match
-> `DEFAULT_SHOP_PROFILE` in `packages/domain/src/suspicion.ts` of
-> [`DDancingDeath/bahi`](https://github.com/DDancingDeath/bahi) as of `6d21b41`.
-> bahi's rule is "where code and spec disagree, the spec wins", so a wrong
-> number here makes an agent change working, tested code — treat any
-> divergence as a defect to settle, not a preference.
+> This registry is normative on its own authority. It does not track, cite, or
+> defer to any implementation — an implementation conforms to these values, not
+> the other way around.
 
 ## Conventions
 
@@ -33,28 +30,28 @@
 | `shopProfile.locale.timeFormat` | enum `12h \| 24h` | `24h` | owner | [`time-clock.md`](./time-clock.md) |
 | `shopProfile.time.toleranceMin` | integer minutes | `5` | owner | [`time-clock.md`](./time-clock.md) — skew accepted silently below this |
 | `shopProfile.time.clockSkewMaxMin` | integer minutes | `15` | owner | [`time-clock.md`](./time-clock.md), [`failure-modes.md`](./failure-modes.md), [`suspicion-engine.md`](./suspicion-engine.md) — above this raises `bill.client-clock-skew` |
-| `shopProfile.time.maxFutureMin` | integer minutes | `60` ✅ | owner | [`time-clock.md`](./time-clock.md) — reject events claiming the future |
+| `shopProfile.time.maxFutureMin` | integer minutes | `60` | owner | [`time-clock.md`](./time-clock.md) — reject events claiming the future |
 | `shopProfile.time.maxSyncDelayMin` | integer minutes | `1440` (24 h) | owner | [`time-clock.md`](./time-clock.md) |
-| `shopProfile.time.backdateToleranceDays` | integer days | `1` (today + yesterday) ✅ | owner | [`invariants.md`](./invariants.md), [`time-clock.md`](./time-clock.md) |
-| `shopProfile.cash.mismatchTolerance` | integer paise | `5000` (₹50) ✅ | owner | [`invariants.md`](./invariants.md) C2, [`suspicion-engine.md`](./suspicion-engine.md) |
-| `shopProfile.cash.mismatchLarge` | integer paise | **conflict — see [open questions](#open-questions)**; code uses `50000` (₹500), `decisions.md` M8 says ₹200 | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
+| `shopProfile.time.backdateToleranceDays` | integer days | `1` (today + yesterday) | owner | [`invariants.md`](./invariants.md), [`time-clock.md`](./time-clock.md) |
+| `shopProfile.cash.mismatchTolerance` | integer paise | `5000` (₹50) | owner | [`invariants.md`](./invariants.md) C2, [`suspicion-engine.md`](./suspicion-engine.md) |
+| `shopProfile.cash.mismatchLarge` | integer paise | `50000` (₹500) — **unsettled**, see [open questions](#open-questions) | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
 | `shopProfile.cash.maxSessionHours` | integer hours | `14` | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
-| `shopProfile.stock.negativeBlockMg` | integer milligrams | `5_000_000` (5 kg) ✅ | owner | [`suspicion-engine.md`](./suspicion-engine.md) `stock.negative.large` |
-| `shopProfile.stock.adjustmentLargeMg` | integer milligrams | `20_000_000` (20 kg) ✅ | owner | [`suspicion-engine.md`](./suspicion-engine.md), [`event-schemas.md`](./event-schemas.md) |
-| `shopProfile.items.rateCeilingPaise` | integer paise | `1_000_000_000` (₹1,00,00,000) ✅ | owner | [`data-governance.md`](./data-governance.md) |
+| `shopProfile.stock.negativeBlockMg` | integer milligrams | `5_000_000` (5 kg) | owner | [`suspicion-engine.md`](./suspicion-engine.md) `stock.negative.large` |
+| `shopProfile.stock.adjustmentLargeMg` | integer milligrams | `20_000_000` (20 kg) | owner | [`suspicion-engine.md`](./suspicion-engine.md), [`event-schemas.md`](./event-schemas.md) |
+| `shopProfile.items.rateCeilingPaise` | integer paise | `1_000_000_000` (₹1,00,00,000) | owner | [`data-governance.md`](./data-governance.md) |
 | `shopProfile.items.rateFloorPaise` | integer paise | `1` | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
 | `shopProfile.items.rateChangeMinIntervalSec` | integer seconds | `60` | owner | [`data-governance.md`](./data-governance.md) — `rate-flapping` |
-| `shopProfile.pricing.maxDiscountPctByRole` | map `role → integer percent` | **conflict — see [open questions](#open-questions)**; code implements a flat `pricing.maxDiscountBps = 1000` (10%), not a per-role map | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
-| `shopProfile.pricing.maxRateMultiple` | decimal multiplier | `5` ✅ | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
+| `shopProfile.pricing.maxDiscountPctByRole` | map `role → integer percent` | flat `1000` bps (10%) — **unsettled**, see [open questions](#open-questions) | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
+| `shopProfile.pricing.maxRateMultiple` | decimal multiplier | `5` | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
 | `shopProfile.bills.duplicateWindowSec` | integer seconds | `120` | owner | [`suspicion-engine.md`](./suspicion-engine.md) `bill.duplicate.window` |
 | `shopProfile.billNumber.offlineBlock` | integer count | `50` | owner | [`concurrency.md`](./concurrency.md), [`offline-sync.md`](./offline-sync.md) |
 | `shopProfile.outstanding.longOverdueDays` | integer days | `30` | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
-| `shopProfile.analytics.deadStockDays` | integer days | `30` ✅ | owner | [`analytics.md`](./analytics.md) |
+| `shopProfile.analytics.deadStockDays` | integer days | `30` | owner | [`analytics.md`](./analytics.md) |
 | `shopProfile.staff.editGraceMin` | integer minutes | `5` | owner | [`role-permission-matrix.md`](./role-permission-matrix.md) |
 | `shopProfile.auth.escalationWindowMin` | integer minutes | `10` | owner | [`role-permission-matrix.md`](./role-permission-matrix.md), [`suspicion-engine.md`](./suspicion-engine.md) |
 | `shopProfile.roleConfig` | map `role → visibility flags` | all defaults from [`role-permission-matrix.md`](./role-permission-matrix.md) | owner | [`role-permission-matrix.md`](./role-permission-matrix.md) |
 | `shopProfile.suspicion` | map `ruleId → { enabled, severity }` | every rule enabled at its documented severity | owner | [`suspicion-engine.md`](./suspicion-engine.md), [`review-queue.md`](./review-queue.md) |
-| `shopProfile.printer.maxRetries` | integer **retries** after the first attempt | `3` (→ 4 attempts total) ✅ | owner | [`print-queue.md`](./print-queue.md), [`printer-compatibility.md`](./printer-compatibility.md) |
+| `shopProfile.printer.maxRetries` | integer **retries** after the first attempt | `3` (→ 4 attempts total) | owner | [`print-queue.md`](./print-queue.md), [`printer-compatibility.md`](./printer-compatibility.md) |
 | `shopProfile.printer.attemptsBeforeFlag` | integer attempts | `3` | owner | [`suspicion-engine.md`](./suspicion-engine.md) `print.repeated-failures` |
 | `shopProfile.printer.reprintsBeforeFlag` | integer count | `3` | owner | [`suspicion-engine.md`](./suspicion-engine.md) `print.many-reprints` |
 | `shopProfile.printer.connectTimeoutSec` | integer seconds | `5` | owner | [`printer-compatibility.md`](./printer-compatibility.md) |
@@ -88,29 +85,14 @@ can be mapped forward.
 
 ## Open questions
 
-Both are **spec-vs-code conflicts**, not blank fields. bahi's rule is "the spec
-wins", so until these are settled an agent could change working, tested code to
-match a number nobody decided.
-
-- `TODO(spec, blocks: M8)` — **`shopProfile.cash.mismatchLarge`.** The shipped
-  code uses `50000` (₹500); `plan/rebuild/decisions.md` M8 records ₹200. Which
-  is the intended "large mismatch" threshold? **Default:** adopt the code's
-  ₹500 and supersede the M8 row, since ₹500 is what the shop has actually been
-  running against. The ₹50 tolerance is not in dispute.
+- `TODO(spec, blocks: M8)` — **`shopProfile.cash.mismatchLarge`.** What
+  end-of-day cash gap is large enough to escalate beyond the ordinary
+  `mismatchTolerance` flag? `plan/rebuild/decisions.md` M8 records ₹200;
+  day-to-day experience at the shop points to ₹500, since ₹200 gaps occur often
+  enough to be noise. **Default:** `50000` (₹500), superseding the M8 row. The
+  ₹50 tolerance is not in dispute.
 - `TODO(spec, blocks: M5)` — **`shopProfile.pricing.maxDiscountPctByRole`.**
-  The spec describes a per-role discount cap; the code implements a single flat
-  `pricing.maxDiscountBps = 1000` (10%) with no role dimension. **Default:**
-  keep the flat cap for v2.0 and drop the per-role map from
-  `suspicion-engine.md`, since the shop has one staff role in practice; revisit
-  when `manager` is actually surfaced.
-
-### Not yet implemented
-
-These keys are specified here but have no implementation in bahi as of
-`6d21b41`, so their defaults are forward-looking rather than reconciled:
-`bills.duplicateWindowSec`, `billNumber.offlineBlock`, `cash.maxSessionHours`,
-`auth.escalationWindowMin`, `outstanding.longOverdueDays`,
-`items.rateFloorPaise`, `items.rateChangeMinIntervalSec`, `staff.editGraceMin`,
-`printer.attemptsBeforeFlag`, `printer.reprintsBeforeFlag`, the `printer.*`
-timeouts, `locale.*`, `roleConfig`, and `suspicion`. Confirm each against the
-code when its milestone lands.
+  Should the discount cap vary by role, or be a single flat limit?
+  **Default:** a single flat cap of `1000` bps (10%) for v2.0, dropping the
+  per-role map from [`suspicion-engine.md`](./suspicion-engine.md) — the shop
+  has one staff role in practice. Revisit when `manager` is actually surfaced.
