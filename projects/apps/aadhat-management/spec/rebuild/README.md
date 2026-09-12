@@ -13,169 +13,65 @@
 
 ## Reading order
 
+Read top to bottom for a full picture. If you only have ten minutes, read
+#33 `worked-example.md` first — one bill traced end to end makes the rest
+click into place.
+
 ### Foundations
 
-1. [`scope-boundaries.md`](./scope-boundaries.md) — what is shop-custom,
-   what is core, what is configurable, what is explicitly out.
-2. [`architecture.md`](./architecture.md) — the layered architecture
-   (domain core → application services → storage adapters → UI →
-   device integrations) and why UI must not own business truth.
-3. [`platform-compatibility.md`](./platform-compatibility.md) —
-   per-platform capability matrix (Web/PWA / Android / iOS); iOS
-   deferred to v2.1 with named gates (BLE Classic SPP, WebKit
-   IndexedDB eviction, background BLE); foreground / background /
-   suspended contract; storage limits per platform.
+| # | Doc | What it settles |
+|---|---|---|
+| 1 | [`scope-boundaries.md`](./scope-boundaries.md) | Core vs configurable vs shop-custom vs explicitly out |
+| 2 | [`architecture.md`](./architecture.md) | Layering: domain core → services → storage adapters → UI → devices. UI never owns business truth |
+| 3 | [`platform-compatibility.md`](./platform-compatibility.md) | Per-platform capability matrix; iOS deferred to v2.1 with named gates; foreground/background/suspended contract; storage limits |
 
 ### Data and lifecycle
 
-4. [`event-ledger.md`](./event-ledger.md) — every business action is an
-   immutable event; stock / cash / outstanding / reports are derived,
-   not stored as authoritative numbers.
-5. [`event-schemas.md`](./event-schemas.md) — full payload shape for
-   each of the 22 event types, with validation rules, examples,
-   invariants applied, and idempotency-key shape.
-6. [`time-clock.md`](./time-clock.md) — two-timestamp model
-   (`at` server-authoritative, `clientAt` device audit-only);
-   clock-skew tolerance bands; backdated accepted-with-flag;
-   future-dated blocked; shop day = open cash session; reports
-   always in shop timezone.
-7. [`money-units-rounding.md`](./money-units-rounding.md) — atomic
-   units (paise / mg / `paisePerKg` / bps); canonical line and bill
-   total formulas with fixed application order; round-half-to-even;
-   Indian display formatting; v1 → v2 import conversion with
-   round-trip verification.
-8. [`projections.md`](./projections.md) — the contract for every
-   derived view (items, **rate history**, stock, cash, outstanding,
-   history, reports, audit, Review Queue) and the rebuild /
-   stale-detection process. The business insights on top of these
-   are in [`analytics.md`](./analytics.md) (#26).
-9. [`data-placement.md`](./data-placement.md) — where each piece of
-   data lives (authoritative location, local cache, sync rule,
-   staleness tolerance, offline behaviour, read/write budgets);
-   server vs app responsibility split; "local for speed, server
-   for trust, shared domain for consistency" principle.
-10. [`bill-lifecycle.md`](./bill-lifecycle.md) — the bill state machine
-    and the **billing-vs-printing separation** invariant (double-tap,
-    slow Bluetooth, retry, offline — none may create duplicate sales).
-11. [`idempotency.md`](./idempotency.md) — `clientActionId` →
-    `idempotencyKey` mapping, lifetimes, and the "what happens
-    when…" cases (double-tap, offline, tab-close, conflict, etc.).
-12. [`print-queue.md`](./print-queue.md) — the background print queue
-    contract; what the UI is allowed to wait on and what it is not.
-13. [`printer-compatibility.md`](./printer-compatibility.md) — which
-    printers v2.0 supports, paper widths, ESC/POS command subset,
-    Devanagari-always-bitmap rule, Android BT Classic SPP pairing
-    path with foreground service + battery whitelist, iOS refused
-    in v2.0, four-layer duplicate-print prevention, manual-print
-    fallback, production-printer-smoke release gate.
-14. [`offline-sync.md`](./offline-sync.md) — per-action offline
-    allowance matrix; local UI state vocabulary
-    (`Saved` / `Sync pending` / `Synced` / `Sync failed
-    (retrying)` / `Needs review` / `Printed` / `Print failed`);
-    retry policy with backoff and budget; conflict handling;
-    reconnect protocol; what the UI must show.
-15. [`concurrency.md`](./concurrency.md) — multi-device contract.
-    Cash session is shop-wide (C3); bill numbers server-allocated
-    with device-bound offline blocks; rate-snapshot-at-intent for
-    in-progress bills; concurrent-sale-into-negative-stock
-    accepted-and-flagged per S2; default rule "first server
-    commit wins, losing write surfaces in Review Queue".
+| # | Doc | What it settles |
+|---|---|---|
+| 4 | [`event-ledger.md`](./event-ledger.md) | Every business action is an immutable event; stock/cash/outstanding/reports are derived, never stored as authoritative |
+| 5 | [`event-schemas.md`](./event-schemas.md) | Payload shape for each of the 22 event types: validation, examples, invariants applied, idempotency-key shape |
+| 6 | [`time-clock.md`](./time-clock.md) | `at` (server, authoritative) vs `clientAt` (device, audit-only); skew bands; backdating flagged, future-dating blocked; shop day = open cash session |
+| 7 | [`money-units-rounding.md`](./money-units-rounding.md) | Integer paise and milligrams; canonical line/bill formulas and their fixed application order; round-half-to-even; v1→v2 import conversion |
+| 8 | [`configuration.md`](./configuration.md) | **Single home for every tunable** — type, unit, default, who may change it. Other docs reference a key and never restate its value |
+| 9 | [`projections.md`](./projections.md) | Contract for every derived view (items, rate history, stock, cash, outstanding, history, reports, audit, Review Queue) and the rebuild/stale-detection process |
+| 10 | [`data-placement.md`](./data-placement.md) | Where each datum lives: authoritative location, cache, sync rule, staleness tolerance, offline behaviour, read/write budgets |
+| 11 | [`bill-lifecycle.md`](./bill-lifecycle.md) | Bill state machine and the billing-vs-printing separation — no double-tap, retry, or offline replay may create a duplicate sale |
+| 12 | [`idempotency.md`](./idempotency.md) | `clientActionId` → `idempotencyKey` mapping, lifetimes, and every "what happens when…" case |
+| 13 | [`print-queue.md`](./print-queue.md) | Background print queue contract; what the UI may and may not wait on |
+| 14 | [`printer-compatibility.md`](./printer-compatibility.md) | Supported printers, paper widths, ESC/POS subset, Devanagari-always-bitmap, Android SPP pairing, duplicate-print prevention, manual fallback |
+| 15 | [`offline-sync.md`](./offline-sync.md) | Per-action offline allowance; UI state vocabulary; retry/backoff budget; conflict handling; reconnect protocol |
+| 16 | [`concurrency.md`](./concurrency.md) | Multi-device contract: shop-wide cash session (C3), bill-number allocation, rate-snapshot-at-intent, first-commit-wins with the loser surfaced in Review Queue |
 
 ### Correctness, monitoring, and access
 
-16. [`invariants.md`](./invariants.md) — the business laws the app must
-    always hold. Opens with `## Constitution` summarising the eight
-    AC rules ("no false data") and mapping each to the
-    M / S / C / B / R label that enforces it.
-17. [`role-permission-matrix.md`](./role-permission-matrix.md) — full
-    role × event-type matrix, projection-read matrix, special
-    principals (`engine`, `queue worker`), API-bypass guarantee,
-    the staff edit-time-limit rule
-    (`shopProfile.staff.editGraceMin`), and the **owner-configurable
-    role-visibility layer** (`shopProfile.roleConfig`) that lets the
-    owner hide pages / switch off capabilities per role at runtime,
-    narrowing the fixed matrix ceiling without ever widening it.
-18. [`suspicion-engine.md`](./suspicion-engine.md) — the anomaly
-    detector that turns "the data looks off" into Review Queue items.
-19. [`review-queue.md`](./review-queue.md) — the page the owner /
-    brother uses to monitor and approve anomalies. New page, not in
-    the v1 page-specs.
-20. [`failure-modes.md`](./failure-modes.md) — catalogue of 20 real-
-    world failures (app crash, battery die, wrong device clock, old
-    client, cache corruption, Firebase down, lost phone…) with
-    expected and forbidden system behaviour, and the pinned test
-    for each.
-21. [`versioning-compatibility.md`](./versioning-compatibility.md) —
-    three independent versions (`appVersion`, `schemaVersion`,
-    `domainVersion`); support-window with force-upgrade; additive
-    vs non-additive event-schema changes and the up-migration
-    contract.
-22. [`data-governance.md`](./data-governance.md) — ownership /
-    access matrix (delete is forbidden; corrections are events);
-    PII inventory with retention; master-data governance (item /
-    party merges, rate history, archive, typos); `## Validation
-    gates` mapping each master-data quality rule to an adapter
-    result code; bill-numbering and legal posture (GST is out of
-    scope for v2.0).
-23. [`observability.md`](./observability.md) — notification
-    catalogue with severity / channel / audience; supportability
-    surface (app / device / user / network / outbox / queues /
-    cache); trace ids; one-tap debug bundle with PII-exclusion
-    contract.
-24. [`ai-boundaries.md`](./ai-boundaries.md) — what AI is allowed
-    to do (suggest, summarise, draft, voice-fill — always
-    confirmed by a human) and what AI is never allowed to do (no
-    event without human confirm; no permission elevation; no
-    flag resolve; no silent suppression).
-25. [`ergonomics.md`](./ergonomics.md) — shop-floor constraints
-    (one-handed, sunlight, noisy, Hindi-first, ₹15–20k phone);
-    tap-target floors; WCAG AA contrast; Hindi label sizing;
-    two-step confirm only for destructive actions; picker and
-    history row design.
+| # | Doc | What it settles |
+|---|---|---|
+| 17 | [`invariants.md`](./invariants.md) | The business laws. Opens with the Constitution: eight AC rules mapped to the M/S/C/B/R label that enforces each |
+| 18 | [`role-permission-matrix.md`](./role-permission-matrix.md) | Role × event-type and projection-read matrices, special principals, API-bypass guarantee, staff edit grace, owner-configurable role visibility (narrows the ceiling, never widens) |
+| 19 | [`suspicion-engine.md`](./suspicion-engine.md) | Anomaly rules that turn "this looks off" into Review Queue items. Owns the one severity scale: `block`/`high`/`medium`/`low` |
+| 20 | [`review-queue.md`](./review-queue.md) | The page owner/brother use to approve or dismiss anomalies. New in v2 |
+| 21 | [`failure-modes.md`](./failure-modes.md) | 20 real-world failures (crash, dead battery, wrong clock, stale client, Firebase down, lost phone…) with expected and forbidden behaviour, plus the pinned test for each |
+| 22 | [`versioning-compatibility.md`](./versioning-compatibility.md) | Three independent versions (`appVersion`, `schemaVersion`, `domainVersion`); support window and force-upgrade; additive vs breaking schema changes |
+| 23 | [`data-governance.md`](./data-governance.md) | Ownership/access matrix (no deletes — corrections are events), PII inventory and retention, master-data governance, validation gates, bill numbering and legal posture |
+| 24 | [`observability.md`](./observability.md) | Notification catalogue by severity/channel/audience; supportability surface; trace ids; one-tap debug bundle with PII exclusion |
+| 25 | [`ai-boundaries.md`](./ai-boundaries.md) | AI may suggest, summarise, draft and voice-fill — always human-confirmed. It may never write an event unconfirmed, elevate permission, resolve a flag, or suppress one |
+| 26 | [`ergonomics.md`](./ergonomics.md) | Shop-floor constraints: one-handed, sunlight, noise, Hindi-first, ₹15–20k phone; tap targets, WCAG AA contrast, two-step confirm only when destructive |
+| 27 | [`analytics.md`](./analytics.md) | Business insights over the projections (forecasts, margins, dead stock, aging, concentration, payment mix, peak hours). Never owns an authoritative total |
 
-26. [`analytics.md`](./analytics.md) — the business insights built
-    on the projections (today / month-end forecasts, profit and
-    margin trends, items-to-focus, dead stock, receivables /
-    payables aging, customer concentration, payment-mix and
-    peak-hour trends, smart suggestions); each mapped to the events
-    and projections it reads, with the retail-attribution data limit
-    called out. Analytics never owns an authoritative total.
+### Quality, performance, definition of done
 
-### Quality, perf, and definition of done
-
-27. [`scenarios.md`](./scenarios.md) — 15 named fixtures (real shop
-    workflows) with setup, sequence, expected projections, expected
-    flags, and the test layer each one belongs to.
-28. [`performance-budgets.md`](./performance-budgets.md) — concrete UI
-    / print / sync numbers, reference device, measurement
-    methodology, required perf scenarios, and CI gates.
-29. [`quality-bar.md`](./quality-bar.md) — required test layers, the
-    "no UI hang" performance bar, and what counts as `done` for a
-    feature.
-30. [`feature-acceptance.md`](./feature-acceptance.md) — per-feature
-    required-test checklist by feature kind, with PR template.
-31. [`ci-contract.md`](./ci-contract.md) — exact required CI jobs,
-    canonical commands, artefact contract, baseline-bump protocol.
-32. [`platform-test-matrix.md`](./platform-test-matrix.md) — which
-    physical surfaces (Chromium headless / headed, Android
-    emulator / real device / real device + printer, iOS Safari /
-    Capacitor, low-end Android) run which CI jobs; manual smoke
-    gates (`G-PRINT-PROD`, `G-OFFLINE-RECON`, `G-CASH-CYCLE`,
-    `G-COLD-START`, `G-FORCE-UPGRADE`, `G-PWA-OWNER`,
-    `G-PWA-SAFARI`); release-gate matrix by release type;
-    release-record JSON manifest.
-33. [`worked-example.md`](./worked-example.md) — one retail bill
-    traced end-to-end through every layer (UI intent → service →
-    event → projection → print → audit → tests). Read this once
-    to make every other doc click into place.
-34. [`ui-standards.md`](./ui-standards.md) — the production-grade UI
-    bar (v1 as the *floor*): design tokens, reusable components, mobile
-    bottom-nav, every-state coverage, accessibility, UI definition-of-
-    done. The visual quality counterpart to `quality-bar.md`.
-35. [`localization.md`](./localization.md) — full Hindi/English app
-    localization via a single runtime toggle: message catalog, Hindi-
-    first authoring, adopt-v1-terminology rule, data-vs-chrome split,
-    number/currency/date handling, and the tests it requires.
+| # | Doc | What it settles |
+|---|---|---|
+| 28 | [`scenarios.md`](./scenarios.md) | 15 named fixtures of real shop workflows: setup, sequence, expected projections and flags, and the test layer each belongs to |
+| 29 | [`performance-budgets.md`](./performance-budgets.md) | Concrete UI/print/sync numbers, the reference device, measurement methodology, required perf scenarios, CI gates |
+| 30 | [`quality-bar.md`](./quality-bar.md) | Required test layers, the "no UI hang" bar, and what `done` means for a feature |
+| 31 | [`feature-acceptance.md`](./feature-acceptance.md) | Per-feature required-test checklist by feature kind, with the PR template |
+| 32 | [`ci-contract.md`](./ci-contract.md) | Required CI jobs, canonical commands, artefact contract, baseline-bump protocol |
+| 33 | [`platform-test-matrix.md`](./platform-test-matrix.md) | Which surfaces run which jobs; manual smoke gates (`G-PRINT-PROD`, `G-OFFLINE-RECON`, `G-CASH-CYCLE`, `G-COLD-START`, `G-FORCE-UPGRADE`, `G-PWA-OWNER`, `G-PWA-SAFARI`); release-gate matrix; release-record manifest |
+| 34 | [`worked-example.md`](./worked-example.md) | One retail bill traced end to end: UI intent → service → event → projection → print → audit → tests. **Read this first if you read nothing else.** |
+| 35 | [`ui-standards.md`](./ui-standards.md) | Production-grade UI bar with v1 as the floor: design tokens, reusable components, bottom nav, every-state coverage, accessibility, UI definition of done |
+| 36 | [`localization.md`](./localization.md) | Full Hindi/English via one runtime toggle: message catalog, Hindi-first authoring, v1 terminology, data-vs-chrome split, number/currency/date handling |
 
 ## Relationship to the v1 page-specs
 
@@ -204,124 +100,3 @@ All ten freeze-list decisions in
 were `confirmed` on 2026-06-15. The remaining open items are
 milestone-specific (see the "Open questions that block specific
 milestones" table in that file).
-
-## Recent changes
-
-- _2026-06-18_ · Added two production docs and indexed them (34, 35):
-  [`ui-standards.md`](./ui-standards.md) (production-grade UI bar — v1
-  is the floor, with tokens/components/nav/states/accessibility) and
-  [`localization.md`](./localization.md) (full Hindi/English app toggle
-  via a message catalog, Hindi-first, adopt-v1-terminology). Updated
-  [`scope-boundaries.md`](./scope-boundaries.md) Core: replaced the old
-  "inline bilingual, not a locale toggle" line with the real
-  language-switch requirement and a production-UI-quality line. Driven
-  by the owner's "make it production, not POC" and "localization
-  support" asks.
-
-- _2026-06-17_ · Ran a full **v1 ↔ v2 feature-parity audit** (~248 v1
-  features in `AadhatManagementApp` vs this rebuild spec). Result:
-  the rebuild covers every core domain. Recorded the four v1 features
-  that had no bucket — frequency-sorted item dropdown, Excel item
-  import/export, custom finance accounts, native contact picker — in
-  [`scope-boundaries.md`](./scope-boundaries.md) §v1 parity gaps with
-  a recommended bucket and `TODO(spec)` for owner sign-off, plus
-  three deliberate simplifications pinned so they are not re-added as
-  "gaps".
-- _2026-06-17_ · Extended [`role-permission-matrix.md`](./role-permission-matrix.md)
-  with §Owner-configurable role visibility & capabilities — the
-  in-product control the owner asked for. The role × permission
-  matrices become the fixed **ceiling**; `shopProfile.roleConfig`
-  lets the owner, from Admin → Roles & Visibility, hide pages and
-  switch off optional within-ceiling capabilities per non-owner role
-  at runtime. Config **narrows, never widens** (no escalation), with
-  hard floors (owner immutable, structural owner-only powers
-  unreachable, audit/block-rules immovable, visibility ⊇ action,
-  don't-lock-out-billing), enforced server-side on the same path as
-  the base matrix. Cross-referenced from
-  [`scope-boundaries.md`](./scope-boundaries.md) (Configurable
-  bucket) and [`event-schemas.md`](./event-schemas.md)
-  (`shop_profile_updated` validation). Default config reproduces the
-  spec cell-for-cell.
-- _2026-06-16_ (later) · Added [`analytics.md`](./analytics.md) (#26)
-  — the v2 business-analytics contract (forecasts, profit/margin
-  trends, items-to-focus, dead stock, receivables/payables aging,
-  customer concentration, payment-mix and peak-hour trends, smart
-  suggestions), each mapped to the events/projections it reads, with
-  the retail-attribution data limit called out. Re-homes v1's
-  forward-looking Analytics page on the ledger; replaces the bare
-  period-binning stub in `projections.md`. Also added a
-  `## Calculation integrity` section to `invariants.md` and expanded
-  the `scenarios.md` Coverage-map gap list from 9 to 31 scenarios
-  (calculation-edge + adversarial/fraud classes added).
-- _2026-06-16_ · Added the platform / accuracy / concurrency
-  layer in response to the owner's "web + Android + iOS, fast,
-  always accurate" review. New spec docs:
-  `platform-compatibility.md` (per-platform capability matrix
-  with iOS deferred to v2.1 and named gates),
-  `printer-compatibility.md` (supported printers, ESC/POS
-  subset, Devanagari = always bitmap, Android BT Classic SPP
-  path, four-layer duplicate-print prevention, manual-print
-  fallback), `money-units-rounding.md` (atomic units, canonical
-  formulas, round-half-to-even, v1 → v2 import conversion),
-  `time-clock.md` (two-timestamp model, skew bands, backdate
-  accepted-with-flag, future-date blocked, shop-day = open
-  cash session), `concurrency.md` (shop-wide cash session,
-  server-allocated bill numbers with device-bound offline
-  blocks, rate-snapshot-at-intent, stock-race accepted-and-
-  flagged, "first server commit wins"),
-  `platform-test-matrix.md` (eight physical surfaces, manual
-  smoke gates, release-gate matrix by release type). New plan
-  doc: `plan/rebuild/release-health-gates.md` (10-gate pre-
-  release checklist with hot-fix subset and sign-off record).
-  Extended `invariants.md` with `## Constitution — the "no
-  false data" rules` summarising AC1–AC8 and mapping each to
-  the M / S / C / B / R label that enforces it (no standalone
-  `accuracy-contract.md`, to avoid duplication drift).
-  Extended `data-governance.md` with `## Validation gates`
-  mapping master-data quality rules to adapter result codes
-  (`SCHEMA_INVALID`, `BLOCKED_BY_RULE`, `INVARIANT_VIOLATION`,
-  `REFERENCE_INVALID`, `PERMISSION_DENIED`) and UI-level
-  recoveries (merge, create-anyway-with-flag, unarchive).
-- _2026-06-15_ (later same day) · Added the operational-concerns
-  layer in response to the owner's "what about offline / failure
-  modes / observability / governance / ergonomics / AI?" review.
-  New spec docs: `data-placement.md` (where each datum lives,
-  read/write budgets, staleness rules), `offline-sync.md`
-  (per-action allowance, state vocabulary, retry policy,
-  conflict handling), `failure-modes.md` (20 real-world failures
-  with expected behaviour and pinned tests), `versioning-
-  compatibility.md` (`appVersion` / `schemaVersion` /
-  `domainVersion` and force-upgrade contract), `data-
-  governance.md` (PII inventory, retention, master-data
-  governance, bill numbering, GST posture),
-  `observability.md` (notifications + supportability + debug
-  bundle with PII-exclusion), `ai-boundaries.md` (suggestion-
-  not-action contract for every AI flow), `ergonomics.md`
-  (shop-floor constraints, tap targets, sunlight, Hindi label
-  sizing). New plan docs: `plan/rebuild/operations-runbook.md`
-  (daily / weekly / monthly + 12 failure procedures + release
-  rules + escalation) and `plan/rebuild/backup-restore.md`
-  (what / where / monthly drill that turns backups into proof).
-  Extended `role-permission-matrix.md` with the staff
-  edit-time-limit rule (`shopProfile.staff.editGraceMin`,
-  default 5 min, enforced by the storage adapter). Re-framed
-  the Save perf budget as three explicit thresholds (UI ≤
-  100 ms / bill visible locally ≤ 300 ms / server-confirmed ≤
-  500 ms) and added a `Required perf scenarios` table.
-- _2026-06-15_ (later same day) · Added two more contract docs:
-  `ci-contract.md` (exact required CI jobs, canonical commands,
-  baseline-bump protocol) and `worked-example.md` (one retail
-  bill traced end-to-end through every layer). Added the
-  Foundations / Data and lifecycle / Correctness, monitoring,
-  and access / Quality, perf, and definition of done groupings
-  to the reading order.
-- _2026-06-15_ (later same day) · Added agent-ready contract docs:
-  `event-schemas.md`, `scenarios.md`, `role-permission-matrix.md`,
-  `idempotency.md`, `projections.md`, `performance-budgets.md`,
-  `feature-acceptance.md`. Plan-side additions
-  (`plan/rebuild/decisions.md`, `migration-cutover.md`) referenced
-  from this README's open-questions section.
-- _2026-06-15_ · Initial draft of the rebuild spec subtree, derived
-  from the owner's stated priorities: test-first correctness, no UI
-  hang, no duplicate bills from double-tap or slow Bluetooth,
-  explicit anomaly flagging, brother-as-monitor usage pattern.

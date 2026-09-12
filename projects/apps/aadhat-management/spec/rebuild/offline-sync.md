@@ -1,31 +1,12 @@
 # Offline / sync contract — rebuild
 
-> The shop must keep working when the network is gone, and
-> recover cleanly when it returns. This file defines, per
-> action, whether offline is allowed, what the local UI state
-> machine looks like, how conflicts resolve, what the retry
-> policy is, and what the UI must show the user.
+> Offline allowance, local state machine, conflict handling, retry policy, and required UI copy.
 
-## Why this doc exists
+## Principle
 
-[`data-placement.md`](./data-placement.md) says **where each
-piece of data lives**. This file says **what each user action
-is allowed to do when there is no network**, what state the row
-goes through, and how the device and server reconcile. Without
-this contract, every screen will quietly invent its own offline
-behaviour and the business will silently lose money.
-
-The principle is the same:
-
-> Truth on the server. Speed in the app. Consistency in the
-> shared domain.
-
-Offline does not change the principle. It changes the timeline:
-the truth-write to the server is **deferred**, not skipped.
+Truth stays on the server; offline only defers the server write. Data ownership is in [`data-placement.md`](./data-placement.md).
 
 ## Per-action allowance table
-
-The rule for every action staff or owner can take.
 
 | Action | Offline allowed? | Why / Constraint |
 |---|:---:|---|
@@ -38,7 +19,7 @@ The rule for every action staff or owner can take.
 | Record expense (personal) | ❌ | Owner-only; treat as settings change |
 | Receive outstanding payment | ✅ | Shown as `Pending sync` until server confirms; over-settlement guarded by local fold + server re-check |
 | Make outstanding payment | ❌ | Owner-only; defer until online |
-| Stock adjustment (small) | ✅ | Allowed for staff if under `stock.adjustmentLargeKg`; flagged when large |
+| Stock adjustment (small) | ✅ | Allowed for staff if under `stock.adjustmentLargeMg`; flagged when large |
 | Stock adjustment (large) | ❌ | Requires owner approval flow; needs network |
 | Void today's bill | 🟡 | Allowed if cash session is still open AND idempotency key not yet server-acknowledged; shown as `Void pending review` |
 | Void older bill | ❌ | Always owner-only and always online |
@@ -55,19 +36,9 @@ The rule for every action staff or owner can take.
 | Read all cached projections | ✅ | With explicit staleness badge per [`data-placement.md`](./data-placement.md) |
 | Reports / Analytics | 🟡 | Allowed for the cached window only; older periods show `Older data requires network` |
 
-✅ = allowed without restriction beyond cache requirements.
-🟡 = allowed with **explicit pending-state surfacing**.
-❌ = blocked with a clear UX message; no event ever appended
-offline.
-
-A row's value is enforced by **both** the UI (for UX) and the
-storage adapter (for safety). The adapter is the truth: even a
-direct SDK call from a hacked client must fail for ❌ rows.
+✅ = allowed offline. 🟡 = allowed with explicit pending-state surfacing. ❌ = blocked with clear UX; no offline event appended. UI and adapter both enforce rows; adapter is authoritative against direct SDK calls.
 
 ## Local UI state vocabulary
-
-Every write the user makes goes through a strict state machine.
-The badge text the user sees is exactly one of:
 
 | Badge | Meaning | When it changes |
 |---|---|---|
@@ -79,53 +50,24 @@ The badge text the user sees is exactly one of:
 | `Printed` | Print queue confirmed delivery. | Independent of `Saved/Synced`. |
 | `Print failed` | Printer reported failure or timed out. | Independent. |
 
-A bill row in History can show two badges: one for the sale
-event (e.g. `Synced`) and one for the print (e.g. `Print
-failed`). They are different concerns by design.
-
-Forbidden:
-
-- A spinner that hides whether the value is local-only or
-  server-confirmed.
-- A toast that disappears before the user can read whether it
-  said `Saved` or `Synced`.
-- A "looks fine" green check while the outbox has the row.
+A History row may show both sale sync and print badges. Forbidden: hiding local/server status behind spinners, transient toasts, or green checks while outbox rows remain.
 
 ## Sync retry policy
 
-Driver for the outbox worker.
+| Policy | Value |
+|---|---|
+| Trigger | `online`, app foregrounded, periodic 60 s tick while online, or user `Retry`. |
+| Order | Oldest-first within a shop; bounded retry window before parking and advancing. |
+| Backoff | Exponential with jitter: start 1 s, cap 60 s, reset to 1 s after success or `online`. |
+| Per-event budget | 5 transient attempts; sixth transient failure parks as `Needs review`. |
+| Permanent failures | No retry; park immediately and raise `sync.permanent-rejection`. |
+| Idempotency | Retry with same `idempotencyKey`; accepted duplicate returns `OK` and marks `Synced`. |
+| Bandwidth | Batch at most 25 events per request. |
+| Outbox retention | 30 days; then banner `Your device hasn't synced in 30 days — contact owner` and refuse new writes until drain. See `decisions.md`, M11. |
 
-1. **Trigger**: `online` event, app foregrounded, periodic 60 s
-   tick while online, or explicit user `Retry`.
-2. **Order**: oldest-first within a shop. A failed item does
-   not block the queue beyond a small bounded retry window —
-   after that, it parks in `Needs review` and the worker
-   advances.
-3. **Backoff**: exponential with jitter. Start at 1 s, cap at
-   60 s. Reset to 1 s after any success or after `online`.
-4. **Per-event budget**: 5 transient attempts. The sixth
-   transient failure parks the item as `Needs review` for the
-   brother / owner to triage.
-5. **Permanent failures** never retry. They park immediately
-   and raise a `sync.permanent-rejection` flag.
-6. **Idempotency**: every retry uses the same
-   `idempotencyKey`. If the server has already accepted the
-   event under that key (e.g. ack lost on the wire) it returns
-   `OK` (idempotent) and the worker marks `Synced`.
-7. **Bandwidth**: batch at most 25 events per request to avoid
-   long blocking writes.
-8. **Outbox retention**: 30 days. Beyond that the device
-   surfaces a banner (`Your device hasn't synced in 30 days —
-   contact owner`) and refuses new writes until a successful
-   drain. (See `decisions.md`, M11.)
-
-The retry policy is one piece of code, not per-feature. Every
-event type uses the same outbox.
+The outbox worker is shared by every event type.
 
 ## Conflict handling
-
-Two devices can act at once even when there is only one staff
-device today (e.g. staff phone + owner phone). The rules:
 
 | Conflict | Resolution |
 |---|---|
@@ -137,96 +79,42 @@ device today (e.g. staff phone + owner phone). The rules:
 | Bill correction after cash close | Always requires owner review even if device is online. Service appends only the **request**; the corrective event lands only after a `flag_resolved(approve)`. |
 | Out-of-order replay (offline burst) | Server orders events by their server-side `seq`. The shared `apply` is **order-independent** for projection state where possible; where order matters (cash session open/close), the event carries `references.sessionId` and is rejected if `seq` shows it would re-order a session boundary. |
 
-The general rule: **no silent loss, no silent overwrite**. Any
-real conflict surfaces in the Review Queue with both candidates
-visible.
+No silent loss, overwrite, or automatic merge; conflicts surface in Review Queue with both candidates where applicable.
 
-## What happens on reconnect
+## Reconnect sequence
 
 1. Device detects `online`.
-2. Outbox worker batches up to 25 oldest events and `POST`s
-   with idempotency keys.
-3. Server validates and either:
-   - Accepts → emits server-ordered events back; device marks
-     `Synced`.
-   - Rejects (transient) → device backs off and retries up to
-     the per-event budget.
-   - Rejects (permanent) → device marks `Needs review` and
-     raises a flag.
-4. After every successful batch, the device pulls any
-   newly-server-recorded events for the shop (from any device)
-   into its event cache, then re-folds projections. The user
-   sees the most recent projection within the **staleness
-   tolerance** in [`data-placement.md`](./data-placement.md).
-5. If reconciliation detects divergence (a local projection
-   that does not match the server's after re-fold) a
-   `reconciliation.mismatch` flag is raised and the device
-   force-rebuilds the affected projection from the server's
-   events.
+2. Outbox worker posts up to 25 oldest events with idempotency keys.
+3. Server validates: accept → emit server-ordered events and mark `Synced`; transient reject → backoff up to budget; permanent reject → `Needs review` + flag.
+4. After each successful batch, device pulls new shop events from any device, re-folds projections, and stays within the staleness tolerance in [`data-placement.md`](./data-placement.md).
+5. Projection divergence raises `reconciliation.mismatch` and forces rebuild from server events.
 
-## What the UI must show
+## UI requirements
 
-For every page, the offline / sync state surfaces in three
-places:
+| Surface | Required copy/behaviour |
+|---|---|
+| App banner, offline | `Offline — your work is saved locally and will sync when you reconnect.` |
+| App banner, draining | `Syncing N items…` |
+| App banner, stuck | `N items need review — open Review Queue.` |
+| Per-row badge | One of the exact state vocabulary badges above in History / Today / Outstanding. |
+| Failed row | One obvious `Retry` button; retry reuses the same idempotency key. |
 
-1. **App-level banner** when offline:
-   `Offline — your work is saved locally and will sync when
-   you reconnect.`
-   When draining: `Syncing N items…`.
-   When stuck: `N items need review — open Review Queue.`
-2. **Per-row badge** in History / Today / Outstanding using the
-   state vocabulary above. Always visible; never collapsed
-   into "everything is fine".
-3. **One obvious `Retry` button** on any failed row. Tapping
-   it enqueues a fresh attempt that reuses the same
-   idempotency key.
-
-Forbidden UI patterns:
-
-- Hiding `Sync pending` once the page re-renders.
-- A toast-only signal that auto-dismisses.
-- Treating `Saved locally` as terminal success in any business
-  view (Reports, Cash close, Outstanding).
-- Cash close that ignores `Sync pending` events.
-- Allowing a "void" of a `Sync pending` bill without the
-  matching idempotency-key surgery (see Conflict handling row
-  above).
+Forbidden: hiding `Sync pending`, toast-only signals, treating `Saved locally` as terminal success in Reports/Cash close/Outstanding, cash close ignoring pending events, or voiding a `Sync pending` bill without the matching idempotency-key handling.
 
 ## Required tests
 
-Add to [`scenarios.md`](./scenarios.md) (or extend existing
-fixtures):
+- `offline-bill-replay` (already listed) — single offline bill, reconnect, single server bill.
+- `offline-burst-then-reconnect` — staff creates 20 bills offline; reconnect; exactly 20 server bills with stable order; no duplicates.
+- `offline-week-long` — week of activity offline including cash open / close, settlements, voids; replay produces identical projections.
+- `dedup-conflict-same-key-different-payload` — same `idempotencyKey` arrives twice with different totals; server raises `dedup.conflict`; UI parks both as `Needs review`.
+- `concurrent-item-edit` — two devices edit the same item; one succeeds; the other lands as `OUT_OF_ORDER`.
+- `concurrent-outstanding-settlement` — two devices receive the same payment; first wins; second is `INVARIANT_VIOLATION`.
+- `cash-close-with-pending-sync` — staff closes cash while three sale events are still `Sync pending`; cash close is itself appended; on reconnect, the cash session totals match exactly.
+- `retry-budget-exhausted` — permanent rejection on the 6th attempt parks as `Needs review` and the next item drains.
+- `reconciliation-mismatch-rebuild` — local stock projection diverges from server's; flag raised; device rebuilds and resolves.
+- `outbox-quota-30d` — simulate 30 days without sync; banner appears; new writes are refused until drain.
 
-- `offline-bill-replay` (already listed) — single offline bill,
-  reconnect, single server bill.
-- `offline-burst-then-reconnect` — staff creates 20 bills
-  offline; reconnect; exactly 20 server bills with stable order;
-  no duplicates.
-- `offline-week-long` — week of activity offline including cash
-  open / close, settlements, voids; replay produces identical
-  projections.
-- `dedup-conflict-same-key-different-payload` — same
-  `idempotencyKey` arrives twice with different totals; server
-  raises `dedup.conflict`; UI parks both as `Needs review`.
-- `concurrent-item-edit` — two devices edit the same item; one
-  succeeds; the other lands as `OUT_OF_ORDER`.
-- `concurrent-outstanding-settlement` — two devices receive the
-  same payment; first wins; second is `INVARIANT_VIOLATION`.
-- `cash-close-with-pending-sync` — staff closes cash while
-  three sale events are still `Sync pending`; cash close is
-  itself appended; on reconnect, the cash session totals match
-  exactly.
-- `retry-budget-exhausted` — permanent rejection on the 6th
-  attempt parks as `Needs review` and the next item drains.
-- `reconciliation-mismatch-rebuild` — local stock projection
-  diverges from server's; flag raised; device rebuilds and
-  resolves.
-- `outbox-quota-30d` — simulate 30 days without sync; banner
-  appears; new writes are refused until drain.
-
-Each of these has the standard scenario contract: setup,
-sequence, expected projections, expected flags, expected UI
-badges.
+Each scenario specifies setup, sequence, expected projections, expected flags, and expected UI badges in [`scenarios.md`](./scenarios.md).
 
 ## Test layers
 
@@ -241,24 +129,8 @@ badges.
 
 ## Open items
 
-- `TODO(spec)` — **Bill number allocation offline.** Pick before
-  M5. Default in [`data-placement.md`](./data-placement.md):
-  pre-allocate a small block per session; surface
-  `offline-issued` badge until reconciled.
-- `TODO(spec)` — **Stale `references.itemVersion` window.** How
-  old can an offline item reference be before the server forces
-  a refetch? Default: 24 h.
-- `TODO(spec)` — **Background sync after app close.** v2.0
-  keeps sync foreground-only; revisit after pilot.
-- `TODO(spec)` — **Cross-device cache coherence protocol.**
-  Document before M8 (also flagged in `data-placement.md`).
+- `TODO(spec, blocks: M5)` — Bill number allocation offline? **Default:** pre-allocate a small block per session per [`data-placement.md`](./data-placement.md); surface `offline-issued` badge until reconciled.
+- `TODO(spec, blocks: M11)` — Stale `references.itemVersion` window: how old can an offline item reference be before server forces refetch? **Default:** 24 h.
+- `TODO(spec, blocks: M11)` — Background sync after app close? **Default:** foreground-only in v2.0; revisit after pilot.
+- `TODO(spec, blocks: M8)` — Cross-device cache coherence protocol? **Default:** none agreed.
 
-## Recent changes
-
-- _2026-06-15_ · file created. Per-action allow / block matrix
-  with offline rules; local UI state vocabulary
-  (`Saved` / `Sync pending` / `Synced` / `Sync failed
-  (retrying)` / `Needs review` / `Printed` / `Print failed`);
-  exponential-backoff retry policy with 6-attempt budget;
-  conflict handling matrix; reconnect protocol; required UI
-  surfaces; ten required test fixtures.

@@ -215,13 +215,3 @@ billing path.
   right-handed only; revisit after pilot.
 - `TODO(spec)` — minimum supported Android version. Default:
   Android 9 (consistent with the v1 production app).
-
-## Recent changes
-
-- _2026-06-15_ · file created. Shop-floor constraints
-  (one-handed, sunlight, noisy, Hindi-first, ₹15–20k phone);
-  tap-target floors (48 / 56 dp); WCAG AA contrast with
-  icon-not-colour status; Hindi label sizing rules;
-  two-step confirm only for destructive actions;
-  single-tap Save / Print backed by idempotency; picker
-  design; history row design; required tests.

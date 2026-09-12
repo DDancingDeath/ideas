@@ -1,60 +1,23 @@
 # Production Firestore Rules — Hardening Design
 
-> **Status: DESIGN ONLY — DO NOT DEPLOY YET.**
-> **Owner action required.** This document is a *proposal* for tightening
-> the production `firestore.rules` file. Nothing in this design has been
-> deployed. The current rules in `firestore.rules` are *unchanged* by
-> this document. See §10 "Rollout Plan" for the safe deployment ladder.
+> **v1 scope.** This document records the designed v1 Firestore ruleset. If it disagrees with `spec/rebuild/`, `spec/rebuild/` wins.
+>
+> **Status: DESIGN ONLY — DO NOT DEPLOY YET.** Owner action required. Current `firestore.rules` is unchanged. See §10 for rollout.
 
 ## 0. Purpose & Scope
 
-The current production rules (`firestore.rules` at the repo root, lines
-1–175) collapse authorisation down to a single check:
+Current production rules (`firestore.rules`, lines 1–175) reduce most authorization to:
 
 ```javascript
 allow read, write: if isSignedIn();
 ```
 
-This is correct *for a closed-trust deployment* — every authenticated
-user is a trusted employee. But it has three real-world consequences:
+This design adds role checks, schema validation, append-only audit/telemetry, and staged rollout. It preserves current staff workflows: create bills, edit items, run reports, and update past bills; only deletes become owner-only.
 
-1. **A leaked / stolen account = full data destruction**. Any signed-in
-   user can `delete` every bill, every customer, every audit log, and
-   then `update` the leftover bills to wrong amounts. The audit log
-   they would normally leave can itself be deleted because
-   `auditLogs/{logId}` allows `update, delete: if false` *only* —
-   wait, that one is correct. But every other collection is open.
-
-2. **Client bugs become data corruption**. A typo in
-   `firestore-service.js` that writes `grandTotal: NaN` or
-   `customerName: undefined` is silently accepted by the server.
-   Reports break days later when nobody can correlate the bad row to
-   the commit that introduced it.
-
-3. **No defence-in-depth against the staging clone**. The staging
-   read-only clone (Phase 1.5 of the master plan) leans on a *single*
-   rule check (`isStagingReadOnly()`). If that check has a typo, the
-   staging user can write to prod. We currently have no payload
-   validation as a fallback.
-
-This design proposes a **role-aware, schema-validating, audit-immutable**
-ruleset that:
-
-- Preserves day-to-day staff workflow (no clicks change).
-- Quarantines destructive operations to the `owner` role.
-- Validates payload shape on every financial write.
-- Makes the staging-readonly rule the **third** layer of defence,
-  not the only one.
-- Is designed to be **rolled out in stages** (§10), each stage being
-  individually reversible without a code deploy.
-
----
 
 ## 1. Current State (verbatim audit)
 
 ### Roles in use today
-
-From `firestore.rules` line 11–17:
 
 ```javascript
 function getUserRole() {
@@ -65,17 +28,11 @@ function isAdmin() {
 }
 ```
 
-The `users` collection stores a `role` field. Code references in
-`www/js/modules/admin.js`, `www/js/modules/users.js`, and
-`www/js/auth/authentication.js` show three values in actual use:
+Roles referenced by `www/js/modules/admin.js`, `www/js/modules/users.js`, and `www/js/auth/authentication.js`:
 
-- `'owner'` — full control (the founders of the business)
-- `'staff'` — day-to-day cashier / data entry
-- `'pending'` — newly-signed-up account, awaiting approval
-
-The `pending` role is implicit — newly created `users/{uid}` docs may
-have `status: 'pending'` and `role` either absent or `'staff'`. The
-admin approval flow flips `status` to `'approved'`.
+- `'owner'` — full control.
+- `'staff'` — cashier / data entry.
+- `'pending'` — new account awaiting approval; may be implicit via `status: 'pending'` with missing/`'staff'` role.
 
 ### Current per-collection summary
 
@@ -99,61 +56,34 @@ admin approval flow flips `status` to `'approved'`.
 | `auditLogs` | `owner` only | signed-in | **never** | **never** |
 | `telemetry` | `owner` only | signed-in | signed-in | `owner` only |
 
-`dev_*` mirrors are all `read, write: if isSignedIn()` (lines 123–173).
-The `dev_*` collections are intentionally permissive — they're the
-testing surface — and out of scope for this hardening exercise.
+`dev_*` mirrors are intentionally permissive: `read, write: if isSignedIn()` (lines 123–173). They are out of scope.
 
-### Things the current rules already get right
-- `auditLogs` is genuinely append-only (`update, delete: if false`).
-- `users` self-modify is correctly gated.
-- The `dev_*` mirror exists.
+### Current gaps
 
-### Things that are gaps
-- **Every financial collection allows delete by any signed-in user.**
-- **No payload validation anywhere.** A write of `{ grandTotal: -1e308 }`
-  succeeds.
-- **No timestamp integrity.** A user can backdate (or post-date) any
-  bill by setting `createdAt` to whatever they want.
-- **No tenant separation.** This is single-tenant by design today, but
-  if a second business is ever onboarded, every write goes into the
-  same collections.
-- **`telemetry.update`** is permitted (line 114) — telemetry should be
-  append-only too, otherwise the bug-tracker can be silently rewritten.
+- Financial collections allow signed-in deletes.
+- No payload validation.
+- No timestamp integrity.
+- No tenant separation.
+- `telemetry.update` is permitted.
 
----
 
-## 2. Goals (in priority order)
+## 2. Goals
 
-1. **No data loss from a single compromised credential.** Destructive
-   ops (`delete`) on financial collections require the `owner` role.
-2. **Schema validation on every financial write.** Money fields must be
-   non-negative numbers; required fields must be present; server
-   timestamps cannot be forged by the client.
-3. **Append-only is enforced for both `auditLogs` AND `telemetry`.**
-4. **Backwards-compatible with the existing client.** The current
-   `staff` workflows must continue to work without code changes:
-   create bills, edit items, run reports. *Edits* to past bills are
-   allowed for staff (the app supports invoice corrections); only
-   *deletes* require `owner`.
-5. **Layered with the staging-readonly rule (Phase 1.5).** When that
-   rule is added, it composes cleanly with this design — both checks
-   apply, and either denial blocks the write.
-6. **Designed for incremental rollout.** Each new check goes in as a
-   *separate* deploy so any regression can be reverted in <60 seconds
-   without a code change.
+1. Financial `delete` requires `owner`.
+2. Financial writes validate schema, non-negative money fields, required fields, and server timestamps.
+3. `auditLogs` and `telemetry` are append-only.
+4. Existing approved staff can create/update business docs and run reports.
+5. Phase 1.5 staging-readonly composes as an extra denial.
+6. Roll out as small, revertible rule deploys.
 
 ### Explicit non-goals
-- Real-time collaboration locking (out of scope; single-store app).
-- Field-level read filtering (out of scope; everyone needs everything
-  they read today).
-- Migrating off the compat SDK (orthogonal — see `STAGING_README.md`).
 
----
+- Real-time collaboration locking.
+- Field-level read filtering.
+- Compat SDK migration; see `STAGING_README.md`.
+
 
 ## 3. New role model
-
-We keep the current three-value role enum. We add **two helper
-functions** that classify writes by intent:
 
 ```javascript
 // Existing - unchanged
@@ -173,218 +103,37 @@ function isApproved() {
 }
 ```
 
-Three behavioural changes follow:
+Effects:
 
-- `pending` users (`status != 'approved'`) **cannot write** to any
-  business collection. They can only read their own `users` doc and
-  await admin approval. (Today, a freshly self-signed-up user can
-  immediately write bills — a quiet vulnerability.)
-- `staff` users can **create and update** any business doc, but **cannot
-  delete** anything except their own draft / autosave.
-- `owner` is the only role that can `delete` from financial collections.
+- `status != 'approved'`: may read only own `users` doc; cannot write business collections.
+- `staff`: create/update business docs; delete only own draft/autosave.
+- `owner`: only role allowed to delete financial docs.
 
-Migration: any existing `users` doc without `status` is treated as
-`'pending'` *only after* the rule deploy. To avoid breaking everyone
-overnight, the rollout (§10) seeds `status: 'approved'` on every
-existing `users` doc *before* the new rule is activated.
+Migration: seed `status: 'approved'` on existing users before activating these checks.
 
----
 
 ## 4. Payload validation rules
 
-Per-collection schema. Every rule below is intersected with the
-existing role check; both must pass.
+Exact helper and match code is in §12. This section is the implementation map.
 
-### 4.1 `purchases` and `wholesaleSales` and `retailSales`
-```javascript
-function billPayloadValid() {
-  let d = request.resource.data;
-  return d.size() <= 50  // sanity bound — bills shouldn't have 100+ fields
-    && d.keys().hasAll(['date', 'items', 'createdAt'])
-    && d.date is string
-    && d.items is list && d.items.size() > 0 && d.items.size() < 200
-    && d.createdAt == request.time   // server timestamp, not client-chosen
-    && (d.get('grandTotal', 0) is number) && d.get('grandTotal', 0) >= 0
-    && (d.get('amountPayable', 0) is number) && d.get('amountPayable', 0) >= 0
-    && (d.get('total', 0) is number) && d.get('total', 0) >= 0
-    && (d.get('payment', {}).get('paid', 0) is number)
-    && d.get('payment', {}).get('paid', 0) >= 0
-    && (d.get('payment', {}).get('due', 0) is number)
-    && d.get('payment', {}).get('due', 0) >= 0;
-}
+| Area | Exact names | Required checks |
+|---|---|---|
+| Bills | `purchases`, `wholesaleSales`, `retailSales`, `billPayloadValid()` | `d.size() <= 50`; keys `date`, `items`, `createdAt`; `date is string`; `items is list && size > 0 && size < 200`; `createdAt == request.time`; `grandTotal`, `amountPayable`, `total`, `payment.paid`, `payment.due` are numbers and `>= 0`. `read: isApproved`; `create/update: isStaff && isApproved && billPayloadValid`; `delete: isOwner && isApproved`. Client must use `serverTimestamp()` in `www/js/firebase/firestore-service.js` before §10 step 4. |
+| Items | `items`, `itemPayloadValid()` | `d.size() <= 30`; key `name`; `name` string length `> 0` and `<= 200`; `hindiName` string; `purchaseRate` and `saleRate` numbers `>= 0`; `stockQty` number and may be negative if oversold. `read: isApproved`; `create/update: isStaff && isApproved && itemPayloadValid`; `delete: isOwner && isApproved`. |
+| Expenses / withdrawals | `expenses`, `withdrawals`, `expensePayloadValid()` | `d.size() <= 20`; keys `amount`, `date`, `createdAt`; `amount is number && amount >= 0`; `date is string`; `createdAt == request.time`; `category` and `description` strings. |
+| Cash sessions | `cashManagement`, `cashSessions`, `cashSessionPayloadValid()` | `d.size() <= 30`; key `createdAt`; `createdAt == request.time`; `openingBalance`, `closingBalance` numbers; `totalIn` and `totalOut` numbers `>= 0`. |
+| Users | `users/{userId}` | `read` own doc or owner; `create` self only with role in `['staff', 'pending']` and status `pending`; `update` owner any doc, self only if `role` and `status` unchanged; `delete` owner only. |
+| Preferences | `users/{userId}/preferences/{prefId}` | `read, write` only same user or owner. Used for v2 preferences including custom finance accounts. |
+| Audit logs | `auditLogs` | Append-only. `create` requires `action`, `timestamp`, `userId`, `userId == request.auth.uid`, `timestamp == request.time`; `read` owner; `update/delete false`. |
+| Telemetry | `telemetry` | Append-only gap fix. `create` signed-in; `read` owner; `update false`; `delete` owner. |
+| Scratch / housekeeping | `drafts`, `autoSaves`, `notifications`, `itemFrequency`, `stockAdjustments` | Payloads stay flexible. `drafts` and `autoSaves` delete only by owner/user-owned doc. `notifications` delete owner only. `stockAdjustments` delete owner only. |
+| Settings | `settings` | Global business config. `read` approved; `create/update/delete` owner. |
 
-match /purchases/{id} {
-  allow read: if isApproved();
-  allow create: if isStaff() && isApproved() && billPayloadValid();
-  allow update: if isStaff() && isApproved() && billPayloadValid();
-  allow delete: if isOwner() && isApproved();
-}
-```
-
-`request.time` is the server-stamped time on the request; any client
-attempt to set `createdAt` to a different value fails the rule.
-**Existing client code must be updated to use `serverTimestamp()` for
-`createdAt`.** This is a one-line change in
-`www/js/firebase/firestore-service.js` per write site. `BATCH-N` already
-audits these sites — that code change is paired with this rule deploy in
-§10 step 4.
-
-### 4.2 `items`
-```javascript
-function itemPayloadValid() {
-  let d = request.resource.data;
-  return d.size() <= 30
-    && d.keys().hasAll(['name'])
-    && d.name is string && d.name.size() > 0 && d.name.size() <= 200
-    && (d.get('hindiName', '') is string)
-    && (d.get('purchaseRate', 0) is number) && d.get('purchaseRate', 0) >= 0
-    && (d.get('saleRate', 0) is number) && d.get('saleRate', 0) >= 0
-    && (d.get('stockQty', 0) is number);  // can be negative if oversold
-}
-
-match /items/{id} {
-  allow read: if isApproved();
-  allow create, update: if isStaff() && isApproved() && itemPayloadValid();
-  allow delete: if isOwner() && isApproved();
-}
-```
-
-### 4.3 `expenses` and `withdrawals`
-Same shape as bills, simpler payload:
-```javascript
-function expensePayloadValid() {
-  let d = request.resource.data;
-  return d.size() <= 20
-    && d.keys().hasAll(['amount', 'date', 'createdAt'])
-    && d.amount is number && d.amount >= 0
-    && d.date is string
-    && d.createdAt == request.time
-    && (d.get('category', '') is string)
-    && (d.get('description', '') is string);
-}
-```
-
-### 4.4 `cashManagement` and `cashSessions`
-```javascript
-function cashSessionPayloadValid() {
-  let d = request.resource.data;
-  return d.size() <= 30
-    && d.keys().hasAll(['createdAt'])
-    && d.createdAt == request.time
-    && (d.get('openingBalance', 0) is number)
-    && (d.get('closingBalance', 0) is number)
-    && (d.get('totalIn', 0) is number) && d.get('totalIn', 0) >= 0
-    && (d.get('totalOut', 0) is number) && d.get('totalOut', 0) >= 0;
-}
-```
-
-### 4.5 `users` (tighten)
-
-- `update` of one's own doc may not modify `role` or `status` (only
-  `owner` can change those). Otherwise, a junior staff member could
-  promote themselves to owner.
-- `read` of others' docs becomes owner-only. Staff can still read their
-  own doc (needed by the role lookup helper).
-
-```javascript
-match /users/{userId} {
-  allow read: if isSignedIn() && (request.auth.uid == userId || isOwner());
-  allow create: if isSignedIn() && request.auth.uid == userId
-    && request.resource.data.get('role', 'staff') in ['staff', 'pending']
-    && request.resource.data.get('status', 'pending') == 'pending';
-  allow update: if isSignedIn() && (
-    // owners can change anything
-    isOwner()
-    // self-edits cannot escalate role/status
-    || (request.auth.uid == userId
-        && request.resource.data.role == resource.data.role
-        && request.resource.data.status == resource.data.status)
-  );
-  allow delete: if isOwner();
-}
-```
-
-Per-user preferences are an explicit subcollection because v2 syncs
-preferences that v1 kept in localStorage only, including custom finance
-accounts:
-
-```javascript
-match /users/{userId}/preferences/{prefId} {
-  allow read, write: if isSignedIn()
-    && (request.auth.uid == userId || isOwner());
-}
-```
-
-### 4.6 `auditLogs` (already correct, document the invariant)
-No change. `update, delete: if false` is the right answer.
-Recommend adding a payload validator anyway:
-```javascript
-match /auditLogs/{logId} {
-  allow create: if isSignedIn()
-    && request.resource.data.keys().hasAll(['action', 'timestamp', 'userId'])
-    && request.resource.data.userId == request.auth.uid
-    && request.resource.data.timestamp == request.time;
-  allow read: if isOwner();
-  allow update, delete: if false;
-}
-```
-Stronger because we now also enforce that the `userId` field on the log
-matches the writer (so users can't impersonate someone else in the log).
-
-### 4.7 `telemetry` (gap fix)
-Today telemetry allows `update`, which lets clients silently rewrite
-historical bug reports. Change to append-only:
-```javascript
-match /telemetry/{docId} {
-  allow create: if isSignedIn();
-  allow read: if isOwner();
-  allow update: if false;          // CHANGED from `if isSignedIn()`
-  allow delete: if isOwner();
-}
-```
-
-### 4.8 Lightly-validated collections (`drafts`, `autoSaves`, `notifications`, `itemFrequency`, `stockAdjustments`)
-
-These are scratch / housekeeping data — payload validation is
-low-value and risks breaking the client. Keep `read, write: if isStaff() && isApproved()`. Drop the `delete`-by-anyone surface area:
-
-```javascript
-match /drafts/{docId} {
-  allow read, create, update: if isStaff() && isApproved();
-  allow delete: if isStaff() && isApproved()
-    && resource.data.get('userId', '') == request.auth.uid;
-}
-```
-Same for `autoSaves`. For `notifications`, allow all signed-in writes
-(since notifications cross users by design), but only `owner` can
-delete:
-```javascript
-match /notifications/{notificationId} {
-  allow read, create, update: if isApproved();
-  allow delete: if isOwner();
-}
-```
-
-### 4.9 `settings`
-
-`settings` is global business config (printer settings, GST rates, etc.).
-It's edited by the admin in the Configure tab — there's no reason a
-junior staff member should be able to overwrite the GST rate or the
-printer config:
-
-```javascript
-match /settings/{settingId} {
-  allow read: if isApproved();
-  allow create, update: if isOwner();
-  allow delete: if isOwner();
-}
-```
-
----
 
 ## 5. Composition with the staging-readonly rule
 
-Phase 1.5 introduces:
+Phase 1.5 adds:
+
 ```javascript
 function isStagingReadOnly() {
   return request.auth != null
@@ -392,50 +141,30 @@ function isStagingReadOnly() {
 }
 ```
 
-This composes with the rules above by appending `&& !isStagingReadOnly()`
-to every `create / update / delete` in the file. It is a final-line
-check — the *most restrictive* — and stays unchanged by this design.
+Append `&& !isStagingReadOnly()` to every `create / update / delete`.
 
-The composition is explicitly defence-in-depth:
-
-```
+```text
 ALLOW WRITE iff:
-   isApproved (status check)
-   AND isStaff or isOwner (role check, depending on op)
-   AND payloadValid (shape check)
-   AND !isStagingReadOnly (identity blocklist)
+   isApproved
+   AND isStaff or isOwner
+   AND payloadValid
+   AND !isStagingReadOnly
 ```
 
-Any one denial blocks the write. The rule deploy order in §10 ensures
-the staging-readonly rule (Phase 1.5) lands *before* the role tightening
-(this document) so we always have a backstop while iterating.
+Any denial blocks the write. Phase 1.5 lands before role tightening.
 
----
 
 ## 6. Things this design does NOT do
 
-- **Field-level access control on reads.** Rules can validate write
-  payloads but don't filter what gets returned on a read. A staff
-  member can still query the entire `users` collection (modulo §4.5)
-  and see everyone's document. If we ever need to hide one staff
-  member's salary from another, we need data partitioning, not rules.
-- **Cross-collection consistency.** Rules can't enforce "you can only
-  create a bill if there's a corresponding cash session open." That's
-  an application-level invariant.
-- **Rate limiting.** Rules can't say "no more than 100 writes per
-  minute per user." App Check or Cloud Functions are the answers there.
-- **Schema migration.** Existing rows that don't match the new schema
-  remain readable (rules only check writes). If we want to enforce
-  the schema retroactively, we need a one-time backfill script.
+- Field-level read filtering. Rules validate writes but do not redact read results.
+- Cross-collection consistency, such as requiring an open cash session before a bill.
+- Rate limiting; use App Check or Cloud Functions.
+- Schema migration; existing rows remain readable until backfilled.
 
----
 
 ## 7. Test matrix
 
-The Firebase Rules Playground (Console → Firestore → Rules → Playground)
-must verify each row before deploy. **All 26 cases must match the
-"Expected" column.** This matrix is the definition-of-done for §10
-step 5.
+Firebase Rules Playground must verify all 26 cases before deploy.
 
 | # | Auth | Status | Role | Op | Collection | Payload | Expected |
 |---|---|---|---|---|---|---|---|
@@ -466,21 +195,19 @@ step 5.
 | 25 | yes | approved | staff | update | auditLogs | — | DENY |
 | 26 | staging | approved | staff | create | purchases | valid | DENY |
 
-The staging-readonly rule (Phase 1.5) is row 26. It's listed last
-because it lands first chronologically (Phase 1.5 before this design's
-deploy).
+Row 26 covers Phase 1.5 staging-readonly. It lands first chronologically.
 
----
 
 ## 8. Migration cost / breaking changes
 
-### Client code changes required *before* §10 step 4 deploys
-1. **All `createdAt` fields must be `firebase.firestore.FieldValue.serverTimestamp()`** instead of client `Date.now()` or new `Date().toISOString()`. Audit sites:
+### Client code required before §10 step 4
+
+1. Use `firebase.firestore.FieldValue.serverTimestamp()` for all `createdAt` fields:
    - `firestore-service.js` create methods (purchases, sales, items, expenses, withdrawals, etc.)
    - `cash-management.js` session open/close
-   - `auditLogs` writes (already mostly server timestamp)
+   - `auditLogs` writes
    - `telemetry` writes
-2. **`payment.due` and `payment.paid` must be numbers**, not strings. Some legacy code stores them as strings. One-time backfill:
+2. Coerce `payment.due` and `payment.paid` to numbers before deploy:
    ```javascript
    db.collection('purchases').get().then(snap => snap.docs.forEach(d => {
      const data = d.data();
@@ -490,38 +217,25 @@ deploy).
      if (Object.keys(fix).length) d.ref.update(fix);
    }));
    ```
-   Run this from a one-shot admin console as `owner` *before* §10 step 4.
-3. **Every existing `users` doc must have `status: 'approved'`** before §10 step 3 (role tightening). One-shot backfill, owner-run.
+3. Seed `status: 'approved'` on every existing `users` doc before §10 step 3.
 
 ### No client changes required for
-- The `delete` restriction. The existing app rarely deletes; only the
-  Admin → Audit "purge" flow does, and only owners use that.
-- The `users` self-edit restriction. The Profile screen doesn't expose
-  role / status fields.
-- Telemetry append-only. Telemetry writes are creates only.
 
----
+- Owner-only delete.
+- `users` self-edit restriction.
+- Telemetry append-only, because telemetry writes are creates only.
+
 
 ## 9. Observability
 
-Every denial in production lands in the Firebase Console → Firestore →
-Usage tab as a "Permission denied" error. Currently we have ~0 of
-those (rules are too loose to deny anything). After deploy we should
-expect a small spike from the validator catching legitimate edge cases
-the existing client code does sloppily — that's a feature, not a bug.
+Permission denials appear in Firebase Console → Firestore → Usage. Expect a small spike after deploy as validators catch bad client payloads.
 
-Recommendation: add a `firestore-deny-monitor.html` admin page that
-renders the last 24h of permission-denied counts grouped by collection.
-Build that page on top of an existing GCP Cloud Logging sink.
-**Not in scope** of this design but referenced for the runbook.
+Optional future runbook item: `firestore-deny-monitor.html`, showing the last 24h of permission-denied counts by collection from a GCP Cloud Logging sink. Not in scope.
 
----
 
-## 10. Rollout plan (the safe ladder)
+## 10. Rollout plan (safe ladder)
 
-Each step is a *separate* `firebase deploy --only firestore:rules`. Each
-step is independently revertible. **Stop at any step that breaks
-production**; the previous step remains active.
+Each step is a separate `firebase deploy --only firestore:rules`. Stop and revert on production breakage.
 
 | Step | What | Risk | Rollback |
 |---|---|---|---|
@@ -537,44 +251,21 @@ production**; the previous step remains active.
 | 9 | Validate: Rules Playground all 26 rows from §7 | n/a | n/a |
 | 10 | One-week soak. Monitor permission-denied error rate. | n/a | n/a |
 
-The staging-readonly rule (Phase 1.5) is independent of this ladder
-and lands separately *before* step 3, so it's the safety net while we
-iterate the role tightening.
+Phase 1.5 staging-readonly lands separately before step 3.
 
----
 
 ## 11. Open questions for the owner
 
-1. **Should `staff` be able to update past bills, or only same-day?**
-   This document allows updates indefinitely (matches current behaviour).
-   If we want to lock historical edits, add `&& resource.data.createdAt
-   > timestamp.value(now() - duration.value(1, 'd'))` to the update
-   rule.
-2. **Are there other accounts in production today besides `owner` and
-   `staff`?** If so, the role enum needs widening before §10 step 3.
-3. **Do we want to hide bill totals from non-`owner` staff?** That's a
-   field-level read filter — out of scope here, but if the answer is
-   "yes" we need to redesign the data layer (separate `billTotals`
-   collection, owner-only).
-4. **Cost ceiling on the `get(/users/...)` lookup inside every
-   rule call.** Each `getUserRole()` invocation costs one read. With
-   ~50 staff users active during peak and ~100 writes/minute, that's
-   ~6000 extra reads per minute. Stays well under the free tier, but
-   if traffic 100×s we should cache the role on the auth token via a
-   Cloud Function `setCustomUserClaims({role, status})`. **Listed as
-   future work.**
-5. **Should the staging-readonly rule expand to also block reads of
-   `users` and `auditLogs`?** Currently it only blocks writes. If
-   staging staff shouldn't see real audit history, add
-   `allow read: if !isStagingReadOnly()` to those two collections.
+1. **Should `staff` be able to update past bills, or only same-day?** Current default: updates indefinitely. Same-day alternative adds `&& resource.data.createdAt > timestamp.value(now() - duration.value(1, 'd'))`.
+2. **Are there production roles besides `owner` and `staff`?** Widen enum before §10 step 3 if yes.
+3. **Hide bill totals from non-`owner` staff?** Requires data-layer redesign, not rules.
+4. **Cost ceiling on `get(/users/...)`:** ~50 staff × ~100 writes/minute = ~6000 extra reads/minute. If traffic 100×s, cache role/status in custom claims via Cloud Function `setCustomUserClaims({role, status})`.
+5. **Should staging-readonly also block reads of `users` and `auditLogs`?** If yes, add `allow read: if !isStagingReadOnly()` to those collections.
 
----
 
 ## 12. Appendix — full proposed `firestore.rules`
 
-> Reproduced for reference. **Not a deploy artefact** — for diff /
-> review only. Compose with the Phase 1.5 staging-readonly rule before
-> shipping.
+> Review reference only. Compose with Phase 1.5 staging-readonly before shipping.
 
 ```javascript
 rules_version = '2';
@@ -774,17 +465,7 @@ service cloud.firestore {
 }
 ```
 
----
 
 ## 13. Summary
 
-**Today**: one rule everywhere — "is signed in?" — with no payload check
-and no role gating. One leaked password destroys the business.
-
-**Proposed**: signed-in + approved + correct role + valid payload, with
-the staging-readonly identity blocked as a final layer. Eight separate
-deploy steps, each individually revertible. Owner-only manual deploys.
-
-**Not deployed by this commit.** Deploying is a Phase 5 (post-staging-
-proven) decision that requires owner action in the Firebase Console
-plus the prerequisite client code changes from §8.
+Proposed v1 design: signed-in + approved + role + valid payload; staging-readonly blocks writes as final layer. Deploy only after §8 prerequisites and owner approval.

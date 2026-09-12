@@ -7,15 +7,14 @@
 
 ## Reference device
 
-`TODO(spec)`: the owner should confirm. The plan's tentative
-recommendation in
-[`plan/rebuild/decisions.md`](../../plan/rebuild/decisions.md) is
-a mid-range Android in the **₹15 000 – ₹20 000** range — for
-example a Pixel 6a-class device or a current Redmi Note. This
-matches what the shop staff actually uses.
+A mid-range Android in the **₹15 000 – ₹20 000** band — Pixel 6a-class or a
+current Redmi Note — matching what the shop staff actually uses
+(`decisions.md` row 6, `confirmed` 2026-06-15). The specific model may drift
+within the band without a `superseded` entry **provided the performance
+baseline is re-captured**; the model actually used must be recorded in the
+baseline artefact.
 
-Until confirmed, the budgets below are written against that
-**reference profile**:
+The budgets below are written against that **reference profile**:
 
 - CPU: roughly Snapdragon 695 / Tensor G1 class
 - RAM: 6–8 GB
@@ -230,26 +229,13 @@ owner can self-diagnose field slowness.
 
 ## Open items
 
-- `TODO(spec)`: confirm the reference device.
-- `TODO(spec)`: pick the exact long-task threshold for
+- `TODO(spec, blocks: M9)`: pick the exact long-task threshold for
   Reports / Analytics — Reports does heavy aggregation and may
-  need a worker offload threshold higher than 50 ms.
-- `TODO(spec)`: decide if cold-start budget is wall-clock from
-  app icon tap, or from the runtime's "app started" callback. The
-  former is honest; the latter is portable.
+  need a worker offload threshold higher than 50 ms. **Default:**
+  `200 ms`, matching the non-billing budget.
+- `TODO(spec, blocks: M11)`: is the cold-start budget wall-clock from
+  app icon tap, or from the runtime's "app started" callback? The
+  former is honest; the latter is portable. **Default:** wall-clock from
+  icon tap — it is what the owner experiences.
 
-## Recent changes
-
-- _2026-06-15_ (later same day) · Reframed the Save budget as
-  three explicit thresholds (UI ≤ 100 ms / bill visible locally
-  ≤ 300 ms / server-confirmed ≤ 500 ms) so the local-first
-  contract from [`data-placement.md`](./data-placement.md) and
-  [`offline-sync.md`](./offline-sync.md) is measurable. Added
-  a `Required perf scenarios` table covering item-search-with-
-  large-catalog, save-while-printer-disconnected, today-render-
-  with-large-history, stock-search-with-large-items, cold-vs-
-  warm startup, double-tap-under-slow-network, offline-burst
-  reconnect, history at 1k / 5k / 20k rows, long-task-absence
-  during billing, and concurrent-print-retry. Added the
-  "Reports > 500 ms must show progress or run off-main-thread"
-  UX rule under Read pages.
+**Resolved** — the reference device is fixed above (`decisions.md` row 6).

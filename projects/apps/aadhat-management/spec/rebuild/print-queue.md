@@ -46,8 +46,10 @@ safe.
   the same printer in v2.0 (`TODO(spec)`: confirm).
 - The worker drains the queue serially. While a job is in
   `connecting` or `sending`, no other job advances.
-- Retry policy: bounded exponential backoff with a maximum retry
-  count (`shopProfile.printer.maxRetries`, default `TODO(spec)`).
+- Retry policy: bounded exponential backoff with a maximum attempt
+  count (`shopProfile.printer.maxRetries`, default `5` total
+  including the first — see
+  [`configuration.md`](./configuration.md)).
   After exhaustion, the job becomes `failed` and a
   `flag_raised(rule: 'print-exhausted', severity: 'medium')` event
   is appended.

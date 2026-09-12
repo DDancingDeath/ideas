@@ -1,28 +1,14 @@
 # Projections — rebuild
 
-> The contract for everything that is **derived** from the event
-> ledger. Stock, cash, outstanding, history, reports, audit,
-> Review Queue — none of these are an authoritative store. They are
-> functions of events. This file defines the function for each.
+> Contract for values derived from the event ledger. Stock, cash, outstanding, history, reports, audit, and Review Queue are folds over events, not authoritative stores.
 
 ## Projection rules (apply to all)
 
-1. **A projection is a fold.** `projection = events.reduce(apply,
-   emptyState)`. The `apply` function is pure and lives in
-   `domain`.
-2. **Replay always wins.** If a cached or materialized projection
-   disagrees with `reduce(apply, events)`, the cache is wrong and
-   gets rebuilt from events.
-3. **No projection writes to the event log.** Projections are
-   consumers, never producers.
-4. **Same events, same projection.** For a fixed input, the
-   `apply` fold is deterministic. Property-based tests enforce
-   this on random event sequences.
-5. **Commutativity where safe.** Operations on disjoint keys
-   (e.g. purchases on different items) must produce the same
-   final projection regardless of order. Operations on the same
-   key (e.g. two corrections of the same bill) are causally
-   ordered by `references`.
+1. **Fold only.** `projection = events.reduce(apply, emptyState)`; `apply` is pure and lives in `domain`.
+2. **Replay wins.** Cached/materialized mismatch means rebuild from events.
+3. **No event writes.** Projections consume events only.
+4. **Deterministic.** Same input events produce same projection; property tests enforce.
+5. **Commutative where safe.** Disjoint-key operations may reorder; same-key corrections are ordered by `references`.
 
 ## Catalog
 
@@ -56,18 +42,11 @@ apply(state, event):
     case 'item_archived':  mark state.items.get(itemId).archived = true
 ```
 
-Stale-detection: not applicable; the projection is small enough to
-recompute on every read in v2.0.
+Stale-detection: none; recompute on every read in v2.0.
 
 ### Rate history per item
 
-Tracks how an item's price moves **over time** — both the owner's
-**configured sell rate** (set-points, each with a reason) and the
-**actually transacted** buy / sell rates. This is the v2 home for
-what v1 surfaced as the Analytics "Rate Trends" subtab (see
-[`../page-specs/11-analytics.md`](../page-specs/11-analytics.md)
-§Rate Trends), now event-sourced from the ledger instead of
-re-derived ad hoc from bill rows.
+Tracks configured sell-rate set-points and transacted buy/sell rates. Replaces v1 Analytics Rate Trends; see [`../page-specs/11-analytics.md`](../page-specs/11-analytics.md) §Rate Trends.
 
 ```
 type RatePoint = {
@@ -91,23 +70,11 @@ apply(state, event):
     for each line: push { at, kind: 'sell', rate: line.rate }
 ```
 
-Reads: the item-detail screen shows the master-set series as a step
-chart (reason on hover) and, optionally, the transacted buy / sell
-points over a 7 / 30 / 90-day window. Margin compression (sell rate
-flat while buy rate climbs) is read directly off this series. The
-series is **append-only** and never edited — a rate correction is a
-new `item_rate_changed` event, never a rewrite, so the history is a
-faithful audit of every change.
+Reads: item-detail screen shows master-set step chart with reason on hover, plus optional transacted buy/sell points over 7 / 30 / 90-day window. Margin compression is read from this series. Series is append-only; corrections append `item_rate_changed`.
 
-Stale-detection: not applicable; recompute on read in v2.0.
+Stale-detection: none; recompute on read in v2.0.
 
-`TODO(spec)` — confirm: (a) one merged projection vs separate
-master-rate and transacted-rate views; (b) retention / windowing for
-high-volume items; (c) whether a purchase that implies a new buy
-rate should also raise a `master-set` point or stay purely
-transactional. Depends on finalizing the `item_rate_changed` schema
-(still in [`event-schemas.md`](./event-schemas.md) §Referenced
-events not yet specified here).
+- `TODO(spec, blocks: M2)` — Should rate history use one merged projection instead of separate master-rate/transacted-rate views, which retention/windowing applies for high-volume items, and should purchase-implied buy rate also raise `master-set`? **Default:** none agreed.
 
 ### Live stock
 
@@ -129,12 +96,7 @@ apply(state, event):
     inverse of the latest non-voided version, then apply the corrected payload
 ```
 
-Rebuild process: full replay from genesis. Acceptable for the
-shop's data volume in v2.0.
-
-Stale-detection: a daily reconciliation job recomputes from
-events and compares to the cached projection. Drift fires
-`recon.projection-mismatch` (high).
+Rebuild: full replay from genesis. Daily reconciliation compares replay with cache and raises `recon.projection-mismatch` (high) on drift.
 
 ### Outstanding per party
 
@@ -157,8 +119,7 @@ apply(state, event):
     reverse the latest, apply the corrected
 ```
 
-Invariant: `byParty[p].balance == Σ byBill[b for b's party == p]`
-at all times. Property-based test enforces.
+Invariant: `byParty[p].balance == Σ byBill[b for b's party == p]` always; property-based test enforces.
 
 ### Cash on hand
 
@@ -191,21 +152,15 @@ apply(state, event):
     activeSessionId = null
 ```
 
-Invariant C1: `expectedClosing == opening + activity`. The close
-event's payload must satisfy this; if not, schema rejects.
+Invariant C1: `expectedClosing == opening + activity`; close event payload must satisfy it or schema rejects.
 
 ### History (bills)
 
-A simple ordered list of `BillRow` constructed from sale events,
-joined to their void / correction chains and to their print
-status. Sort: most recent first by `at`. Pagination cursor: event
-`id` (UUID v7 is sortable).
+Ordered `BillRow` list from sale events joined to void/correction chains and print status. Sort most recent first by `at`. Pagination cursor: event `id` (UUID v7 sortable).
 
 ### Today summary
 
-Filter all money events to `[today-start, today-end]` in the
-shop's configured timezone. Reduce to the documented shape.
-Identical reducer to **Period reports** with `range = today`.
+Filter money events to `[today-start, today-end]` in shop timezone. Use the Period reports reducer with `range = today` and output documented shape.
 
 ### Period reports
 
@@ -224,31 +179,17 @@ output = {
 }
 ```
 
-Cross-page invariant (R4): Today / Finance / Reports / Analytics
-for any range they all render must produce identical numbers.
-Enforced by an invariant test that runs the same reducer once and
-compares the three callers' outputs.
+Cross-page invariant R4: Today / Finance / Reports / Analytics render identical numbers for any shared range; invariant test runs one reducer and compares callers.
 
 ### Analytics
 
-`Array<{ bucket: IsoDate; ...periodReportFields }>`. Buckets are
-day / week / month depending on UI selection. Each bucket is just
-the period report applied to that bucket's range.
+`Array<{ bucket: IsoDate; ...periodReportFields }>`; buckets are day / week / month. Each bucket is the period report for that range.
 
-This is only the **binning primitive**. The forward-looking and
-comparative insights built on top of it (today / month-end
-forecasts, profit and margin trends, items-to-focus, dead stock,
-receivables / payables aging, customer concentration, payment-mix
-and peak-hour trends, smart suggestions) and the events each reads
-from are specified in [`analytics.md`](./analytics.md). Analytics
-reads projections only — it never owns an authoritative total
-(`M5`, `R4`).
+Forward-looking/comparative insights and event inputs are in [`analytics.md`](./analytics.md). Analytics reads projections only and never owns an authoritative total (`M5`, `R4`).
 
 ### Audit log
 
-Every event, oldest to newest within the configured retention
-window. Read-only for every role (A4). Rows expose `id, type, at,
-by, summary` and a link to the raw event payload.
+Every event, oldest to newest within configured retention window. Read-only for every role (A4). Rows expose `id, type, at, by, summary` and raw-payload link.
 
 ### Review Queue (unresolved)
 
@@ -263,106 +204,45 @@ Sort: severity desc, then `raisedAt` desc.
 For each `billId`:
 
 - `latestAttempt = max(print_attempt by attemptNo)` for jobKind `first-print`
-- `state` = `printed` if any `print_succeeded` for this billId
-  exists else `failed` if latest attempt outcome is `failed` else
-  `pending`
-- Reprints are tracked separately under jobKind `reprint`, each
-  with its own state.
+- `state` = `printed` if any `print_succeeded` for this billId exists else `failed` if latest attempt outcome is `failed` else `pending`
+- Reprints are tracked separately under jobKind `reprint`, each with its own state.
 
 ### Reconciliation status
 
-The reconciliation worker periodically:
+Worker picks window (yesterday, today, last 7 days), computes canonical projection from events, compares against cached/materialized projection, emits `flag_raised(rule: 'recon.projection-mismatch', severity: 'high')` per drift, and updates `reconciliationStatus`: `lastRunAt`, `windowsChecked`, `driftsFound`.
 
-1. Picks a window (default: yesterday, today, last 7 days).
-2. Computes the canonical projection from events.
-3. Compares to the cached / materialized projection.
-4. For each drift, emits `flag_raised(rule: 'recon.projection-mismatch', severity: 'high')`.
-5. Updates a small `reconciliationStatus` row: `lastRunAt`,
-   `windowsChecked`, `driftsFound`.
-
-This row is surfaced on the Diagnostics page (see
-[`review-queue.md`](./review-queue.md)).
+Diagnostics page surfaces this row; see [`review-queue.md`](./review-queue.md).
 
 ## Materialization strategy
 
-For v2.0, the default is **client-side projections** with optional
-caching:
+v2.0 default: client-side projections with optional caching. Client computes projections from streamed events. Small per-projection caches, e.g. Today summary, live in memory and invalidate on any input event. Tests assert cache equals replay for every fixture.
 
-- Projections are computed in the client from streamed events.
-- A small per-projection cache (e.g. Today summary) lives in
-  memory and is invalidated by any event that touches its inputs.
-- The cache is verifiable by replaying; tests assert the cache
-  equals the replay for every fixture.
-
-Server-side materialization is an option for later if read load
-demands it. The interface (`getProjection<T>(name, params)`) does
-not change.
+Later server-side materialization may be added without changing `getProjection<T>(name, params)`.
 
 ## Stale-detection
 
-A projection is "stale" when:
+Stale means the projection misses present events or reflects absent events.
 
-- The events that should have produced it are present but the
-  projection does not reflect them.
-- The projection reflects events that are not present (cache
-  corruption, replay bug).
+| Mechanism | Rule |
+|---|---|
+| Subscription invalidation | Each projection declares input event types; new event synchronously invalidates dependent projections |
+| Periodic reconciliation | Worker runs every N minutes, configurable in [`configuration.md`](./configuration.md), and compares cache to replay |
+| On-demand verification | UI page may request fresh replay for its visible section |
 
-Detection mechanisms, in order of preference:
-
-1. **Subscription invalidation.** Each projection declares the
-   event types it depends on. When a new event arrives, every
-   dependent projection is invalidated synchronously.
-2. **Periodic reconciliation.** The worker runs every N minutes
-   (configurable; default `TODO(spec)`) and compares cache to
-   replay.
-3. **On-demand verification.** Any UI page can request a fresh
-   replay for the section it shows; useful for the brother's
-   "double-check" flow.
-
-When stale is detected, the cache is rebuilt from events without
-user action. A `recon.projection-mismatch` flag is raised so the
-brother sees it happened.
+On stale detection, rebuild cache from events and raise `recon.projection-mismatch`.
 
 ## Rebuild process
 
-A rebuild reads every event in `[genesis, now]` for the shop,
-folds through `apply`, and writes the resulting state. This is
-the safest operation in the system because it cannot corrupt
-events (read-only over the source). It is the recovery path for
-any cache or materialized-view corruption.
-
-For projections with very large input event counts, snapshotting
-is allowed (`projectionSnapshot` row + replay from snapshot
-onward). Snapshots are tagged with the latest event id they
-include; replay starts strictly after.
+Read every shop event in `[genesis, now]`, fold through `apply`, and write state. Source events are read-only. For large inputs, `projectionSnapshot` is allowed; snapshots store latest included event id, and replay starts strictly after it.
 
 ## Tests this spec requires
 
-- For each projection × each scenario fixture: replay produces
-  exactly the documented expected values.
-- For each projection: random shuffle of commutative event subset
-  produces identical final state.
-- For each projection: invalidation correctly rebuilds after every
-  affecting event type.
-- For each projection: snapshot + replay-from-snapshot equals
-  full replay.
-- Across projections: R1–R4 invariants hold for every fixture.
-- Rate history: a sequence of `item_rate_changed` + purchase + sale
-  events for one item yields a chronological `RatePoint[]` with the
-  correct `master-set` / `buy` / `sell` kinds; a later rate change
-  appends a new point and does **not** alter earlier points or any
-  historical bill's re-fold (rate-as-of-T holds).
-- Performance: full rebuild for the shop's expected 2-year volume
-  completes within the budget in
-  [`performance-budgets.md`](./performance-budgets.md).
-
-## Recent changes
-
-- _2026-06-16_ · Added the **Rate history per item** projection
-  (sources: `item_rate_changed` master set-points plus transacted
-  `buy` / `sell` rates from purchase and sale lines), giving v2 an
-  event-sourced home for tracking an item's price over time and
-  carrying forward v1's Analytics "Rate Trends" — which the
-  projection catalogue previously lacked. Added a required test. The
-  exact view shape depends on finalizing the `item_rate_changed`
-  schema (`TODO(spec)` in `event-schemas.md`).
+| Test area | Requirement |
+|---|---|
+| Projection × scenario fixture | Replay matches documented expected values |
+| Projection commutativity | Random shuffle of commutative subset preserves final state |
+| Projection invalidation | Rebuilds after every affecting event type |
+| Snapshot replay | Snapshot + replay-from-snapshot equals full replay |
+| Cross-projection invariants | R1–R4 hold for every fixture |
+| Rate history | `item_rate_changed` + purchase + sale sequence yields chronological `RatePoint[]` with correct `master-set` / `buy` / `sell`; later rate change appends and does not alter earlier points or historical bill re-fold |
+| Performance | Full rebuild for expected 2-year volume meets [`performance-budgets.md`](./performance-budgets.md) |

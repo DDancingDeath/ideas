@@ -66,7 +66,7 @@ property-based suite:
 - Plus all entries in `invariants.md` (M1–M5, S1–S4, O1–O3, C1–C5,
   B1–B5, A1–A5, X1–X3, T1–T2)
 
-An invariant failure is a `Sev-1` and blocks the build.
+An invariant failure is a `block` and blocks the build.
 
 ### 4. Property-based tests
 
@@ -269,12 +269,3 @@ real phone with a real printer:
 
 This is the only place hardware is touched; everything else is
 mocked in CI.
-
-## Recent changes
-
-- _2026-06-17_ · Added a **selector convention** to §7 (E2E):
-  Playwright flows select by stable `data-testid` / ARIA role, never
-  by visible text, so the same flow passes unchanged in both
-  Hindi-leading and English-leading label modes (the bilingual UI
-  would otherwise make text selectors flaky). Every interactive
-  control carries a `data-testid` as part of the feature.

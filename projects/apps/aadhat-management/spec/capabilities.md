@@ -1,17 +1,11 @@
 # Aadhat Management App — Capabilities
 
-> **Source of truth for what this app does today.**
-> Generated from a deep, read-only walkthrough of the production code at commit
-> `bc2a434` (mirrored into this staging clone). When code changes here, update
-> this file in the same PR.
+> **v1 scope.** This document records the shipped v1 app capabilities. If it disagrees with `spec/rebuild/`, `spec/rebuild/` wins.
+>
+> Generated from production code at commit `bc2a434`. Update when v1 behaviour changes.
 
-This is a **single-page web app** for a small wholesale + retail business
-(Hindi/English UI, Indian currency/locale). It runs in a browser, as a PWA, or
-inside Capacitor on Android. Data lives in a single Firebase project
-(Firestore + Firebase Auth). A subset of features (printing) needs Cordova
-Bluetooth Serial on Android.
+Hindi/English single-page POS app for a small wholesale + retail shop. Runs in browser, PWA, and Capacitor Android. Backend: one Firebase project (Firestore + Firebase Auth). Android printing uses Cordova Bluetooth Serial.
 
----
 
 ## 1. App shell
 
@@ -22,11 +16,8 @@ Bluetooth Serial on Android.
 | Global app state, listeners, and date helpers | `www/js/modules/state.js`, `www/js/modules/helpers.js` |
 | Firebase wrapper (`FirebaseService`) for all Firestore reads/writes, with environment-prefixed collection names | `www/js/firebase/firestore-service.js` |
 
-The app deliberately **does not** use a build step or framework. All scripts
-load via `<script>` tags from `www/index.html` and use the Firebase compat
-SDK (global `firebase.*`).
+No build step or framework. Scripts load via `<script>` from `www/index.html`; Firebase compat SDK is global `firebase.*`.
 
----
 
 ## 2. Authentication & roles
 
@@ -40,14 +31,12 @@ SDK (global `firebase.*`).
 | Pending / rejected gating | If `users/{uid}.status` is `pending` or `rejected`, login is blocked with a message |
 | Owner bootstrap | First user becomes `owner` (see `firestore.rules`); subsequent users get `staff` by default |
 
-User profile data lives in the `users/{uid}` Firestore document
-(`displayName`, `role`, `status`).
+User profile doc: `users/{uid}` with `displayName`, `role`, `status`.
 
----
 
 ## 3. Navigation (full tab list)
 
-The hamburger / side menu exposes **15 tabs**. Documented top-to-bottom:
+The hamburger / side menu exposes 15 tabs.
 
 | # | Tab id | Label | Module | Purpose |
 |---|---|---|---|---|
@@ -67,169 +56,34 @@ The hamburger / side menu exposes **15 tabs**. Documented top-to-bottom:
 | 14 | `settings` | Settings | `settings.js` | Theme, Hindi display, Bluetooth printer |
 | 15 | `chat` | AI Assistant | *(none — see issues doc)* | UI is wired up but the implementing module does not exist |
 
-The "bottom of the menu" (where the user reports a lot of breakage) is
-**Stocks → Outstanding → Finance → Reports → Analytics → Settings → AI Assistant**.
-All seven of these have functional bugs documented in `REVIEW_ISSUES.md`.
+Bottom menu sequence: Stocks → Outstanding → Finance → Reports → Analytics → Settings → AI Assistant. Bugs are in `REVIEW_ISSUES.md`.
 
----
 
 ## 4. Module deep-dives
 
-### 4.1 Today (`day`)
+| Module | v1 capabilities / notes |
+|---|---|
+| Today (`day`) | Today's cash/online in/out totals split by purchase / retail / wholesale; transaction list with type filters; embedded `cash-management` clone (Issue #10); data from `AppState.purchaseHistory`, `AppState.retailSalesHistory`, `AppState.salesHistory`, `AppState.expensesHistory`, `AppState.cashManagement`. |
+| Billing (`billing`) | Purchase (`purchase.js`): farmer/supplier purchase with party, items × (quantity, weight, rate, labor), cash/online/due split, heavy-weight per-bag deduction, labor rate per qty. Retail Sale (`retail-sale.js`): same shape, opposite cash flow, sale total = receivable. Shared: `autoSaves/{userUid}_{mode}`, `drafts/`, Bluetooth ESC/POS print, WhatsApp share, person autocomplete. |
+| Wholesale Sales (`wholesale-sales`) | Sell from existing purchase stock; profit preview (stock cost vs sale rate); "Complete all due" bulk action; reprint / WhatsApp / print existing wholesale sales; all-due only, no cash/online split (Issue #15). |
+| Expenses (`miscellaneous.js`) | Business and personal categories; print receipt; person autocomplete; history with detail / edit / delete. File is `miscellaneous.js`; tab/template are `expenses`. |
+| Items (`items`) | Item master with English name, Hindi name, purchase / retail / wholesale rates; modal add/edit; SheetJS (`xlsx`) Excel import/export; frequency badges; staff sees fewer fields than owner/admin. |
+| History (`history`) | Unified `purchaseHistory` + `retailSalesHistory` + `salesHistory`; card/table toggle; search / date filter; detail modal; edit / delete entry points. |
+| Stock (`stock`) | Current stock = purchases received − wholesale sales − adjustments; manual adjustment add / remove / set absolute with reason; adjustment history; search. |
+| Outstanding (`due`) | Purchase outstanding (we owe supplier) and Retail outstanding (customer owes us); per-bill cash/online payment recording; "Mark cleared"; originating bill links. |
+| Finance (`finance`) | Assets, liabilities, withdrawals; rolling date filter (`week` / `month` / `year` = 7d / 1mo / 1yr, Issue #30); custom finance accounts are localStorage-only (Issue #29); uses `withdrawals/`. |
+| Reports (`reports`) | Overview combined totals; Purchases by item / party / time series; Sales same shape for retail + wholesale; Compare period comparisons; outputs Chart.js charts, CSV, PDF, date filter. |
+| Analytics (`analytics`) | Rule-based only: next-month cash prediction, monthly summary cards, profit trend line, item focus suggestions, generic suggestions panel. |
+| Cash Management (`cash-management`) | Per-day session opening balance → transactions → closing balance; transactions are due paid/received, business expense, personal expense; reconciliation; session history; auto-closes forgotten previous session with `closingBalance=0` at sign-in (Issue #8); stored in `cashManagement/`, listener bug uses wrong name (Issue #6). |
+| Admin (`admin`, owner-only) | Configure: business name, address, phone, GSTIN, default labor rate, default heavy-weight, etc. in localStorage `settings`; Users: list, approve/reject pending, change role, delete; Data: wipe / reseed test data, export. `configure.html` loads but is not menu-navigable (Issue #48). |
+| Diagnostics (`diagnostics`, owner-only) | Telemetry write/read/error counts; audit log viewer; clear / delete buttons; reads `telemetry/` and `auditLogs/`. |
+| Settings (`settings`) | Dark mode; "Show Hindi"; Bluetooth printer scan / connect / disconnect / test print; logout; JS still reads removed labor-rate fields (Issues #2, #3). |
+| AI Assistant (`chat`) | Template calls `askChatbot()` / `sendChatMessageFromTab()`, but no `chat.js`, LLM integration, or rule-based responder is loaded. v2 plans this under Phase 4. |
 
-- Shows today's headline in/out totals (cash + online), separated by purchase / retail / wholesale.
-- Lists today's transactions with type filters.
-- Embeds a **subtab clone of `cash-management`** inside the Today page (see Issue #10).
-
-Data sources: `AppState.purchaseHistory`, `AppState.retailSalesHistory`, `AppState.salesHistory` (wholesale), `AppState.expensesHistory`, `AppState.cashManagement`.
-
-### 4.2 Billing (`billing`)
-
-Two modes selected by tab buttons:
-
-- **Purchase** (`purchase.js`) — record a purchase from a farmer/supplier. Captures party name, items × (quantity, weight, rate, labor), payment split (cash/online/due), heavy-weight toggle (subtracts a per-bag deduction), labor rate per qty.
-- **Retail Sale** (`retail-sale.js`) — record a retail customer sale. Same shape as purchase, but flows the other direction (sale total = receivable).
-
-Shared features:
-
-- Autosave to `autoSaves/{userUid}_{mode}` so an unfinished bill survives a crash.
-- Drafts saved to `drafts/`.
-- Print via Bluetooth ESC/POS.
-- WhatsApp share button.
-- Person autocomplete from prior bill history.
-
-### 4.3 Wholesale Sales (`wholesale-sales`)
-
-- Sells **from existing stock** (purchase items already received), not new purchases.
-- Profit preview (cost from stock vs. sale rate).
-- "Complete all due" bulk action.
-- Reprint / WhatsApp / print existing wholesale sales.
-- **Currently all-due only** — the form has no cash/online split for wholesale sales (Issue #15).
-
-### 4.4 Expenses (`miscellaneous.js`)
-
-- Two categories: **business** and **personal**.
-- Print receipt.
-- Person autocomplete.
-- History list with detail / edit / delete.
-
-Note the module is named `miscellaneous.js` even though the tab and template
-are called `expenses`.
-
-### 4.5 Items (`items`)
-
-- Item master with English name (canonical), Hindi name, and three rates: purchase / retail / wholesale.
-- Modal-based add/edit.
-- Excel import + export via SheetJS (`xlsx`).
-- Frequency badges (most-used items).
-- Staff role sees fewer fields than owner/admin.
-
-### 4.6 History (`history`)
-
-- Unified view of `purchaseHistory` + `retailSalesHistory` + `salesHistory` (wholesale).
-- Card view + table view toggle.
-- Search / date filter.
-- Detail modal per bill.
-- Edit / delete entry points.
-
-### 4.7 Stock (`stock`)
-
-- Derived current stock = purchases received − wholesale sales − adjustments.
-- Manual stock adjustment: add / remove / set absolute, with reason.
-- Adjustment history list.
-- Search.
-
-### 4.8 Outstanding (`due`)
-
-- Two subtabs: **Purchase outstanding** (we owe the supplier) and **Retail outstanding** (customer owes us).
-- Per-bill payment recording (cash / online split).
-- "Mark cleared" button.
-- Links back to the originating bill.
-
-### 4.9 Finance (`finance`)
-
-- Dashboard with assets, liabilities, withdrawals.
-- Date filter (note: "week"/"month"/"year" mean rolling 7d/1mo/1yr, not calendar — Issue #30).
-- Custom finance accounts (currently localStorage-only — Issue #29).
-- Withdrawals collection (`withdrawals/`).
-
-### 4.10 Reports (`reports`)
-
-Four report types:
-1. **Overview** — combined totals.
-2. **Purchases** — by item / by party / time series.
-3. **Sales** — same shape as purchases but for retail+wholesale.
-4. **Compare** — side-by-side period comparisons.
-
-Outputs:
-- On-screen charts (Chart.js).
-- CSV download.
-- PDF download.
-- Date filter.
-
-### 4.11 Analytics (`analytics`)
-
-Rule-based heuristics (no ML):
-- Cash prediction for the next month based on recent trends.
-- Monthly summary cards.
-- Profit trend line.
-- Item focus suggestions ("you're buying a lot of X but selling little").
-- Generic suggestions panel.
-
-### 4.12 Cash Management (`cash-management`, embedded in Today)
-
-- Per-day cash session: opening balance → transactions during the day → closing balance.
-- Transactions: due paid/received, business expense, personal expense.
-- Reconciliation view.
-- Session history with details.
-- **Auto-closes the previous session at sign-in with closingBalance=0** if user forgot to close (Issue #8).
-- Stored in `cashManagement/` collection (Issue #6: realtime listener uses the wrong name).
-
-### 4.13 Admin (owner-only, `admin`)
-
-Three subtabs:
-- **Configure** — business config (name, address, phone, GSTIN, default labor rate, default heavy-weight, etc.) stored in `localStorage` `settings` key.
-- **Users** — list of all users; approve/reject pending; change role; delete.
-- **Data** — wipe / reseed test data, export, etc.
-
-Note: there is also a standalone `configure.html` template that is loaded but
-not currently navigable from the menu (see Issue #48).
-
-### 4.14 Diagnostics (owner-only, `diagnostics`)
-
-- Telemetry events table (write/read/error counts).
-- Audit log viewer.
-- Clear / delete buttons.
-- Reads `telemetry/` and `auditLogs/` collections.
-
-### 4.15 Settings (`settings`)
-
-- Dark mode toggle.
-- "Show Hindi" toggle (renders Hindi name alongside English in lists).
-- Bluetooth printer: scan / connect / disconnect / test print.
-- Logout button.
-
-The settings UI in the visible template only exposes dark/Hindi/printer,
-but the JS still tries to read labor-rate fields that no longer exist
-(Issues #2, #3).
-
-### 4.16 AI Assistant (`chat`)
-
-The template exists with a chat UI that calls `askChatbot()` and
-`sendChatMessageFromTab()` — but **no implementation is loaded**. There is no
-`chat.js` module, no LLM integration, no rule-based responder.
-
-The user has explicitly asked for "a better AI chatbot", so this is a green
-field: anything we add will be the first implementation. Plan v2 captures
-this work under Phase 4.
-
----
 
 ## 5. Data model (Firestore collections)
 
-All collection names are **environment-prefixed** by `FirebaseService` (e.g.
-`prod_purchases`, `staging_purchases`). A few modules bypass the wrapper and
-hit raw collection names — those are listed as bugs in `REVIEW_ISSUES.md`.
+`FirebaseService` environment-prefixes collection names (for example `prod_purchases`, `staging_purchases`). Raw-name bypasses are bugs in `REVIEW_ISSUES.md`.
 
 | Collection | Purpose |
 |---|---|
@@ -247,38 +101,36 @@ hit raw collection names — those are listed as bugs in `REVIEW_ISSUES.md`.
 | `telemetry` | Write/read/error counters |
 | `auditLogs` | Admin action log |
 
-Some modules also persist to `localStorage`:
-- `settings` (business config from Admin → Configure).
-- `customFinanceAccounts` (Finance custom accounts).
+Local storage:
+
+- `settings` (Admin → Configure business config).
+- `customFinanceAccounts`.
 - Theme + Hindi toggle.
 
----
 
 ## 6. Integrations
 
-- **Firebase** (Auth + Firestore) — primary backend.
-- **Cordova Bluetooth Serial** — Bluetooth printer (Android via Capacitor).
-- **SheetJS / `xlsx`** — Excel import/export of items.
-- **Chart.js** — Reports charts.
-- **WhatsApp** — `wa.me/` deep link with a templated message; no API call.
+- Firebase Auth + Firestore.
+- Cordova Bluetooth Serial for Android Bluetooth printer.
+- SheetJS / `xlsx` for item Excel import/export.
+- Chart.js for Reports charts.
+- WhatsApp `wa.me/` deep link; no API call.
 
----
 
 ## 7. What this app does **not** do
 
-- No real-time multi-user collaboration UI (last-write-wins).
-- No GST invoice generation (only captures GSTIN as static text).
-- No barcode / QR scanning.
-- No SMS / email notifications.
-- No backup / restore beyond Excel item export.
-- No actual AI / LLM in the AI Assistant tab.
-- No web-server side: everything is static + Firestore client SDK.
+- Real-time multi-user collaboration UI (last-write-wins).
+- GST invoice generation; GSTIN is static text only.
+- Barcode / QR scanning.
+- SMS / email notifications.
+- Backup / restore beyond Excel item export.
+- Actual AI / LLM in AI Assistant tab.
+- Server side; everything is static + Firestore client SDK.
 
----
 
 ## 8. Known operational notes
 
-- `npm install` requires `--legacy-peer-deps` because `canvas@^3.2.0` clashes with `jest-environment-jsdom@29.7.0`. Plan removes the `canvas` dep.
-- Tests: `npm test` runs Jest with jsdom; baseline is **103/103 passing** at commit `bc2a434`.
-- Local dev: `npm start` runs `firebase serve` on the `www/` folder.
-- CI workflow exists (`.github/workflows/`) but is broken in prod (documented in `REVIEW_ISSUES.md`).
+- `npm install --legacy-peer-deps` is required because `canvas@^3.2.0` clashes with `jest-environment-jsdom@29.7.0`; plan removes `canvas`.
+- `npm test`: Jest/jsdom; baseline **103/103 passing** at commit `bc2a434`.
+- `npm start`: `firebase serve` on `www/`.
+- CI exists in `.github/workflows/` but is broken in prod; see `REVIEW_ISSUES.md`.

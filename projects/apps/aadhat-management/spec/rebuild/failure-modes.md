@@ -1,395 +1,212 @@
 # Failure modes — rebuild
 
-> Every scary real-world failure, the **expected behaviour** of
-> the rebuild when it happens, and the **test** that proves the
-> behaviour. If a failure mode is not in this list, treat that as
-> a spec gap and open a `TODO(spec)`.
-
-This file is the catalogue. The runbook for **what a human
-does** about each failure lives in
-[`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md).
-This file says what the **system** does so the human has
-something stable to operate on.
+> Expected system behaviour for real-world failures. Human runbooks live in
+> [`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md).
+> If a failure mode is missing, open a shaped spec TODO.
 
 ## Reading guide
 
-For each failure:
-
-- **Trigger** — the concrete situation.
-- **Expected system behaviour** — events appended, projections
-  updated, flags raised, UI state, recovery path.
-- **Forbidden behaviour** — what must never happen.
-- **Test** — the scenario fixture or integration test that pins
-  this. New entries here must come with a fixture; existing
-  fixtures are in [`scenarios.md`](./scenarios.md).
+Each entry defines **Trigger**, **Expected**, **Forbidden**, and **Test**. New entries need a scenario fixture; existing fixtures are in [`scenarios.md`](./scenarios.md).
 
 ## Failure catalogue
 
 ### F1. App crashes after save before print
 
-- **Trigger**: bill is appended to the local event log, outbox
-  has it (or not, depending on online state), print job has been
-  enqueued, then the app process dies (OOM, crash, force-close).
+- **Trigger**: bill appended to local event log; outbox may contain it; print job enqueued; app dies by OOM, crash, or force-close.
 - **Expected**:
-  - On relaunch, the local event log replays into projections;
-    the bill is visible in History with `Saved` /
-    `Sync pending` / `Synced` as appropriate.
-  - The print job recovers from its IndexedDB queue. State on
-    relaunch is one of `queued` / `printing → reset to queued`
-    (because no `print_succeeded` ack was recorded) / never
-    started. Bill is reprinted exactly once because the print
-    queue is idempotent on `clientActionId`.
-- **Forbidden**: a duplicate sale event, a duplicate print that
-  cannot be deduped, or the bill disappearing.
-- **Test**: `crash-after-save-before-print` scenario — kills the
-  process between event-append and print dispatch; relaunch
-  asserts exactly one sale event and exactly one print delivery.
+  - Relaunch replays local events; History shows the bill as `Saved` / `Sync pending` / `Synced`.
+  - Print job recovers from IndexedDB as `queued`, `printing → queued` if no `print_succeeded` ack, or never started.
+  - Bill reprints exactly once; print queue dedupes on `clientActionId`.
+- **Forbidden**: duplicate sale event; non-dedupable duplicate print; disappearing bill.
+- **Test**: `crash-after-save-before-print` scenario — kill between event append and print dispatch; relaunch asserts one sale event and one print delivery.
 
 ### F2. App crashes during print
 
-- **Trigger**: bill is `Saved` / `Synced`, the BT print
-  transmission is in flight, process dies.
+- **Trigger**: bill is `Saved` / `Synced`; BT print transmission is in flight; process dies.
 - **Expected**:
-  - No `print_succeeded` event is appended (the printer never
-    confirmed).
-  - On relaunch the queue state is `printing` → it is reset to
-    `queued` with `attempts += 1`.
-  - The queue retries up to its budget (see
-    [`print-queue.md`](./print-queue.md)).
-  - The user can manually `Reprint` and the queue dedupes on
-    `clientActionId`.
-- **Forbidden**: appending `print_succeeded` speculatively;
-  creating any sale event from the print path.
+  - No `print_succeeded` event without printer confirmation.
+  - Relaunch resets `printing` → `queued` and increments `attempts += 1`.
+  - Queue retries up to [`print-queue.md`](./print-queue.md) budget.
+  - Manual `Reprint` is allowed; queue dedupes on `clientActionId`.
+- **Forbidden**: speculative `print_succeeded`; sale event from print path.
 - **Test**: `crash-during-print` scenario.
 
 ### F3. Phone battery dies with unsynced bills
 
-- **Trigger**: outbox holds N events; battery dies; phone
-  recharges and launches the app possibly hours later.
+- **Trigger**: outbox holds N events; battery dies; phone relaunches hours later.
 - **Expected**:
-  - Outbox is persisted in IndexedDB and is intact on relaunch.
-  - On `online`, drain proceeds per the retry policy in
-    [`offline-sync.md`](./offline-sync.md).
-  - Every drained event keeps its original `idempotencyKey` and
-    its original `clientAt` timestamp; server `at` is set on
-    server-side accept.
-  - Reconciliation re-folds projections; user sees the unsynced
-    bills as `Sync pending` until ack, then `Synced`.
-- **Forbidden**: dropping any outbox row; rewriting `clientAt`;
-  silently moving the bill's recorded date.
+  - IndexedDB outbox is intact.
+  - On `online`, drain follows [`offline-sync.md`](./offline-sync.md) retry policy.
+  - Drained events keep original `idempotencyKey` and `clientAt`; server `at` is set on accept.
+  - Reconciliation re-folds projections; bills show `Sync pending` until ack, then `Synced`.
+- **Forbidden**: dropped outbox row; rewritten `clientAt`; silently moved bill date.
 - **Test**: `battery-die-outbox-replay` scenario.
 
 ### F4. Firestore write succeeds but UI times out
 
-- **Trigger**: server accepts and persists the event, but the
-  network drops before the ack reaches the device — the device
-  thinks the write failed.
-- **Expected**:
-  - Outbox keeps the row and retries with the same
-    `idempotencyKey`.
-  - Server returns `OK (deduped)` because the key already
-    exists; device marks `Synced`.
-  - Exactly one server event; exactly one projection update.
-- **Forbidden**: a second server-side event, a manual "force
-  resend" path that bypasses idempotency.
-- **Test**: `ack-lost-on-wire` integration test against the
-  Firestore emulator with a network kill between persist and ack.
+- **Trigger**: server persists event; network drops before device receives ack.
+- **Expected**: outbox keeps row; retry uses same `idempotencyKey`; server returns `OK (deduped)`; device marks `Synced`; exactly one server event and projection update.
+- **Forbidden**: second server event; manual force-resend bypassing idempotency.
+- **Test**: `ack-lost-on-wire` Firestore emulator integration test with network kill between persist and ack.
 
 ### F5. Print succeeds but `print_succeeded` event fails
 
-- **Trigger**: printer confirms delivery, the queue tries to
-  append `print_succeeded`, that append fails (offline, server
-  error, app crash).
+- **Trigger**: printer confirms delivery; appending `print_succeeded` fails due to offline, server error, or crash.
 - **Expected**:
-  - The print queue retains an in-memory "physically printed"
-    marker keyed by `clientActionId`. On any retry that
-    discovers the printer already accepted this `clientActionId`
-    (vendor-specific echo, or a local "do not resend within N
-    seconds" guard), it does **not** reprint; it only retries
-    the `print_succeeded` event append.
-  - If the marker is lost (e.g. process crash before marker
-    persistence), the next attempt may reprint once; this is a
-    documented and acceptable corner because the alternative
-    (silently believing the print succeeded) is worse.
-- **Forbidden**: assuming success without an event; counting the
-  bill as "printed" in History before `print_succeeded` is
-  recorded.
-- **Test**: `print-ack-event-fails` scenario; also
-  `print-succeeded-marker-survives-restart`.
+  - Queue keeps an in-memory physically-printed marker keyed by `clientActionId`.
+  - Retry that detects printer accepted this `clientActionId` (vendor echo or local no-resend guard within N seconds) does not reprint; it retries only the `print_succeeded` append.
+  - If the marker is lost before persistence, the next attempt may reprint once.
+- **Forbidden**: success without event; History counted as printed before `print_succeeded`.
+- **Test**: `print-ack-event-fails`; `print-succeeded-marker-survives-restart`.
 
 ### F6. Duplicate tap during reconnect
 
-- **Trigger**: staff taps Save once while offline, then taps
-  Save a second time after the device just came online but the
-  first event hasn't acknowledged yet.
+- **Trigger**: staff taps Save offline, then taps again after reconnect before first ack.
 - **Expected**:
-  - UI: Save button disables on the first tap (see
-    [`bill-lifecycle.md`](./bill-lifecycle.md) B-rules).
-  - Service: the second tap reuses the same `clientActionId`
-    only if the user is still editing the same draft; if it's a
-    re-tap on the same row in History, it's a no-op surfaced as
-    `Already saved`.
-  - Server: same `idempotencyKey` → `OK (deduped)`.
-- **Forbidden**: two sale events; two outbox rows that drift
-  apart; "Save successful" toast firing twice for one intent.
+  - UI disables Save on first tap; see [`bill-lifecycle.md`](./bill-lifecycle.md) B-rules.
+  - Service reuses the same `clientActionId` only while editing the same draft.
+  - Re-tap on same History row is a no-op shown as `Already saved`.
+  - Server dedupes same `idempotencyKey` as `OK (deduped)`.
+- **Forbidden**: two sale events; two drifting outbox rows; duplicate success toast.
 - **Test**: `double-tap-during-reconnect` scenario.
 
 ### F7. Device date is wrong
 
-- **Trigger**: phone date is set to last year (or next year).
+- **Trigger**: phone date is last year or next year.
 - **Expected**:
-  - Every event carries `clientAt` (device time) and the
-    server stamps `at` (server time) on accept.
-  - On accept the server checks `|clientAt − at| <
-    shopProfile.time.clockSkewMaxMin` (default `15 min`). If
-    out of range, the server raises a `T1` (clock skew) flag
-    and tags the event but still accepts (it would be worse to
-    refuse the sale).
-  - The UI shows a banner `Your device clock looks wrong — fix
-    in Settings` while the skew persists.
-  - All projections, reports, and "today" boundaries use
-    server `at`, never `clientAt`. The shop's `Today` and cash
-    session window are server-truth.
-- **Forbidden**: trusting `clientAt` for any projection or
-  report; silently dropping events; deriving cash session
-  boundaries from device time.
-- **Test**: `wrong-device-clock` scenario; `T1` invariant test.
+  - Every event carries `clientAt`; server stamps `at` on accept.
+  - Server checks `|clientAt − at| < shopProfile.time.clockSkewMaxMin` per [`configuration.md`](./configuration.md); out-of-range accepts with `T1` clock-skew flag.
+  - UI banner: `Your device clock looks wrong — fix in Settings` while skew persists.
+  - Projections, reports, `Today`, and cash sessions use server `at`, never `clientAt`.
+- **Forbidden**: projection/report from `clientAt`; dropped events; cash boundaries from device time.
+- **Test**: `wrong-device-clock`; `T1` invariant test.
 
 ### F8. Staff uses old app version
 
-- **Trigger**: staff phone is running an older build than the
-  current schema. Old build attempts to write events with an
-  earlier schema version.
+- **Trigger**: old build writes earlier-schema events.
 - **Expected**:
-  - Server reads the event's `schemaVersion` and the client's
-    self-reported `appVersion` (on every write).
-  - Within the supported window (`appVersion >=
-    shopProfile.minSupportedAppVersion`): server validates
-    against the historical schema, optionally up-migrates the
-    payload, accepts.
-  - Below the supported window: server rejects with
-    `UNAUTHORIZED` and the device shows a blocking screen
-    `Please update — version X.Y required`. No event is
-    accepted from a below-minimum client.
-  - See [`versioning-compatibility.md`](./versioning-compatibility.md)
-    for the support window and migration rules.
-- **Forbidden**: silently dropping fields from old payloads;
-  letting an out-of-window client read fresh data while writes
-  are blocked.
-- **Test**: `old-client-rejected` and `old-client-migrated`
-  scenarios.
+  - Server reads event `schemaVersion` and client `appVersion` on every write.
+  - If `appVersion >= shopProfile.minSupportedAppVersion`, server validates historical schema, may up-migrate payload, and accepts.
+  - Below supported window, server rejects with `UNAUTHORIZED`; device blocks on `Please update — version X.Y required`; no event accepted.
+  - Support window and migration rules: [`versioning-compatibility.md`](./versioning-compatibility.md).
+- **Forbidden**: silently dropped old fields; out-of-window client reading fresh data while writes are blocked.
+- **Test**: `old-client-rejected`; `old-client-migrated`.
 
 ### F9. Local cache corrupts
 
-- **Trigger**: IndexedDB read returns malformed JSON, schema
-  mismatch, or fails entirely.
+- **Trigger**: IndexedDB read returns malformed JSON, schema mismatch, or failure.
 - **Expected**:
-  - The cache layer detects (Zod parse fails) and **does not**
-    use the bad row. It marks the cache as poisoned, logs a
-    `cache.corrupted` flag, and triggers a refetch from the
-    server for that projection's input window.
-  - User sees `Refreshing local data…` briefly. If offline,
-    user sees `Local data unreadable — connect to repair`.
-  - The outbox is in its own database with its own schema
-    versioning; corrupting projections cannot lose the outbox.
-- **Forbidden**: trusting partially-parsed projection state;
-  silent fallback to "zero" values; mixing repaired and
-  unrepaired rows in the same view.
+  - Cache layer rejects bad row on Zod parse failure, marks cache poisoned, logs `cache.corrupted`, and refetches that projection input window from server.
+  - UI shows `Refreshing local data…`; offline UI shows `Local data unreadable — connect to repair`.
+  - Outbox has separate database and schema versioning; projection corruption cannot lose outbox.
+- **Forbidden**: partially-parsed state; silent zero fallback; mixed repaired/unrepaired rows in one view.
 - **Test**: `cache-corruption-quarantine` integration test.
 
 ### F10. Firebase is down
 
-- **Trigger**: the backend (Firestore / Auth / Functions) is
-  unavailable.
+- **Trigger**: Firestore / Auth / Functions unavailable.
 - **Expected**:
-  - Auth: if session token is still valid the app continues in
-    offline-read-write mode. If expired, app shows the offline
-    sign-in screen using cached credentials' last-known role and
-    prompts to reconnect for fresh auth before any **owner-only**
-    action.
-  - Writes: all ✅-rows in
-    [`offline-sync.md`](./offline-sync.md) continue. All ❌-rows
-    are blocked with `Needs network`.
-  - Reads: served from cache with explicit staleness badges.
-  - When Firebase returns, outbox drains; auth refreshes; UI
-    transitions out of the offline banner.
-- **Forbidden**: silently treating cached projections as fresh;
-  allowing role-change or settings writes while auth is in
-  cached mode; corrupting outbox during repeated retries.
+  - Valid session token: app continues offline read-write.
+  - Expired token: offline sign-in screen uses cached last-known role; fresh auth required before any **owner-only** action.
+  - Writes follow ✅/❌ matrix in [`offline-sync.md`](./offline-sync.md): ✅ continue, ❌ show `Needs network`.
+  - Reads use cache with staleness badges.
+  - On recovery: outbox drains, auth refreshes, offline banner clears.
+- **Forbidden**: cached projections shown as fresh; role/settings writes in cached-auth mode; outbox corruption during retries.
 - **Test**: `backend-outage-replay` integration test.
 
 ### F11. Printer disconnected
 
-- **Trigger**: BT printer powered off, out of range, paired
-  with another device.
+- **Trigger**: BT printer off, out of range, or paired elsewhere.
 - **Expected**:
-  - Print queue marks the job `failed` after the BT timeout
-    budget (see [`print-queue.md`](./print-queue.md)).
-  - Bill row in History shows `Print failed` with a `Retry`
-    button; the sale event itself is untouched.
-  - User can retry; the queue re-tries with the same
-    `clientActionId`.
-- **Forbidden**: voiding the bill because the print failed;
-  blocking new bills because the queue is stalled (the queue
-  must continue draining other jobs).
+  - Queue marks job `failed` after BT timeout budget in [`print-queue.md`](./print-queue.md).
+  - History row shows `Print failed` + `Retry`; sale event unchanged.
+  - Retry uses same `clientActionId`.
+- **Forbidden**: void bill because print failed; stalled queue blocking new bills or other jobs.
 - **Test**: `printer-disconnected-during-bill` scenario.
 
 ### F12. Printer out of paper
 
-- **Trigger**: printer accepts the BT bytes but the physical
-  print is blank / partial.
+- **Trigger**: printer accepts BT bytes but print is blank or partial.
 - **Expected**:
-  - The printer's ESC/POS status response (where supported)
-    surfaces `out-of-paper`; queue marks `failed (paper)`.
-  - Where status is not available, the user sees the bill is
-    blank and taps `Reprint`. Queue dedupes; nothing changes
-    business-wise.
-- **Forbidden**: appending `print_succeeded` on `out-of-paper`.
-- **Test**: `printer-out-of-paper` scenario (mocked driver).
+  - ESC/POS status response, where supported, surfaces `out-of-paper`; queue marks `failed (paper)`.
+  - Without status, user taps `Reprint`; queue dedupes; business state unchanged.
+- **Forbidden**: `print_succeeded` on `out-of-paper`.
+- **Test**: `printer-out-of-paper` mocked-driver scenario.
 
 ### F13. Android battery optimisation kills the app or print worker
 
-- **Trigger**: OS aggressively suspends the app while a print
-  job is in flight.
-- **Expected**:
-  - Queue state on resume matches F2 (treat as crash-during-
-    print); retry budget applies.
-  - The app holds a foreground service / wake lock for the BT
-    transmission window so the kill is rare in practice.
-- **Forbidden**: assuming the print succeeded because the app
-  re-started.
+- **Trigger**: OS suspends app while print job is in flight.
+- **Expected**: resume follows F2; retry budget applies; app holds a foreground service / wake lock for the BT transmission window.
+- **Forbidden**: assuming print succeeded because app restarted.
 - **Test**: `battery-optimization-kills-print-worker`.
 
 ### F14. Phone is low on storage
 
-- **Trigger**: IndexedDB writes start failing with `QuotaExceededError`.
+- **Trigger**: IndexedDB writes fail with `QuotaExceededError`.
 - **Expected**:
-  - Outbox writes degrade to a "critical-only" mode: domain
-    events (sales, cash, settlements) still attempt to enqueue;
-    cached projections trim aggressively to free space.
-  - User sees a blocking banner `Storage almost full — clear
-    space or contact owner`. Once storage is freed, the device
-    self-recovers.
-  - If outbox enqueue itself fails: the UI **must** show `Save
-    failed — storage full`, never a misleading `Saved`.
-- **Forbidden**: a green check when the outbox write was
-  refused; silent data loss.
+  - Outbox enters critical-only mode: domain events (sales, cash, settlements) still attempt enqueue; cached projections trim aggressively.
+  - Blocking banner: `Storage almost full — clear space or contact owner` until storage frees.
+  - If outbox enqueue fails, UI shows `Save failed — storage full`, never `Saved`.
+- **Forbidden**: green check after refused outbox write; silent data loss.
 - **Test**: `storage-quota-degradation` scenario.
 
 ### F15. Phone is low on RAM
 
-- **Trigger**: large History / Reports causes the page to OOM.
-- **Expected**:
-  - Read paths use the local fold with bounded windows per
-    [`data-placement.md`](./data-placement.md). Reports
-    threshold defers to server-materialized after M9.
-  - List virtualisation everywhere (History, Stock,
-    Outstanding, Audit, Review Queue).
-- **Forbidden**: holding the full event log in memory to render
-  a page; loading more than the projection's bounded window
-  client-side.
+- **Trigger**: large History / Reports page OOMs.
+- **Expected**: read paths use bounded windows per [`data-placement.md`](./data-placement.md); Reports defer to server-materialized after M9; virtualise History, Stock, Outstanding, Audit, and Review Queue lists.
+- **Forbidden**: full event log in memory for page render; loading beyond projection bounded window client-side.
 - **Test**: `large-history-virtualization-perf` perf test.
 
 ### F16. App update during business hours
 
 - **Trigger**: APK / PWA auto-updates mid-day.
 - **Expected**:
-  - PWA: new SW activates only on next reload; current draft is
-    preserved. After reload, schema migrations run; outbox
-    replays under the new client.
-  - APK: install completes; relaunch resumes from the persisted
-    state.
-  - See [`versioning-compatibility.md`](./versioning-compatibility.md)
-    §Force-upgrade for the rules around blocking writes during
-    a forced upgrade.
-- **Forbidden**: losing the active draft; mid-bill schema
-  changes that drop fields.
+  - PWA: new SW activates on next reload; current draft preserved; migrations run; outbox replays under new client.
+  - APK: install completes; relaunch resumes persisted state.
+  - Forced-upgrade write blocking: [`versioning-compatibility.md`](./versioning-compatibility.md) §Force-upgrade.
+- **Forbidden**: lost active draft; mid-bill schema changes dropping fields.
 - **Test**: `update-during-active-draft` Playwright test.
 
 ### F17. Two devices act at the same time
 
-- **Trigger**: covered as a conflict in
-  [`offline-sync.md`](./offline-sync.md) §Conflict handling.
-- **Expected / Forbidden / Test**: see that section. Cross-
-  referenced here so failure-mode reviewers do not miss it.
+- **Trigger**: conflict described in [`offline-sync.md`](./offline-sync.md) §Conflict handling.
+- **Expected / Forbidden / Test**: see that section.
 
 ### F18. Bill correction after cash close
 
-- **Trigger**: cash session was closed; a sale in that session
-  is later discovered to be wrong.
-- **Expected**: correction request appends a flag; nothing
-  changes on the closed session's totals until owner approves
-  via the Review Queue. After approval, the correction event is
-  appended with a `references.closedSessionId` so reports show
-  a re-stated session.
-- **Forbidden**: silently mutating the closed session's totals;
-  appending the correction without owner approval.
+- **Trigger**: cash session closed; sale in that session is later wrong.
+- **Expected**: correction request appends a flag; closed totals stay unchanged until owner approval via Review Queue; approval appends correction event with `references.closedSessionId`; reports show re-stated session.
+- **Forbidden**: silent closed-total mutation; correction without owner approval.
 - **Test**: `correction-after-cash-close` scenario.
 
 ### F19. Sign-in attempt with stale or revoked token
 
-- **Trigger**: owner revoked staff via Admin; staff device
-  still has a cached token.
-- **Expected**: token refresh fails; device transitions to
-  signed-out state; outbox stops draining for that user; pending
-  events are quarantined until owner intervention.
-- **Forbidden**: continuing to write under a revoked identity;
-  silently re-binding the outbox to another user.
+- **Trigger**: owner revoked staff via Admin; staff device still has cached token.
+- **Expected**: token refresh fails; device signs out; outbox stops draining for that user; pending events quarantined until owner intervention.
+- **Forbidden**: writes under revoked identity; silently rebinding outbox to another user.
 - **Test**: `revoked-token-quarantine` integration test.
 
 ### F20. Lost phone
 
-- **Trigger**: staff phone is lost. Owner needs to (a) prevent
-  further writes from that device, (b) recover any unsynced
-  events the phone held.
+- **Trigger**: staff phone is lost; owner must block future writes and handle unsynced events.
 - **Expected**:
-  - (a) Owner revokes the user in Admin → token refresh fails
-    on the lost device (next time it ever comes online); the
-    revoked-token flow from F19 applies.
-  - (b) Any events that never reached the server are lost. The
-    next cash close after the loss will detect a mismatch and
-    raise a `reconciliation.cash-shortfall` flag for owner
-    review.
-  - The runbook for the human side is in
-    [`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md)
-    §Lost phone.
-- **Forbidden**: pretending the unsynced events can be
-  recovered; counting them in any report.
+  - Owner revokes user in Admin; next online token refresh fails; F19 applies.
+  - Events never reaching server are lost.
+  - Next cash close detects mismatch and raises `reconciliation.cash-shortfall` for owner review.
+  - Human runbook: [`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md) §Lost phone.
+- **Forbidden**: pretending unsynced events can be recovered; counting them in reports.
 - **Test**: `lost-phone-revoke-and-reconcile` integration test.
 
 ## Universal rules
 
-These rules apply to every failure above:
-
-- **No silent data loss.** If an event cannot be appended, the
-  user is told.
-- **No silent duplication.** Idempotency keys are mandatory on
-  every write.
-- **Every retry is the same intent.** Same `clientActionId`,
-  same `idempotencyKey`.
-- **Every projection is reproducible from events.** If a
-  projection diverges, throw it away and rebuild — never patch
-  it in place.
-- **Every flag has a resolution path.** The Review Queue is
-  the universal landing pad; see
-  [`review-queue.md`](./review-queue.md).
+- **No silent data loss.** If append fails, tell the user.
+- **No silent duplication.** Every write requires idempotency keys.
+- **Retries preserve intent.** Same `clientActionId`, same `idempotencyKey`.
+- **Projections are reproducible.** Divergence means rebuild, never patch.
+- **Every flag has a resolution path.** Review Queue is the landing pad; see [`review-queue.md`](./review-queue.md).
 
 ## Open items
 
-- `TODO(spec)` — confirm `shopProfile.time.clockSkewMaxMin`
-  (default 15 min) and the exact `T1` behaviour: accept-with-
-  flag vs reject. Default in this file is accept-with-flag.
-- `TODO(spec)` — define exact ESC/POS status-byte handling per
-  printer model the shop uses. Until known, F12 falls back to
-  "user reprints; queue dedupes."
-- `TODO(spec)` — decide on the foreground-service / wake-lock
-  strategy for F13 on Android 14+. Default: foreground service
-  for the BT transmission window only.
-
-## Recent changes
-
-- _2026-06-15_ · file created. 20 failure modes with expected
-  behaviour, forbidden behaviour, and pinned test fixture;
-  universal rules; cross-links to print-queue, offline-sync,
-  data-placement, versioning-compatibility, review-queue, and
-  the operations runbook.
+- `TODO(spec, blocks: M0)` — Confirm `shopProfile.time.clockSkewMaxMin` and exact `T1` behaviour: accept-with-flag vs reject? **Default:** accept-with-flag.
+- `TODO(spec, blocks: M10)` — Define exact ESC/POS status-byte handling per printer model? **Default:** user reprints; queue dedupes.
+- `TODO(spec, blocks: M10)` — Decide foreground-service / wake-lock strategy for F13 on Android 14+? **Default:** foreground service for the BT transmission window only.

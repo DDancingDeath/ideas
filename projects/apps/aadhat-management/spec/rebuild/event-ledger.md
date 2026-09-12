@@ -121,12 +121,3 @@ the v2 event log on cutover. Two candidates:
   translated into v2 events in chronological order. Higher fidelity
   but more work; only worth it if the owner needs historical
   drill-down inside the new app.
-
-## Recent changes
-
-- _2026-06-16_ · Aligned the `print_attempt` summary row's `outcome`
-  values from `(queued / sent / failed)` to
-  `(queued / connecting / sending / failed)` so the at-a-glance
-  table matches the canonical enum in
-  [`event-schemas.md`](./event-schemas.md) §`print_attempt`. No
-  behaviour change; the summary had simply drifted.

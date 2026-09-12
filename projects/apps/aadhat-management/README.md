@@ -230,60 +230,29 @@ priority ones:
 
 ---
 
-## Reading order for an agent
+## Reading order
 
-> **Building v2?** Start with
-> [`prompts/rebuild-m0-foundation.md`](./prompts/rebuild-m0-foundation.md)
-> for the M0 scaffolding milestone, then switch to
-> [`prompts/build-rebuild.md`](./prompts/build-rebuild.md) for
-> M1 and onward. Both prompts thread through `spec/rebuild/` and
-> `plan/rebuild/` in the right order. The reading order below is
-> for understanding the live v1 app.
+Two tracks, listed with file-by-file line counts in
+[`READING-TRACKS.md`](./READING-TRACKS.md):
 
-1. **[`idea.md`](./idea.md)** — vision in detail.
-2. **[`spec/README.md`](./spec/README.md)** — spec entry point + glossary
-   + path-remapping notes (now covers both v1 and v2 reading orders).
-3. **[`spec/capabilities.md`](./spec/capabilities.md)** — exhaustive
-   feature inventory of the live app.
-4. **[`spec/page-specs/README.md`](./spec/page-specs/README.md)** —
-   per-page contract template + page index + the `PeriodMath` table.
-5. **[`spec/page-specs/`](./spec/page-specs/)** (00-auth → 16-cash) —
-   one file per screen.
-6. **[`spec/firestore-rules-design.md`](./spec/firestore-rules-design.md)**
-   — data model + authorization (the **designed** rules, not the
-   shipped ones).
-7. **[`spec/chat-design.md`](./spec/chat-design.md)** — AI assistant tab.
-8. **[`spec/voice-billing-v2.md`](./spec/voice-billing-v2.md)** — voice
-   billing v2 design.
-9. **[`spec/mobile-enhancements.md`](./spec/mobile-enhancements.md)** —
-   mobile polish (haptics, toasts, pull-to-refresh).
-10. **[`spec/rebuild/`](./spec/rebuild/)** — the v2 rebuild spec
-    (architecture, event ledger, bill lifecycle, print queue,
-    invariants, suspicion engine, Review Queue, quality bar).
-11. **[`plan/rebuild/`](./plan/rebuild/)** — opinionated v2 guidance
-    (**start at [`getting-started.md`](./plan/rebuild/getting-started.md)**;
-    then roadmap, decisions, agent roster, **agent orchestration**,
-    tech candidates, productization).
-12. **[`plan/review-issues.md`](./plan/review-issues.md)** — known
-    defects in v1. Do not reintroduce in v2.
-13. **[`plan/promotion.md`](./plan/promotion.md)** — staging → prod
-    protocol (v1).
-14. **[`plan/staging-smoke-checklist.md`](./plan/staging-smoke-checklist.md)**
-    — manual smoke test (v1).
-15. **[`plan/legacy-agents-orientation.md`](./plan/legacy-agents-orientation.md)**
-    — the original `AGENTS.md` from the live repo (safety rules and
-    operational workflow for code work, not spec work).
-16. **[`plan/setup/`](./plan/setup/)** — environment setup, Bluetooth
-    printer config, Firebase project setup, staging mode docs. Read
-    these when you actually start building or deploying.
-17. **[`prompts/build-from-spec.md`](./prompts/build-from-spec.md)** —
-    paste-ready prompt to (re)build v1.
-18. **[`prompts/build-rebuild.md`](./prompts/build-rebuild.md)** —
-    paste-ready prompt to build v2 (use for milestones M1 onward).
-19. **[`prompts/rebuild-m0-foundation.md`](./prompts/rebuild-m0-foundation.md)** —
-    paste-ready prompt for the very first milestone: take the
-    rebuild repo from "no code" to "M0 green" (scaffold, CI,
-    fixture runner, event schemas).
+- **Human** — this README, [`idea.md`](./idea.md),
+  [`spec/rebuild/README.md`](./spec/rebuild/README.md) (the 36-doc index),
+  [`worked-example.md`](./spec/rebuild/worked-example.md),
+  [`scope-boundaries.md`](./spec/rebuild/scope-boundaries.md),
+  [`invariants.md`](./spec/rebuild/invariants.md),
+  [`decisions.md`](./plan/rebuild/decisions.md) and
+  [`roadmap.md`](./plan/rebuild/roadmap.md).
+- **Agent** — everything. Enter at
+  [`spec/rebuild/README.md`](./spec/rebuild/README.md) and follow its order;
+  [`spec/README.md`](./spec/README.md) covers the v1 docs.
+
+**Building v2?** Start with
+[`prompts/rebuild-m0-foundation.md`](./prompts/rebuild-m0-foundation.md) for
+the M0 scaffolding milestone, then
+[`prompts/build-rebuild.md`](./prompts/build-rebuild.md) for M1 onward. Both
+thread through `spec/rebuild/` and `plan/rebuild/` in the right order. For a
+v1 reference rebuild use
+[`prompts/build-from-spec.md`](./prompts/build-from-spec.md).
 
 ## Layout
 

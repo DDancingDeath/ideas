@@ -248,13 +248,3 @@ Per [`ci-contract.md`](./ci-contract.md) `unit` and
   that returns rounded **and** unrounded values for the UI to
   show transparency? Default: no — UI shows only the rounded
   result. Revisit if the brother asks for it.
-
-## Recent changes
-
-- _2026-06-16_ · file created. Atomic units (paise / mg /
-  paisePerKg / bps); rate representation (per-kg or
-  per-piece, never both); line and bill total formulas with
-  canonical application order; round-half-to-even rule;
-  Indian display formatting; v1 → v2 conversion table with
-  migration round-trip verification; required tests pinned to
-  CI `unit` and `invariant` jobs.

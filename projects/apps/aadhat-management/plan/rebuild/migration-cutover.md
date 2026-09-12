@@ -84,7 +84,7 @@ The window ends when **all** of the following are true:
 2. Brother's flag-resolution rate in v2 is calmer than the v1
    baseline for the same shop volume (i.e., v2 is not raising
    more spurious flags than v1 produced bugs).
-3. Zero unresolved `Sev-1` flags in v2's Review Queue.
+3. Zero unresolved `block` flags in v2's Review Queue.
 4. Zero `recon.projection-mismatch` events in the past 7 days.
 5. Brother explicitly signs off (a recorded `cutover_signed_off`
    event with `by: <brother>` and a free-text note).
@@ -184,7 +184,7 @@ T-0 is gated by all of them green.
   window.
 - Reviews the comparison report at T-3, T-0, and daily during
   dual-run.
-- Resolves any `Sev-1` flag personally before window close.
+- Resolves any `block` flag personally before window close.
 - Signs off with a recorded event, not just a verbal yes.
 
 This concentration of authority in the brother is deliberate:

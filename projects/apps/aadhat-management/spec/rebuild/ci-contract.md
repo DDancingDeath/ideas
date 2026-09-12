@@ -34,7 +34,7 @@ any required job failing.
 | N4 | `migration-check` | Run `migration check *` commands from [`../../plan/rebuild/migration-cutover.md`](../../plan/rebuild/migration-cutover.md) against the latest snapshot import |
 | N5 | `bundle-size` | UI bundle size budget; non-blocking warning above threshold |
 
-Nightly failures open a `Sev-2` issue automatically and notify the
+Nightly failures open a `high` issue automatically and notify the
 brother + owner agents.
 
 ## Canonical commands
@@ -127,9 +127,3 @@ the Reviewer agent.
   hides a test failure.
 - Marking a snapshot or baseline as accepted from inside a
   feature PR.
-
-## Recent changes
-
-- _2026-06-15_ · file created. Required jobs, nightly jobs,
-  canonical commands, artefact contract, baseline-bump protocol,
-  flakiness policy.
