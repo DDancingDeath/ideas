@@ -1,20 +1,12 @@
 # Event schemas — rebuild
 
-> The wire-and-storage shape of every event in the ledger. This file
-> is the contract validated by the storage adapter and every service
-> that constructs an event. If an event does not match its schema,
-> the adapter rejects the append.
+> Wire/storage contract for ledger events. The storage adapter rejects any event that fails its schema.
 
 ## Validation library
 
-All payloads validated with a runtime schema (Zod recommended; see
-[`../../plan/rebuild/tech-candidates.md`](../../plan/rebuild/tech-candidates.md)).
-Schema definitions live in the shared `domain` package so client,
-server (if any), and tests share one source.
+Runtime schemas (Zod recommended; see [`../../plan/rebuild/tech-candidates.md`](../../plan/rebuild/tech-candidates.md)) live in the shared `domain` package.
 
 ## Common envelope
-
-Every event, regardless of type, carries the same envelope:
 
 ```ts
 interface EventEnvelope {
@@ -38,22 +30,16 @@ interface EventRef {
 
 ### Envelope rules (apply to every type)
 
-- `id`, `at`, `shopId`, `by` are set by the storage adapter, not the
-  client. A client-supplied value is ignored.
-- `idempotencyKey` is mandatory and unique per `(shopId, type)`. See
-  [`idempotency.md`](./idempotency.md) for shape.
-- `schemaVersion` starts at `1` and is bumped only when a payload
-  field is removed or its meaning changes. Adding optional fields
-  does not bump it.
-- `references[].eventId` must exist in the same `shopId` and must
-  satisfy the type-specific rule (e.g. a `voids` reference must
-  point to a sale event in a non-voided state).
+| Field | Rule |
+|---|---|
+| `id`, `at`, `shopId`, `by` | Set by storage adapter; client values ignored. |
+| `idempotencyKey` | Mandatory; unique per `(shopId, type)`. Shape: [`idempotency.md`](./idempotency.md). |
+| `schemaVersion` | Starts at `1`; bump only when a payload field is removed or its meaning changes. Optional additions do not bump. |
+| `references[].eventId` | Must exist in the same `shopId` and satisfy type-specific state rules. |
 
 ## Money representation
 
-All amounts are integer paise (₹ × 100). Floating point is
-forbidden. Schema enforces `z.number().int().nonnegative()` unless
-the field documents a signed delta (e.g. `stock_adjustment_recorded.delta`).
+All amounts are integer paise (₹ × 100). Floating point is forbidden. Default schema: `z.number().int().nonnegative()` unless a field documents a signed delta (e.g. `stock_adjustment_recorded.delta`).
 
 ## Common payload primitives
 
@@ -87,7 +73,6 @@ interface BillLine {
 ## Types
 
 ### `item_created`
-
 ```ts
 payload: {
   itemId: ItemId;
@@ -99,13 +84,7 @@ payload: {
   laborRatePaise?: Paise;              // per heavy packet
 }
 ```
-
-Validation: `names.en` and `names.hi` non-empty. `defaultRates.*`
-non-negative integers. `unit` ∈ `allowedUnits` if both present.
-
-Invariants applied: M4 (paise), X3 (schema-clean).
-
-Idempotency key shape: `item.create:{names.en | slug}`.
+Validation: `names.en` and `names.hi` non-empty; `defaultRates.*` non-negative integers; `unit` ∈ `allowedUnits` if both present. Invariants: M4, X3. Idempotency key: `item.create:{names.en | slug}`. Invalid examples: missing `names.hi`; negative rate; unit not in `allowedUnits`.
 
 Example (valid):
 
@@ -123,44 +102,25 @@ Example (valid):
 }
 ```
 
-Example (invalid → reason): missing `names.hi` (required); negative
-rate; unit not in allowedUnits.
-
----
 
 ### `item_updated`
-
 ```ts
 payload: {
   itemId: ItemId;
   changes: Partial<Omit<ItemCreatedPayload, 'itemId'>>;
 }
 ```
+Validation: at least one field in `changes`; storage adapter rejects `itemId` mutation. Invariants: M4, X3. Idempotency key: `item.update:{itemId}:{changeHash}`.
 
-Validation: at least one field in `changes`. Storage adapter
-rejects mutation of the `itemId`.
-
-Invariants: M4, X3.
-
-Idempotency key: `item.update:{itemId}:{changeHash}`.
-
----
 
 ### `item_archived`
-
 ```ts
 payload: { itemId: ItemId; reason: string }
 ```
+Validation: `reason` non-empty (≥ 5 chars); reject if item is referenced by any non-voided open draft. Idempotency key: `item.archive:{itemId}`.
 
-Validation: `reason` non-empty (≥ 5 chars). The adapter rejects if
-the item is referenced by any non-voided open draft.
-
-Idempotency key: `item.archive:{itemId}`.
-
----
 
 ### `purchase_recorded`
-
 ```ts
 payload: {
   billId: BillId;
@@ -173,22 +133,10 @@ payload: {
   grandTotal: Paise;                   // = Σlines.itemTotal − laborCharges
 }
 ```
+Validation: `lines.length >= 1`; each `BillLine.weights.length >= 1`; `grandTotal == Σlines.itemTotal − laborCharges` (M3); `payment.online + payment.cash + payment.due == grandTotal` (M1); `billNumber` positive and counter-produced. Invariants: M1, M3, M4, B1, B5, S4 (rate update), T1, T2 (if backdated). Idempotency key: `bill.create:{idempotencyKey supplied by client form}`.
 
-Validation:
-- `lines.length >= 1`
-- each `BillLine.weights.length >= 1`
-- `grandTotal == Σlines.itemTotal − laborCharges` (M3)
-- `payment.online + payment.cash + payment.due == grandTotal` (M1)
-- `billNumber` is positive and matches what the counter produced
-
-Invariants: M1, M3, M4, B1, B5, S4 (rate update), T1, T2 (if backdated).
-
-Idempotency key: `bill.create:{idempotencyKey supplied by client form}`.
-
----
 
 ### `retail_sale_created`
-
 ```ts
 payload: {
   billId: BillId;
@@ -201,21 +149,10 @@ payload: {
   totalDiscountPaise?: Paise;
 }
 ```
+Validation: `grandTotal == Σlines.itemTotal − Σlines.discountPaise` (M2 + line discounts); `payment.online + payment.cash + payment.due == grandTotal` (M1); discounts within role limit (else `price.discount.*`). Invariants: M1, M2, M4, B1, B5. Retail does **not** touch stock (S3). Idempotency key: `bill.create:{clientActionId}`.
 
-Validation:
-- `grandTotal == Σlines.itemTotal − Σlines.discountPaise` (M2 + line discounts)
-- `payment.online + payment.cash + payment.due == grandTotal` (M1)
-- discounts within role limit (else `price.discount.*` rule)
-
-Invariants: M1, M2, M4, B1, B5. Note: retail does **not** touch
-stock (S3).
-
-Idempotency key: `bill.create:{clientActionId}`.
-
----
 
 ### `wholesale_sale_created`
-
 ```ts
 payload: {
   billId: BillId;
@@ -227,35 +164,18 @@ payload: {
   grandTotal: Paise;
 }
 ```
+Validation: same money rules as retail; `party.partyId` required. Invariants: M1, M2, M4, B1, B5, S1, S2 (if pushes < 0). Idempotency key: `bill.create:{clientActionId}`.
 
-Validation: same money rules as retail; `party.partyId` required.
-
-Invariants: M1, M2, M4, B1, B5, S1, S2 (if pushes < 0).
-
-Idempotency key: `bill.create:{clientActionId}`.
-
----
 
 ### `bill_voided`
-
 ```ts
 payload: { originalBillId: BillId; reason: string }
 references: [{ type: 'voids', eventId: <original sale event id> }]
 ```
+Validation: original sale exists, is not already voided, and has no outstanding correction chain that is itself voided; `reason` non-empty (≥ 5 chars). Invariants / permission: B2; role matrix (`outstanding-day` voids may need owner approval). Idempotency key: `bill.void:{originalBillId}`.
 
-Validation: original sale event must exist, must not already be
-voided, must not have an outstanding correction chain that is
-itself voided. `reason` non-empty (≥ 5 chars).
-
-Invariants: B2. Permission: see role matrix (`outstanding-day`
-voids may need owner approval).
-
-Idempotency key: `bill.void:{originalBillId}`.
-
----
 
 ### `bill_correction_recorded`
-
 ```ts
 payload: {
   originalBillId: BillId;
@@ -264,19 +184,10 @@ payload: {
 }
 references: [{ type: 'corrects', eventId: <latest non-voided version of bill> }]
 ```
+Validation: original exists and is not voided; `correctedPayload` passes its schema and money invariants; `originalBillId` in corrected payload equals `payload.originalBillId`. Invariants / permission: B3; role matrix. Idempotency key: `bill.correct:{originalBillId}:{correctionHash}`.
 
-Validation: original must exist and not be voided. `correctedPayload`
-must itself pass the schema for its type and the money invariants.
-`originalBillId` in the corrected payload equals `payload.originalBillId`.
-
-Invariants: B3. Permission per role matrix.
-
-Idempotency key: `bill.correct:{originalBillId}:{correctionHash}`.
-
----
 
 ### `stock_adjustment_recorded`
-
 ```ts
 payload: {
   itemId: ItemId;
@@ -285,18 +196,10 @@ payload: {
   context?: 'physical-count' | 'damage' | 'theft' | 'transfer' | 'other';
 }
 ```
+Validation: `delta != 0`; `reason` non-empty (≥ 5 chars). Invariants: S1, S2. Flag: if `|delta|` exceeds `shopProfile.stock.adjustmentLargeMg` → `stock.adjustment.large`. Idempotency key: `stock.adjust:{itemId}:{clientActionId}`.
 
-Validation: `delta != 0`. `reason` non-empty (≥ 5 chars).
-
-Invariants: S1, S2. If `|delta|` exceeds `shopProfile.stock.adjustmentLargeKg`
-→ `stock.adjustment.large` flag.
-
-Idempotency key: `stock.adjust:{itemId}:{clientActionId}`.
-
----
 
 ### `expense_recorded`
-
 ```ts
 payload: {
   category: string;                    // free text, recommend enum per shop
@@ -308,15 +211,10 @@ payload: {
   occurredAt: IsoDate;
 }
 ```
+Validation: `amount > 0`; `payment.online + payment.cash + payment.due == amount`. Idempotency key: `expense.create:{clientActionId}`.
 
-Validation: `amount > 0`. `payment.online + payment.cash + payment.due == amount`.
-
-Idempotency key: `expense.create:{clientActionId}`.
-
----
 
 ### `withdrawal_recorded`
-
 ```ts
 payload: {
   amount: Paise;
@@ -326,16 +224,10 @@ payload: {
   occurredAt: IsoDate;
 }
 ```
+Validation: `amount > 0`; `payment.online + payment.cash == amount`; `payment.due == 0`. Idempotency key: `withdrawal.create:{clientActionId}`.
 
-Validation: `amount > 0`. `payment.online + payment.cash == amount`,
-`payment.due == 0` (withdrawals are not credit).
-
-Idempotency key: `withdrawal.create:{clientActionId}`.
-
----
 
 ### `outstanding_payment_received`
-
 ```ts
 payload: {
   partyId: PartyId;
@@ -347,42 +239,24 @@ payload: {
 }
 references: againstBills.map(b => ({ type: 'settles', eventId: b.billId }))
 ```
+Validation: `amount > 0`; `payment.due == 0`; if `againstBills` present, `Σallocate == amount` and each `allocate <= bill outstanding` at write time, else `outstanding.settlement-overpayment`. Invariants: O1, O3. Idempotency key: `settle.in:{clientActionId}`.
 
-Validation: `amount > 0`. `payment.due == 0`. If `againstBills`
-present, `Σallocate == amount` and each `allocate <= bill outstanding`
-at time of write (else `outstanding.settlement-overpayment` flag).
-
-Invariants: O1, O3.
-
-Idempotency key: `settle.in:{clientActionId}`.
-
----
 
 ### `outstanding_payment_made`
 
-Symmetric to `outstanding_payment_received` (we pay a supplier).
-Same schema; differs only in direction of effect on per-party
-outstanding.
+Symmetric to `outstanding_payment_received` (we pay a supplier). Same schema; opposite per-party outstanding effect.
 
 Idempotency key: `settle.out:{clientActionId}`.
 
----
 
 ### `cash_session_opened`
-
 ```ts
 payload: { sessionId: string; openingCount: Paise; openedAt: IsoTimestamp }
 ```
+Validation: `openingCount >= 0`; reject if a session is already open for the same shop (C3). Idempotency key: `cash.open:{clientActionId}`.
 
-Validation: `openingCount >= 0`. Rejected if a session is already
-open for the same shop (C3).
-
-Idempotency key: `cash.open:{clientActionId}`.
-
----
 
 ### `cash_session_closed`
-
 ```ts
 payload: {
   sessionId: string;
@@ -394,21 +268,10 @@ payload: {
 }
 references: [{ type: 'caused-by', eventId: <cash_session_opened event> }]
 ```
+Validation: `closingCount >= 0`; `expectedClosing` matches domain computation (C1); `mismatch == closingCount − expectedClosing`; if `|mismatch| > shopProfile.cash.mismatchTolerance`, raise `cash.mismatch.above-tolerance` or `.large` with mandatory `mismatchReason` (configurable). Invariants: C1, C2, C4. Idempotency key: `cash.close:{sessionId}`.
 
-Validation: `closingCount >= 0`. `expectedClosing` matches the
-domain's computation (C1). `mismatch == closingCount − expectedClosing`.
-If `|mismatch| > shopProfile.cash.mismatchTolerance` →
-`cash.mismatch.above-tolerance` (or `.large`) flag with mandatory
-`mismatchReason` (configurable).
-
-Invariants: C1, C2, C4.
-
-Idempotency key: `cash.close:{sessionId}`.
-
----
 
 ### `print_attempt`
-
 ```ts
 payload: {
   billId: BillId;
@@ -423,16 +286,10 @@ payload: {
 }
 references: [{ type: 'caused-by', eventId: <sale event id> }]
 ```
+Validation: `attemptNo >= 1`; `errorCode` required when `outcome == 'failed'`; audit-only; never modifies a sale (B4). Idempotency key: `print.attempt:{jobId}:{attemptNo}`.
 
-Validation: `attemptNo >= 1`. `errorCode` required when
-`outcome == 'failed'`. Audit-only; never modifies a sale (B4).
-
-Idempotency key: `print.attempt:{jobId}:{attemptNo}`.
-
----
 
 ### `print_succeeded`
-
 ```ts
 payload: {
   billId: BillId;
@@ -444,16 +301,10 @@ payload: {
 }
 references: [{ type: 'caused-by', eventId: <sale event id> }]
 ```
+Validation: a `print_attempt` with same `jobId, attemptNo` and `outcome != 'failed'` exists. Idempotency key: `print.success:{jobId}:{attemptNo}`.
 
-Validation: a `print_attempt` with the same `jobId, attemptNo` and
-`outcome != 'failed'` exists.
-
-Idempotency key: `print.success:{jobId}:{attemptNo}`.
-
----
 
 ### `flag_raised`
-
 ```ts
 payload: {
   flagId: string;
@@ -466,17 +317,10 @@ payload: {
 }
 references: [{ type: 'flags', eventId: <target event id, optional for background flags> }]?
 ```
+Validation: `ruleId` in registered rule set; `severity` matches the rule's configured severity in `shopProfile`. Idempotency key: `flag.raise:{ruleId}:{targetEventId | recon-window}`; prevents same rule re-fire for same event.
 
-Validation: `ruleId` must be in the registered rule set. `severity`
-matches the rule's configured severity in `shopProfile`.
-
-Idempotency key: `flag.raise:{ruleId}:{targetEventId | recon-window}`.
-Prevents the engine re-firing the same rule for the same event.
-
----
 
 ### `flag_resolved`
-
 ```ts
 payload: {
   flagId: string;
@@ -491,18 +335,10 @@ references:
       ? [{ type: 'caused-by', eventId: <correction event id> }]
       : [])
 ```
+Validation: target flag exists and is unresolved; `correct` requires a `bill_correction_recorded` or `stock_adjustment_recorded` in the same shop at or before `resolvedAt`. Idempotency key: `flag.resolve:{flagId}`.
 
-Validation: target flag exists and is unresolved. `correct`
-resolution requires a `bill_correction_recorded` or
-`stock_adjustment_recorded` event in the same shop at or before
-`resolvedAt`.
-
-Idempotency key: `flag.resolve:{flagId}`.
-
----
 
 ### `user_role_changed`
-
 ```ts
 payload: {
   targetUserId: UserId;
@@ -511,17 +347,10 @@ payload: {
   reason?: string;
 }
 ```
+Validation: owner principal only (A1, A3); `fromRole != toRole`; `fromRole` equals current role at write time. Idempotency key: `user.role:{targetUserId}:{toRole}:{clientActionId}`.
 
-Validation: only the owner principal can append this (A1, A3).
-`fromRole != toRole`. `fromRole` must equal the current role at
-write time.
-
-Idempotency key: `user.role:{targetUserId}:{toRole}:{clientActionId}`.
-
----
 
 ### `user_status_changed`
-
 ```ts
 payload: {
   targetUserId: UserId;
@@ -530,88 +359,52 @@ payload: {
   reason?: string;
 }
 ```
+Validation: owner principal only; transitions in `role-permission-matrix.md`. Idempotency key: `user.status:{targetUserId}:{toStatus}:{clientActionId}`.
 
-Validation: only owner principal. Status transitions documented in
-`role-permission-matrix.md`.
-
-Idempotency key: `user.status:{targetUserId}:{toStatus}:{clientActionId}`.
-
----
 
 ### `shop_profile_updated`
-
 ```ts
 payload: {
   changes: Partial<ShopProfile>;       // shop profile shape lives in domain
   changedBy: UserId;
 }
 ```
-
-Validation: only owner principal. `changes` non-empty. Disabling a
-`block`-severity rule is rejected (`suspicion-engine.md` §Configurability).
-When `changes.roleConfig` is present it is validated against the
-**hard floors** in `role-permission-matrix.md` §Owner-configurable
-role visibility & capabilities — any grant beyond the matrix ceiling
-is clamped, and a config that violates a floor (escalation, owner
-key, visibility ⊇ action, lock-out-billing) is rejected with
-`SCHEMA_INVALID`.
-
-Idempotency key: `shop.profile:{changeHash}`.
+Validation: owner principal only; `changes` non-empty; cannot disable a `block`-severity rule (`suspicion-engine.md` §Configurability). Role config: validate `changes.roleConfig` against **hard floors** in `role-permission-matrix.md` §Owner-configurable role visibility & capabilities; clamp grants beyond matrix ceiling; reject floor violations (escalation, owner key, visibility ⊇ action, lock-out-billing) with `SCHEMA_INVALID`. Idempotency key: `shop.profile:{changeHash}`.
 
 ---
 
 ## Referenced events not yet specified here
 
-The 22 types above are the ones with a frozen payload schema. The
-following event names are **referenced by other rebuild docs** but
-do not yet have a full schema in this file. Each must get one (a
-`###` block above, and a bump of the count) **before** the
-milestone that first emits it. Until then the storage adapter does
-not accept them. This table is the single reconciliation point so
-the registry and the prose docs do not silently drift.
+The 22 types above have frozen payload schemas. Names below are referenced by other rebuild docs but are not accepted by the storage adapter until they get a `###` schema block and the count is updated.
 
 | Event | Referenced in | Purpose | Payload hints already stated | Status |
 |---|---|---|---|---|
-| `item_rate_changed` | [`data-governance.md`](./data-governance.md) §Rate change history | Record an item rate change as an event, never a silent edit; feeds the **Rate history per item** projection ([`projections.md`](./projections.md#rate-history-per-item)) | Mandatory non-empty `reason`; generic reason → `rate-reason-generic` flag; must carry old + new rate so bills re-fold to the rate-as-of-T | `TODO(spec)` — confirm whether this is its own type or a constrained `item_updated` |
-| `party_updated` | [`data-governance.md`](./data-governance.md) §Typo correction | Record a party (customer / supplier) field change | Carries old and new value in payload | `TODO(spec)` |
-| `item_merged` | [`data-governance.md`](./data-governance.md) §Duplicate item merge | Merge a duplicate item into a survivor; rerouting happens at projection time, never by rewriting history | Exactly one event per merge; references both ids; no shadow updates of historical bills | `TODO(spec)` |
-| `party_merged` | [`data-governance.md`](./data-governance.md) §Duplicate party merge | Same as `item_merged` for parties; survivor outstanding = pre-merge sum-of-outstanding | Same shape as `item_merged` | `TODO(spec)` |
-| `print_manual_recorded` | [`printer-compatibility.md`](./printer-compatibility.md) §Manual print fallback | Owner marks a bill "printed manually"; audit-only, does **not** modify the sale | Audit-only; low-severity flag if manual marks spike | `TODO(spec)` |
-| `shop_timezone_changed` | [`time-clock.md`](./time-clock.md) §Reports use shop timezone | Audit the owner changing the shop timezone; triggers a report-projection re-render | Old + new IANA tz; owner-only | `TODO(spec)` |
+| `item_rate_changed` | [`data-governance.md`](./data-governance.md) §Rate change history | Record an item rate change as an event, never a silent edit; feeds the **Rate history per item** projection ([`projections.md`](./projections.md#rate-history-per-item)) | Mandatory non-empty `reason`; generic reason → `rate-reason-generic` flag; must carry old + new rate so bills re-fold to the rate-as-of-T | `TODO(spec, blocks: M<N>)` — Confirm whether this is its own type or a constrained `item_updated`? **Default:** none agreed. |
+| `party_updated` | [`data-governance.md`](./data-governance.md) §Typo correction | Record a party (customer / supplier) field change | Carries old and new value in payload | `TODO(spec, blocks: M<N>)` — What is the full schema for `party_updated`? **Default:** none agreed. |
+| `item_merged` | [`data-governance.md`](./data-governance.md) §Duplicate item merge | Merge a duplicate item into a survivor; rerouting happens at projection time, never by rewriting history | Exactly one event per merge; references both ids; no shadow updates of historical bills | `TODO(spec, blocks: M<N>)` — What is the full schema for `item_merged`? **Default:** none agreed. |
+| `party_merged` | [`data-governance.md`](./data-governance.md) §Duplicate party merge | Same as `item_merged` for parties; survivor outstanding = pre-merge sum-of-outstanding | Same shape as `item_merged` | `TODO(spec, blocks: M<N>)` — What is the full schema for `party_merged`? **Default:** none agreed. |
+| `print_manual_recorded` | [`printer-compatibility.md`](./printer-compatibility.md) §Manual print fallback | Owner marks a bill "printed manually"; audit-only, does **not** modify the sale | Audit-only; low-severity flag if manual marks spike | `TODO(spec, blocks: M<N>)` — What is the full schema for `print_manual_recorded`? **Default:** none agreed. |
+| `shop_timezone_changed` | [`time-clock.md`](./time-clock.md) §Reports use shop timezone | Audit the owner changing the shop timezone; triggers a report-projection re-render | Old + new IANA tz; owner-only | `TODO(spec, blocks: M<N>)` — What is the full schema for `shop_timezone_changed`? **Default:** none agreed. |
 | `overpayment_recorded` | [`concurrency.md`](./concurrency.md) §Open items | Explicit owner-recorded overpayment, distinct from a failed settlement | Owner-only; out of scope for v2.0 unless requested | **Proposed** — deferred, not in v2.0 |
 
-Also referenced but deliberately **not** ledger events (do not add
-them here):
+Not ledger events:
 
-- `screen_view`, `action_started`, `action_succeeded`,
-  `action_failed` — analytics / telemetry events defined in
-  [`observability.md`](./observability.md) §Analytics, not ledger
-  appends.
-- `print_failed` — a **bill print-state** in
-  [`bill-lifecycle.md`](./bill-lifecycle.md), not an event type. A
-  failed print is a `print_attempt` outcome plus a `flag_raised`.
+- `screen_view`, `action_started`, `action_succeeded`, `action_failed` — analytics / telemetry events in [`observability.md`](./observability.md) §Analytics.
+- `print_failed` — bill print-state in [`bill-lifecycle.md`](./bill-lifecycle.md); failed print is `print_attempt` outcome plus `flag_raised`.
 
-`TODO(spec)`: parties are updated and merged above but there is no
-`party_created` event anywhere in the spec. Decide how a party
-first enters the ledger (explicit `party_created`, or implicitly on
-first sale that names it) before the party-management milestone.
+`TODO(spec, blocks: M<N>)` — How does a party first enter the ledger: explicit `party_created`, or implicitly on first sale that names it? **Default:** none agreed.
 
 ---
 
 ## Versioning
 
 - `schemaVersion` starts at `1` for every type.
-- Additive changes (new optional field) do not bump it.
-- Removing a field, renaming a field, changing a field's type, or
-  changing the meaning of a field bumps it. The storage adapter
-  must keep a reader for every previous version forever.
-- Test suite asserts: every fixture in `scenarios.md` replayed
-  through the current readers produces the documented projections,
-  including fixtures recorded under old schema versions.
+- Additive optional fields do not bump it.
+- Removing, renaming, retyping, or changing meaning bumps it.
+- Storage adapter keeps readers for every previous version forever.
+- Tests replay every fixture in `scenarios.md` through current readers and assert documented projections, including old schema versions.
 
 ## Append-time errors
-
-The storage adapter returns one of:
 
 | Code | Meaning |
 |---|---|
@@ -625,54 +418,10 @@ The storage adapter returns one of:
 | `OUT_OF_ORDER` | Causally impossible sequencing (e.g. close before open) |
 | `UNAUTHORIZED` | No authenticated principal |
 
-Every error includes a stable `code`, a human `message`, and (in
-dev / staging) a `context` blob useful for tests.
+Every error includes stable `code`, human `message`, and, in dev / staging, a test-useful `context` blob.
 
 ## Open questions
 
-- `TODO(spec)`: weight-unit **decision is frozen** — integer
-  milligrams (decisions row 8; formulas in
-  [`money-units-rounding.md`](./money-units-rounding.md)). What
-  remains is mechanical: the `BillLine` / `Quantity` schemas and
-  examples in **this** file still express weights as decimal kg
-  with `itemTotal = round(Σweights × rate)` (rate as ₹/kg). Migrate
-  these literal schemas and example values to the integer-mg model
-  (`itemTotal = round(Σweights_mg × paisePerKg / 1_000_000)`)
-  during M0. This is a representation change, not an open decision.
-- `TODO(spec)`: Decide the canonical case / locale for free-text
-  fields (`category`, `reason`) — store as-typed, normalized
-  client-side, or normalized on append? Recommend store-as-typed
-  with normalization only for matching/search.
-- `TODO(spec)`: Decide whether `print_attempt` events live in the
-  main ledger or a sibling `audit` stream. Default: main ledger,
-  partitioned by `type` in queries.
-
-## Recent changes
-
-- _2026-06-17_ · Extended `shop_profile_updated` validation for the
-  new owner-configurable role layer: a `changes.roleConfig` patch is
-  validated against the hard floors in `role-permission-matrix.md`
-  §Owner-configurable role visibility & capabilities (grants beyond
-  the matrix ceiling are clamped; floor violations are rejected with
-  `SCHEMA_INVALID`). No new event type — role visibility rides the
-  existing owner-only `shop_profile_updated`.
-- _2026-06-16_ (later) · Reframed the stale weight-unit `TODO(spec)`
-  in §Open questions from "decide kg vs mg before M0" to "decision is
-  frozen (decisions row 8 = integer mg); migrate this file's kg
-  schemas/examples to the mg model during M0". The decision was
-  already frozen in `decisions.md` row 8 and
-  [`money-units-rounding.md`](./money-units-rounding.md); only the
-  literal schemas here still used kg. Annotated the `Quantity`
-  primitive comment accordingly. No schema values changed.
-- _2026-06-16_ · Added the `## Referenced events not yet specified
-  here` reconciliation table. It names every event referenced by
-  other rebuild docs that does not yet have a frozen schema here
-  (`item_rate_changed`, `party_updated`, `item_merged`,
-  `party_merged`, `print_manual_recorded`, `shop_timezone_changed`,
-  and the proposed `overpayment_recorded`), so the canonical
-  registry and the prose docs stop drifting. Also documented which
-  referenced names are deliberately **not** ledger events
-  (telemetry `screen_view` / `action_*`; the `print_failed` bill
-  state) and flagged the missing `party_created` event as a
-  `TODO(spec)`. No payloads were invented; all entries are
-  `TODO(spec)` / Proposed.
+- `TODO(spec, blocks: M0)` — What remains after the frozen integer-milligram decision? **Default:** migrate `BillLine` / `Quantity` schemas and examples in **this** file from decimal kg to integer mg using `itemTotal = round(Σweights_mg × paisePerKg / 1_000_000)`; this is representation work only. See decisions row 8 and [`money-units-rounding.md`](./money-units-rounding.md).
+- `TODO(spec, blocks: M<N>)` — What is the canonical case / locale for free-text fields (`category`, `reason`): store as-typed, normalized client-side, or normalized on append? **Default:** store-as-typed with normalization only for matching/search.
+- `TODO(spec, blocks: M<N>)` — Do `print_attempt` events live in the main ledger or a sibling `audit` stream? **Default:** main ledger, partitioned by `type` in queries.

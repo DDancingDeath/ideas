@@ -114,14 +114,3 @@ test:
   prompt-injection mitigation, server-side AI access).
   Default: kept out of v2.0 spec; revisit when AI flows leave
   voice billing scope.
-
-## Recent changes
-
-- _2026-06-15_ · file created. Allowed AI uses (explain,
-  draft, search, voice fill — always suggestion-only);
-  forbidden AI uses (no event without human confirm; no
-  permission elevation; no flag resolve; no silent
-  suppression); three contract rules
-  (suggestion-not-action / same-permissions / transparent-
-  attribution); drift and hallucination handling; required
-  tests.

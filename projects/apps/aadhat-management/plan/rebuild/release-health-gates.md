@@ -123,19 +123,19 @@ check commands:
 Required for any schema-bump release; required for the v1 → v2
 cutover. Not required for hot-fix patches.
 
-### 6. No unresolved Sev-1 flags
+### 6. No unresolved `block` flags
 
 Per [`spec/rebuild/review-queue.md`](../../spec/rebuild/review-queue.md)
 and [`spec/rebuild/observability.md`](../../spec/rebuild/observability.md):
 
-- [ ] Review Queue is **clean of Sev-1**. A Sev-1 flag from
+- [ ] Review Queue is **clean of `block`**. A `block` flag from
       the previous release that has not been resolved is a
-      blocker; a known-and-tracked Sev-2 is acceptable with a
+      blocker; a known-and-tracked `high` is acceptable with a
       release note.
 - [ ] No `sync.permanent-rejection`, `dedup.conflict`,
       `reconciliation.mismatch`, or `R4`-projection-divergence
       flag is open against production data
-- [ ] Brother has signed off on any open Sev-2 carried into
+- [ ] Brother has signed off on any open `high` carried into
       the new release
 
 ### 7. Rollback / hotfix path known
@@ -182,7 +182,7 @@ Per [`backup-restore.md`](./backup-restore.md):
 The shop's data is the shop's only history. A release that
 goes out without a known-good backup taken first is a
 violation of [`backup-restore.md`](./backup-restore.md) and is
-a Sev-1 process defect.
+a `block` process defect.
 
 ### 10. Release notes drafted for the brother
 
@@ -207,7 +207,7 @@ The minimum subset:
 - [ ] Gate 2 (platform matrix) — per release-type column
 - [ ] Gate 3 (printer smoke) — only if printer code touched
 - [ ] Gate 4 (offline / reconnect) — only if sync code touched
-- [ ] Gate 6 (no Sev-1 flags) — **always**
+- [ ] Gate 6 (no `block` flags) — **always**
 - [ ] Gate 7 (rollback path) — **always**
 - [ ] Gate 9 (backup verified) — **always**
 - [ ] Gate 10 (release notes) — **always**, even if one line
@@ -238,11 +238,11 @@ goes wrong; it is also the input to the post-release smoke
 A release that has passed every gate above can still go wrong
 in production. The runbook's §P11 rule:
 
-- Sev-1 in production within 1 hour → roll back if rollback-
+- `block` in production within 1 hour → roll back if rollback-
   capable; hotfix-forward if not
-- Sev-1 across multiple shops (post-v2.0 productisation) → roll
+- `block` across multiple shops (post-v2.0 productisation) → roll
   back same hour
-- Sev-1 corruption of the event ledger → stop writes
+- `block` corruption of the event ledger → stop writes
   immediately; engage backup-restore (drill `S3`)
 
 A release that turned out to need a rollback within its first
@@ -269,7 +269,7 @@ real-device test, raise the printer smoke from "if touched" to
 
 - _2026-06-16_ · file created. Ten gates (CI green, platform
   matrix, printer smoke, offline / reconnect, migration
-  checks, no Sev-1 flags, rollback path, brother sign-off,
+  checks, no `block` flags, rollback path, brother sign-off,
   backup verified, release notes); hot-fix subset rule;
   sign-off record fields; rollback-trigger rules cross-
   referenced to operations-runbook §P11.

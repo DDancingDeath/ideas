@@ -1,49 +1,30 @@
 # Voice Billing — V2 Design
 
-> **Status:** Draft for review. Lives in `docs/VOICE_BILLING_V2.md`.
-> Builds on V1 (commit `56e230f` — "tap-to-talk voice entry, Hindi + English,
-> for purchase + sale"). Scope is **strictly the billing page**.
+> **v1 scope.** This document records the shipped v1-era voice billing design. If it disagrees with `spec/rebuild/`, `spec/rebuild/` wins.
+>
+> **Status:** Draft for review. Original path: `docs/VOICE_BILLING_V2.md`. Builds on V1 commit `56e230f`; scope is strictly the billing page.
 
 ## 1. Goals
 
-V1 shipped a working but minimal voice-billing experience: one tap, one
-item, one weight, one rate. Real shop-floor billing is faster, more
-multi-step, and happens with both hands full of goods or a scale. V2
-makes voice actually useful in that environment.
+V1 supports one tap, one item, one weight, one rate. V2 makes billing usable on a shop floor.
 
-What V2 must deliver:
+### Must deliver
 
-1. **Hands-free verification** — shopkeeper hears "added 10 kilo aloo at
-   30 rupees" without looking at the phone.
-2. **Bills in one breath** — *"10 kilo aloo at 30, 5 kilo pyaaz at 25"*
-   produces two rows, not one confused row.
-3. **Whole bill in voice** — including the customer name, not just items.
-4. **Safety** — opt-in confirmation mode for users who don't trust
-   speech-to-text; opt-out toggle for users who want voice gone entirely.
-5. **Wider Hindi vocabulary** — every number 1–99, both Devanagari and
-   Roman-Hindi spellings, so prices like 33 / 47 / 82 work spoken in Hindi.
-6. **Production readiness on Android** — `RECORD_AUDIO` in the manifest;
-   misrecognition data captured (opt-in) so we can tune the parser from
-   real usage.
+1. Hands-free verification: speak back "added 10 kilo aloo at 30 rupees".
+2. Bills in one breath: "10 kilo aloo at 30, 5 kilo pyaaz at 25" creates two rows.
+3. Whole bill by voice, including customer name.
+4. Safety: confirmation mode and a full voice-off toggle.
+5. Hindi vocabulary: numbers 1–99, Devanagari and Roman-Hindi.
+6. Android readiness: `RECORD_AUDIO`; opt-in misrecognition telemetry.
 
-What V2 must NOT do:
+### Must not deliver in v2.0
 
-- **No new tabs.** Voice on chat, cash management, items, expenses are
-  out of scope for V2. Each is a future ask.
-- **No wake-word in v2.0.** No always-listening mic in the v2.0 cut;
-  it drains battery, raises privacy questions, and isn't free in any
-  browser STT API. **Zero-touch / hands-free activation is a
-  deliberate v2.1 goal** — recorded with two candidate approaches and
-  a recommendation in §9 below (the owner's "I don't touch my mobile
-  and can still activate the app and create a bill" ask).
-- **No server-side STT.** Voice samples never leave the device.
-  We use `webkitSpeechRecognition` only.
-- **No custom Hindi STT model.** Chrome's `hi-IN` is good enough when
-  paired with the item list as a fuzzy-match anchor.
+- No new tabs: no voice on chat, cash management, items, or expenses.
+- No wake-word / always-listening mic; zero-touch activation is v2.1 (§9).
+- No server-side STT; samples stay on device via `webkitSpeechRecognition`.
+- No custom Hindi STT model; Chrome `hi-IN` plus item-list fuzzy match is enough.
 
 ## 2. Status quo — what V1 already does (commit `56e230f`)
-
-Reference table so reviewers don't need to re-read the V1 code.
 
 | Capability | Behaviour |
 |---|---|
@@ -73,136 +54,83 @@ Reference table so reviewers don't need to re-read the V1 code.
 
 ## 3. Architecture (no change from V1)
 
-```
-                  user taps 🎤 (purchase or sale)
-                                │
-                                ▼
-              ┌────────────────────────────────┐
-              │  VoiceBillingManager.start()   │  voice-billing.js
-              │  (singleton, stateful)         │
-              └──────────────┬─────────────────┘
-                             │
-                             ▼
-              ┌────────────────────────────────┐
-              │  webkitSpeechRecognition       │  browser
-              │  lang = preferences.voiceLang  │  ← new in A5
-              └──────────────┬─────────────────┘
-                             │ final transcript
-                             ▼
-              ┌────────────────────────────────┐
-              │  parseUtterance(text, items)   │  pure function
-              │  returns Intent[] (was: Intent)│  ← changes in A2
-              └──────────────┬─────────────────┘
-                             │
-                             ▼
-              ┌────────────────────────────────┐
-              │  manager dispatches per intent:│
-              │   • fill inputs                │
-              │   • addWeight() (unless A6     │
-              │     preview mode is on)        │
-              │   • TTS readback (A1)          │
-              │   • customerName fill (A3)     │
-              └────────────────────────────────┘
+```text
+user taps 🎤
+  → VoiceBillingManager.start()        voice-billing.js singleton
+  → webkitSpeechRecognition            lang = preferences.voiceLang (A5)
+  → parseUtterance(text, items)        pure; returns Intent[] in A2
+  → manager dispatches intents         fill inputs, addWeight/preview, TTS, customerName
 ```
 
-The pure parser stays testable in jsdom. The manager stays the only
-DOM-touching, browser-only surface. V2 doesn't change the layering —
-it only widens the grammar and adds adjacent capabilities (TTS, settings).
+Parser remains pure/testable in jsdom. Manager owns DOM and browser APIs.
 
 ## 4. V2 work plan
 
-Organised by **tier** (build-order) and **letter** (slot in tier).
-Each item is independent except where noted under "Depends on".
-
-### Tier A — high-value, low-risk (build first)
+### Tier A — high-value, low-risk
 
 #### A1. TTS readback (audio confirmation)
-**What:** After every successful voice action, speak a short Hindi/English
-confirmation via `window.speechSynthesis`.
-- Add: *"added 10 kilo aloo at 30 rupees"* / *"दस किलो आलू तीस रुपये जोड़ा"*
-  (language follows the same preference as STT).
-- Commit: *"bill saved"* / *"bill jod diya"*.
-- Clear: *"cleared"* / *"साफ़ कर दिया"*.
-- Unknown utterance: no TTS (a toast is enough; avoid spamming).
-- Respect the **TTS toggle** from A5; default on.
-- Cancel any in-flight TTS before speaking the next readback, so stale
-  audio does not overlap the current confirmation.
 
-**Why this first:** biggest UX gain per line of code. A shopkeeper holding
-a scale can't glance at the phone every utterance.
+**What:** After each successful action, use `window.speechSynthesis`.
 
-**Implementation:**
-- New helper `speak(textHi, textEn)` inside `VoiceBillingManager`.
-- Pick a `hi-IN` voice from `speechSynthesis.getVoices()` once on init;
-  cache; fall back to default.
-- Call `speak()` from `_handleUtterance` after each success branch.
-- `speak()` calls `speechSynthesis.cancel()` before `speechSynthesis.speak()`.
+| Branch | Readback |
+|---|---|
+| Add | "added 10 kilo aloo at 30 rupees" / "दस किलो आलू तीस रुपये जोड़ा" |
+| Commit | "bill saved" / "bill jod diya" |
+| Clear | "cleared" / "साफ़ कर दिया" |
+| Unknown | No TTS; toast only |
 
-**Test:** mock `window.speechSynthesis` in jest, assert `.cancel()` runs
-before `.speak()` and `.speak()` receives the expected utterance string
-for each branch.
+Rules: language follows STT preference; A5 TTS toggle defaults on; cancel in-flight TTS before new readback.
 
-**Depends on:** A5 (so the toggle exists). Build A5 first → A1.
+Implementation: add `speak(textHi, textEn)`; cache a `hi-IN` voice from `speechSynthesis.getVoices()`; call `speechSynthesis.cancel()` before `.speak()`; call from `_handleUtterance` success branches.
 
----
+Test: mock `window.speechSynthesis`; assert `.cancel()` before `.speak()` and expected utterance per branch.
+
+**Depends on:** A5.
+
 
 #### A2. Multi-item utterance
-**What:** Parser learns separators `and` / `aur` / `phir` / `और` / `,` /
-`;` and returns an **array** of `add` intents rather than a single
-intent.
-*"10 kilo aloo at 30 and 5 kilo pyaaz at 25"* → two rows staged.
 
-**Implementation:**
-- Change `parseUtterance` return shape from a single intent to either
-  a single intent (current callers continue to work) **or** an array,
-  picking the array when separators are present. Update internal type:
-  `{ kind: 'add'|'commit'|'clear'|'unknown' | 'batch', items?: Intent[], ... }`.
-- New `splitOnSeparators(text)` returns one segment per implied item.
-- Manager loops each segment: fill → `addWeight()` → next.
-  All-or-nothing semantics — if segment 3 fails to parse, segments 1+2
-  still land (matches typing behaviour: each weight chip is independent).
+**What:** Separators `and` / `aur` / `phir` / `और` / `,` / `;` produce multiple add intents. Example: "10 kilo aloo at 30 and 5 kilo pyaaz at 25" → two rows.
 
-**Test:** at least 10 new cases:
-- 2-item English with `and`
-- 2-item Hindi with `aur`
-- 2-item Hinglish with `phir`
-- 2-item Devanagari with `और`
-- Comma-separated, 3 items
-- Mixed: `"10 kg aloo 30, pyaaz 25"` (item-without-weight middle slot)
-- Trailing separator (`"…and"`) — must not crash
-- Backwards-compatible: single-item utterance still returns a single intent
+Implementation:
 
----
+- Change `parseUtterance` return shape from single intent to single intent or array. Use array when separators are present. Internal type: `{ kind: 'add'|'commit'|'clear'|'unknown' | 'batch', items?: Intent[], ... }`.
+- Add `splitOnSeparators(text)`.
+- Manager loops segments: fill → `addWeight()` → next.
+- Semantics: if segment 3 fails, segments 1+2 still land.
+
+Test at least 10 cases:
+
+- 2-item English with `and`.
+- 2-item Hindi with `aur`.
+- 2-item Hinglish with `phir`.
+- 2-item Devanagari with `और`.
+- Comma-separated, 3 items.
+- Mixed: `"10 kg aloo 30, pyaaz 25"`.
+- Trailing separator (`"…and"`) does not crash.
+- Single-item utterance still returns a single intent.
+
 
 #### A3. Customer-name dictation
-**What:** A trigger word (`customer` / `ग्राहक` / `naam`) followed by 1–3
-tokens fills the customer name field. Also support the suffix form
-`<name> ke liye` / `<name> के लिए`.
-- *"customer Ramesh Kumar, 10 kilo aloo at 30"*
-  → `customerName` = "Ramesh Kumar", then row added.
-- *"ग्राहक रमेश, दस किलो आलू"*  → same.
-- *"Ramesh ke liye 10 kilo aloo"* / *"रमेश के लिए दस किलो आलू"*
-  → same suffix-form capture.
-- Capture stops at the first number, separator, or unit word — so a name
-  never leaks into item-match territory.
 
-**Implementation:**
-- New `extractCustomerName(text)` runs **before** item-match, removes the
-  matched span from the working text so item-match isn't confused.
-- New trigger word list `CUSTOMER_PHRASE_LIST` in voice-billing.js, plus
-  suffix matching for `ke liye` / `के लिए`.
-- Manager fills `customerName` (purchase) or `saleCustomerName` (sale)
-  depending on `_mode`.
+**What:** Trigger word (`customer` / `ग्राहक` / `naam`) plus 1–3 tokens fills customer field. Suffix form: `<name> ke liye` / `<name> के लिए`.
 
-**Test:** ≥6 cases covering English/Hindi triggers, suffix `ke liye` /
-`के लिए`, multi-word names, name with item in same utterance, name only,
-no trigger (must not match).
+Examples:
 
----
+- "customer Ramesh Kumar, 10 kilo aloo at 30" → `customerName` = "Ramesh Kumar", then row added.
+- "ग्राहक रमेश, दस किलो आलू" → same.
+- "Ramesh ke liye 10 kilo aloo" / "रमेश के लिए दस किलो आलू" → same.
+
+Capture stops at first number, separator, or unit word.
+
+Implementation: `extractCustomerName(text)` runs before item-match and removes the matched span; add `CUSTOMER_PHRASE_LIST`; manager fills `customerName` for purchase or `saleCustomerName` for sale.
+
+Test: ≥6 cases for English/Hindi triggers, `ke liye` / `के लिए`, multi-word names, name + item same utterance, name only, and no-trigger negative.
+
 
 #### A4. Expanded Hindi number table (11–99)
-**What:** Fill in the missing entries so every spoken Hindi number
-1–99 parses.
+
+**What:** Add every spoken Hindi number 1–99.
 
 | Missing today (sample) | Add (Roman-Hindi) | Add (Devanagari) |
 |---|---|---|
@@ -228,18 +156,14 @@ no trigger (must not match).
 | 81–89 | ikyaasi…nibbe-ke-pehle | इक्यासी…नवासी |
 | 91–99 | ikyaanve…ninyaanve | इक्यानवे…निन्यानवे |
 
-Optional follow-on: compound parsing of *"tees-teen"* → 33 for speakers
-who know "tees" and "teen" but not "tetalees". Low priority — digits
-already cover 95%.
+Optional later: compound `tees-teen` → 33. Low priority; digits cover 95%.
 
-**Test:** parametric — for every entry in the new table, assert
-`parseUtterance("X kilo aloo")` returns `weight: <number>`.
+Test: parametric; every new table entry makes `parseUtterance("X kilo aloo")` return `weight: <number>`.
 
----
 
 #### A5. Settings toggle + language pick
-**What:** New "Voice input" section on the Settings page (`14-settings.md`).
-Persists to `AppState.preferences` + Firestore `users/{uid}/preferences`.
+
+**What:** Add Settings "Voice input" section (`14-settings.md`). Persist to `AppState.preferences` and Firestore `users/{uid}/preferences`.
 
 | Setting | Type | Default | Effect when changed |
 |---|---|---|---|
@@ -248,139 +172,93 @@ Persists to `AppState.preferences` + Firestore `users/{uid}/preferences`.
 | TTS readback | toggle | on | When off: skip the `speak()` call (toast still appears) |
 | Confirmation mode | radio: auto-add / preview | auto-add | Controls A6 behaviour |
 
-**Implementation:**
-- Add fields to `AppState.preferences.voice = { enabled, lang, tts, confirmMode }`.
-- Reuse the existing `users/{uid}/preferences` Firestore doc (the same
-  one Phase 4 was going to extend rules for — the per-user prefs rule
-  is already designed in `docs/STAGING_RULES_PATCH.md`).
-- Settings UI: new section, four controls, save-on-change.
-- VoiceBillingManager reads `_ctx.AppState.preferences.voice` on each
-  `start()` so changes apply immediately without page reload.
+Implementation: add `AppState.preferences.voice = { enabled, lang, tts, confirmMode }`; reuse `users/{uid}/preferences`; settings UI saves on change; `VoiceBillingManager.start()` rereads prefs each time.
 
-**Test:** Settings save → assert Firestore write payload; Settings
-load → assert UI controls reflect prefs; mic button visibility toggles
-with the enable flag.
+Test: Settings save payload; Settings load UI; mic visibility toggles.
 
----
 
 #### A6. Confirmation mode (preview-then-commit)
-**What:** When user picks "preview" in A5, voice input fills the inputs
-but does **not** auto-click `addWeight()`. User reviews on screen and
-says *"confirm"* / *"haan"* / *"OK"* / *"पक्का"* to commit, or speaks
-again to overwrite, or *"clear"* to abandon.
 
-**Implementation:**
-- New `CONFIRM_PHRASE_LIST`.
-- Add a state field to `VoiceBillingManager._stagedIntent` — when set,
-  the `start()` call accepts only *confirm* / *overwrite* / *clear*
-  utterances. On confirm, the auto-`addWeight()` finally runs.
-- TTS readback (A1) reads the preview *before* asking for confirmation
-  ("staged: 10 kg aloo, 30 rupees. say confirm to add.").
+**What:** In A5 preview mode, voice fills inputs but does not auto-click `addWeight()`. User says `confirm` / `haan` / `OK` / `पक्का` to commit, speaks again to overwrite, or says `clear` to abandon.
 
-**Test:** state-machine cases — idle → previewing → confirmed; idle →
-previewing → overwritten; idle → previewing → cleared.
+Implementation: add `CONFIRM_PHRASE_LIST`; add `_stagedIntent`; while staged, `start()` accepts confirm / overwrite / clear only; on confirm run `addWeight()`. A1 TTS says: "staged: 10 kg aloo, 30 rupees. say confirm to add."
 
-**Depends on:** A5 (the setting that gates this behaviour).
+Test: idle → previewing → confirmed; idle → previewing → overwritten; idle → previewing → cleared.
 
----
+**Depends on:** A5.
 
-### Tier B — refinements (after Tier A lands)
+
+### Tier B — refinements
 
 #### B7. Continuous "dictation mode"
-**What:** Long-press the mic (or a separate "Dictation" button) to enter
-a session where recognition stays open across multiple utterances.
-Ends on *"stop"* / *"रुको"* / *"khatam"*, on 30 s of silence, or on
-navigation away.
 
-**Implementation:** flip `rec.continuous = true`; manage the lifecycle
-explicitly; show a different active-state ("DICTATING" pulsing red).
+**What:** Long-press mic or separate "Dictation" button keeps recognition open. Ends on `stop` / `रुको` / `khatam`, 30 s silence, or navigation away.
 
----
+Implementation: set `rec.continuous = true`; explicit lifecycle; active state shows "DICTATING" pulsing red.
+
 
 #### B8. Voice undo / revert last action
-**What:** *"undo"* / *"वापस"* / *"galat"* pops the most recent voice add
-(removes the last weight chip OR removes the last committed row).
 
-**Implementation:** small undo stack in VoiceBillingManager keeping
-the last 5 actions: `{type: 'add'|'commit'|'clear', undo: () => void}`.
-Manager exposes `.undoLast()`.
+**What:** `undo` / `वापस` / `galat` removes the most recent voice add: last weight chip or committed row.
 
----
+Implementation: undo stack length 5 with `{type: 'add'|'commit'|'clear', undo: () => void}`; expose `.undoLast()`.
+
 
 #### B9. Edit row via voice
-**What:** *"row 2 rate 35"* / *"दूसरा रेट 35"* updates the rate of the
-named row without retyping the whole line. Useful for fixing
-misrecognised rates.
 
-**Implementation:** parser learns ordinal triggers
-(`pehla`/`doosra`/`teesra` and `1st`/`2nd`/`3rd`); manager calls
-`editBillItem(idx)` to open the row, then changes the right field.
+**What:** `row 2 rate 35` / `दूसरा रेट 35` updates a row rate.
 
----
+Implementation: parser learns ordinals (`pehla`/`doosra`/`teesra`, `1st`/`2nd`/`3rd`); manager calls `editBillItem(idx)`, then updates field.
+
 
 #### B10. Transcript log panel (toggleable)
-**What:** Collapsible drawer below the mic shows the last 3 utterances
-+ what the parser extracted. Makes it visually obvious whether
-recognition or parsing is at fault.
 
-**Implementation:** ring buffer of length 3 in VoiceBillingManager;
-render in a small `<details>` element next to the status line.
+**What:** Collapsible drawer shows last 3 utterances and parser output.
 
----
+Implementation: ring buffer length 3; render in `<details>` next to status.
+
 
 #### B11. Audio cue on listen start/stop
-**What:** Short 100 ms tone on mic-open and mic-close so the user knows
-the mic is hot without looking.
 
-**Implementation:** generate the tone with `AudioContext` (no asset
-download); two different pitches for open vs close.
+**What:** 100 ms tone for mic open/close.
 
----
+Implementation: generate via `AudioContext`; use two pitches.
+
 
 ### Tier C — production readiness
 
 #### C12. Android `RECORD_AUDIO` manifest entry
-**What:** Capacitor APK builds need the explicit permission in
-`android/app/src/main/AndroidManifest.xml`:
+
+**What:** Capacitor APK needs:
 
 ```xml
 <uses-permission android:name="android.permission.RECORD_AUDIO" />
 ```
 
-**Where:** the **prod** repo (`DDancingDeath/AadhatManagementApp`) —
-this staging clone has no `android/` directory. Owner action. Document
-the exact diff in the V2 promotion PR.
+**Where:** prod repo (`DDancingDeath/AadhatManagementApp`); this staging clone has no `android/`. Owner documents exact diff in V2 promotion PR.
 
----
 
 #### C13. Misrecognition telemetry (privacy-respecting)
-**What:** When user says *"clear"* / *"undo"* within 5 seconds of a
-voice add, anonymously log `{transcript, parsed, action_taken: 'reverted'}`
-to a `voiceMisses/` collection. Use to tune the parser from real data.
 
-**Privacy controls:**
-- **Opt-in by default in prod.** A new Settings toggle "help improve
-  voice recognition" (off by default).
-- **Opt-out by default in staging.** Safe environment, helps tuning.
-- Never log customer names, item rates, or anything PII-shaped — the
-  transcript field is the only free-text payload, and the toggle text
-  explicitly states it leaves the phone.
+**What:** If user says `clear` / `undo` within 5 seconds of voice add, anonymously log `{transcript, parsed, action_taken: 'reverted'}` to `voiceMisses/` for parser tuning.
 
----
+Privacy controls:
+
+- Prod toggle "help improve voice recognition" is off by default.
+- Staging default is opt-out.
+- Never log customer names, item rates, or PII-shaped fields; transcript is the only free text and copy says it leaves the phone.
 
 ## 5. Build sequence
 
-Each step ships independently and is testable on its own.
-
-1. **A5** — Settings toggle scaffold (unlocks opt-out and gates A1/A6)
-2. **A1** — TTS readback
-3. **A2** — Multi-item utterance
-4. **A3** — Customer-name dictation
-5. **A4** — Hindi number expansion
-6. **A6** — Confirmation mode
-7. Tier B (any order, all independent)
-8. **C12** — prod repo manifest entry (owner action; document diff)
-9. **C13** — last, once Tier A has settled and real misses exist
+1. **A5** — Settings toggle scaffold.
+2. **A1** — TTS readback.
+3. **A2** — Multi-item utterance.
+4. **A3** — Customer-name dictation.
+5. **A4** — Hindi number expansion.
+6. **A6** — Confirmation mode.
+7. Tier B in any order.
+8. **C12** — prod repo manifest entry.
+9. **C13** — last, after Tier A settles.
 
 ## 6. Test strategy
 
@@ -392,28 +270,19 @@ Each step ships independently and is testable on its own.
 | Settings | toggle persistence, lang switch | mock `FirebaseService`, assert payload shape |
 | End-to-end | mic → form fill → bill saved | manual smoke on Chrome desktop + Android |
 
-**Targets:**
-- 50+ parser tests by end of Tier A (currently 28)
-- 70+ parser tests by end of V2
-- All existing 539 tests still green at every merge
+Targets:
+
+- 50+ parser tests by end of Tier A (currently 28).
+- 70+ parser tests by end of V2.
+- All existing 539 tests green at every merge.
 
 ## 7. Open assumptions (override anytime)
 
-1. **Tier A is the right cut.** Smallest reasonable V2 is just A1 (TTS)
-   + A2 (multi-item) shipped as one PR — that fixes the two biggest
-   "feels broken without" pain points.
-2. **Settings storage uses Firestore prefs.** If you'd rather keep it
-   device-local (`localStorage`), it's a one-line change — but then
-   voice prefs don't follow the user to a second device.
-3. **Telemetry opt-in default in prod.** Some shopkeepers will not want
-   voice samples leaving their phone. If you'd rather make it opt-out
-   to maximise tuning data, say so and we flip the default + the
-   Settings copy.
-4. **A4 covers only round Hindi numbers up to 99.** Numbers > 99 (like
-   *"do sau pachas"* = 250) parse fine via digits in real-world use,
-   so we don't add the hundreds/thousands compound machinery in V2.
-5. **No voice for chat / cash / items / expenses** — explicitly out of
-   scope. Each is a future ask once V2 has bedded in.
+1. **Tier A is the right cut.** Smallest V2 is A1 + A2 in one PR.
+2. **Settings storage uses Firestore prefs.** LocalStorage alternative is one-line but prefs do not follow devices.
+3. **Telemetry opt-in default in prod.** Flip to opt-out only if owner accepts samples leaving the phone by default.
+4. **A4 covers only Hindi numbers up to 99.** Numbers >99 are handled as digits in real use.
+5. **No voice for chat / cash / items / expenses.** Future asks only.
 
 ## 8. Files this PR set will touch
 
@@ -430,99 +299,55 @@ Each step ships independently and is testable on its own.
 | `docs/VOICE_BILLING_V2.md` | This document (created in the planning PR) |
 
 Production-repo files (owner action, not this clone):
+
 | File | What changes |
 |---|---|
 | `android/app/src/main/AndroidManifest.xml` | Add `<uses-permission android:name="android.permission.RECORD_AUDIO" />` (C12) |
 
 ## 9. Future: zero-touch / hands-free activation (v2.1)
 
-> **Status:** `TODO(spec)` — v2.1 goal, post-cutover. Records the
-> owner's explicit ask: *"I don't touch my mobile and can still
-> activate the app and create a bill."* v2.0 stays tap-to-talk (§1);
-> this section is the agreed **direction** for v2.1, with the
-> **mechanism** still to be chosen.
+> **Status:** TODO(spec, blocks: M9) — Which zero-touch activation approach should ship in v2.1? **Default:** start with A (OS-assistant launch).
 
 ### The goal
 
-Fully hands-free billing for when the shopkeeper's hands are full of
-goods or on the scale. Two things must work without a touch:
+Hands-free billing when the shopkeeper's hands are full:
 
-1. **Activation** — bring the app to the billing page and start
-   listening without tapping the screen.
-2. **Full bill by voice** — already designed for v2.1: multi-item
-   (A2), customer name (A3), TTS readback (A1), confirm-by-voice
-   (A6), continuous dictation (B7), voice undo (B8), edit-row (B9).
-   Once activation is solved, these chain into a complete no-touch
-   bill.
+1. Activation: open billing and start listening without tapping.
+2. Full bill by voice: A2, A3, A1, A6, B7, B8, B9. After activation, these complete a no-touch bill.
 
-So the **only** missing piece for true zero-touch is *activation* —
-everything after "start listening" is already on the v2.1 plan.
+### Why v2.0 excluded it
 
-### Why v2.0 excluded it (so we reverse this deliberately, not by accident)
+Always-listening drains battery, raises privacy issues, and browser STT (`webkitSpeechRecognition`) is not free-running/continuous. v2.1 must solve all three.
 
-The v2.0 "No wake-word" boundary (§1) was chosen for real reasons: an
-always-listening mic drains battery, raises privacy questions (a hot
-mic in a shop), and browser STT (`webkitSpeechRecognition`) is
-neither free-running nor continuous by default. Any v2.1 activation
-path **must answer all three**, or it does not ship.
-
-### Two approaches — pick one (`TODO(spec)`)
+### Two approaches — pick one
 
 | | **A. OS-assistant launch** | **B. In-app wake-word (foreground mode)** |
 |---|---|---|
-| How | *"Hey Google, open Bahi and start a bill"* via **Android App Actions / shortcuts**; the OS does the wake-word, deep-links into the billing page, then in-app **dictation mode (B7)** takes over. | Owner turns on a **"listening" foreground service**; a local wake-word (*"Bahi"* / *"बही"*) opens billing + starts dictation. Needs a native wake-word lib (e.g. Porcupine) or Android `SpeechRecognizer`, not browser STT. |
+| How | "Hey Google, open Bahi and start a bill" via **Android App Actions / shortcuts**; OS handles wake-word, deep-links to billing, then in-app **dictation mode (B7)** takes over. | Owner enables a **"listening" foreground service**; local wake-word ("Bahi" / "बही") opens billing + starts dictation. Needs native wake-word lib (e.g. Porcupine) or Android `SpeechRecognizer`, not browser STT. |
 | Always-on mic *in our app* | **No** — the OS owns it until launch | **Yes** — while the mode is on |
 | Battery | Low (no app-side mic until launched) | Higher (foreground service + live mic) |
-| Privacy | Better (no app-side hot mic) | Needs a visible "listening" banner + explicit opt-in; mic is hot |
+| Privacy | Better (no app-side hot mic) | Needs visible "listening" banner + explicit opt-in; mic is hot |
 | Platform | Android + Google Assistant only | Android only (foreground service + `RECORD_AUDIO`); not web/PWA |
 | Effort | Medium — App Actions intent + deep link + chain to B7 | High — native wake-word, service lifecycle, battery tuning |
 | Fallback | Assistant unavailable → tap-to-talk | Service killed by battery saver → tap-to-talk |
 
-**Recommendation:** start with **A (OS-assistant launch)**. It
-offloads the always-on mic and wake-word to the OS — which directly
-answers the v2.0 battery/privacy/cost objections — and then reuses
-the already-planned dictation mode (B7) for the rest of the bill.
-Keep **B** as a fallback only for devices without a usable assistant,
-and only behind an explicit, clearly-indicated opt-in.
+Recommendation: start with A. Keep B only for devices without usable assistant and behind explicit, visible opt-in.
 
 ### Acceptance (whichever approach)
 
-- From a home-screen / awake state, a single spoken command lands the
-  user on the billing page in **listening** state with **zero taps**.
-- The full bill (customer + ≥2 items) can then be completed by voice
-  using the v2.1 dictation grammar, with **TTS readback (A1)** so the
-  user never needs to look at the screen.
-- A visible indicator shows when the mic is live; the owner can turn
-  the whole capability off in Settings (extends A5).
-- If activation fails (no assistant, permission denied, service
-  killed), the app degrades gracefully to v2.0 tap-to-talk — never a
-  dead end.
+- From home-screen / awake state, one spoken command opens billing in listening state with zero taps.
+- Full bill (customer + ≥2 items) completes by v2.1 dictation grammar with TTS readback (A1).
+- Visible live-mic indicator; owner can disable in Settings (extends A5).
+- Failure degrades to v2.0 tap-to-talk, never dead end.
 
 ### Depends on
 
-B7 (continuous dictation), A1 (TTS readback), A5 (settings / opt-out),
-C12 (`RECORD_AUDIO`). Sequenced **after** the v2.0 cutover, with the
-rest of voice v2 (roadmap Phase 4 / §v2.1 candidates).
+B7, A1, A5, C12. Sequence after v2.0 cutover with roadmap Phase 4 / v2.1 candidates.
 
 ## 10. Glossary
 
-- **Intent** — the structured object the parser returns:
-  `{kind: 'add'|'commit'|'clear'|'unknown', weight?, rate?, itemName?, itemIndex?, raw}`.
-- **Tap-to-talk** — current V1 model: one tap, one utterance, mic auto-stops.
-- **Dictation mode** — V2 B7 model: long-press, mic stays open until
-  user says *stop* or 30 s silence.
-- **STT** — Speech-to-text (the browser's `webkitSpeechRecognition`).
+- **Intent** — parser object: `{kind: 'add'|'commit'|'clear'|'unknown', weight?, rate?, itemName?, itemIndex?, raw}`.
+- **Tap-to-talk** — V1 model: one tap, one utterance, mic auto-stops.
+- **Dictation mode** — B7 model: long-press, mic stays open until `stop` or 30 s silence.
+- **STT** — Speech-to-text (`webkitSpeechRecognition`).
 - **TTS** — Text-to-speech (`window.speechSynthesis`).
-
-## Recent changes
-
-- _2026-06-17_ · Added §9 *Future: zero-touch / hands-free activation
-  (v2.1)* capturing the owner's "I don't touch my mobile and can
-  still activate the app and create a bill" ask. Reframed the §1
-  "No wake-word" boundary as a **v2.0-only** cut and pointed it at
-  §9. Recorded two candidate activation mechanisms — (A) OS-assistant
-  launch via Android App Actions, recommended; (B) in-app wake-word
-  foreground mode, fallback — with battery/privacy/platform/effort
-  tradeoffs, acceptance criteria, and dependencies (B7/A1/A5/C12).
-  Mechanism left as `TODO(spec)` for owner sign-off; full bill-by-voice
-  was already designed for v2.1, so activation is the only new piece.

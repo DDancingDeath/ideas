@@ -182,12 +182,3 @@ release must respect:
 - `TODO(spec)` — server-side schema validator retention policy.
   Default: keep forever (cheap; needed for any historical
   replay).
-
-## Recent changes
-
-- _2026-06-15_ · file created. Three independent versions
-  (`appVersion`, `schemaVersion`, `domainVersion`); support
-  window with force-upgrade rules; additive vs non-additive
-  event-schema changes with up-migration contract; cache
-  poisoning vs outbox separation; release cadence cross-link
-  to operations runbook; required tests.

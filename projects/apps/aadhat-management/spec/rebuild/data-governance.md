@@ -1,32 +1,14 @@
 # Data governance — rebuild
 
-> Who can read, export, delete, and merge each kind of data.
-> What is kept and for how long. What customer / staff personal
-> information the app stores. The compliance boundary the family
-> shop operates within. The contracts that
-> [`role-permission-matrix.md`](./role-permission-matrix.md),
-> [`audit log`](./projections.md#audit-log), and
-> [`failure-modes.md`](./failure-modes.md) F20 (lost phone) all
-> depend on.
+> Read/export/delete/merge permissions, retention, personal data, and compliance boundaries. Dependent specs: [`role-permission-matrix.md`](./role-permission-matrix.md), [`audit log`](./projections.md#audit-log), and [`failure-modes.md`](./failure-modes.md) F20.
 
-This file says **what the system permits and remembers**, not
-how the human acts on it. The human procedures live in
-[`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md).
+Human procedures live in [`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md). GST and e-invoicing are out of scope for v2.0 per [`scope-boundaries.md`](./scope-boundaries.md).
 
 ## Scope
 
-Three concerns nest here:
-
-1. **Privacy and ownership** of data the app collects.
-2. **Master data governance** — how items, parties, and rates
-   evolve cleanly over time.
-3. **Legal / compliance boundary** — what the app records that
-   matters outside the shop (bill numbering, retention,
-   accountant export).
-
-GST and e-invoicing remain explicitly **out of scope** for v2.0
-per [`scope-boundaries.md`](./scope-boundaries.md). This file
-defines the contract the app **does** enforce.
+1. Privacy and ownership.
+2. Master data governance: items, parties, rates.
+3. Legal/compliance records: bill numbering, retention, accountant export.
 
 ## Ownership and access matrix
 
@@ -46,14 +28,9 @@ defines the contract the app **does** enforce.
 | Wipe a device | ❌ | ✅ | — | See §Lost or replaced device |
 | Revoke a user | ❌ | ✅ | — | Server-enforced |
 
-The deliberate `❌` for **delete** is the most important row.
-**Business events are immutable.** Corrections, voids, and
-adjustments are new events that reference the original. The
-event log is the only honest history.
+Business events are immutable. Corrections, voids, and adjustments are new events that reference the original.
 
 ## What personal data the app stores
-
-Minimised by design.
 
 | Data | Stored where | Required? | Notes |
 |---|---|---|---|
@@ -72,113 +49,71 @@ Minimised by design.
 
 ### Voice transcripts
 
-- Transcripts are produced on-device by the voice billing flow
-  (per [`spec/voice-billing-v2.md`](../voice-billing-v2.md)).
-- Recordings are **not** persisted by default. Transcripts are
-  retained only when they are referenced by a created event;
-  free-form transcripts that did not result in a bill are
-  discarded.
-- A retained transcript is stored alongside the event with the
-  speaker's user id, never the raw audio. Owner can export or
-  purge.
+- Produced on-device by voice billing; see [`spec/voice-billing-v2.md`](../voice-billing-v2.md).
+- Raw recordings are not persisted by default.
+- Transcripts are retained only when referenced by a created event; abandoned free-form transcripts are discarded.
+- Retained transcript stores speaker user id, never raw audio. Owner can export or purge.
 
 ### Customer phone numbers
 
-- Customer phone is **optional** on every entry path.
-- If entered, it is searchable on the device and visible on
-  printed bills.
-- A `party_updated` event records every change with the
-  `by` user; an exported audit trail shows the full history.
+- Optional on every entry path.
+- If entered, searchable on device and visible on printed bills.
+- Every change is a `party_updated` event with `by`; export shows full history.
 
 ### Local encryption
 
-- IndexedDB is treated as a sensitive store. Outbox rows and
-  cached events live there.
-- Device-level encryption (Android File-Based Encryption) is
-  assumed; the app does not add a second encryption layer.
-- The forced-upgrade screen and the lost-phone flow
-  (§Lost or replaced device) are the primary defences in case
-  of physical theft.
-- A future at-rest encryption pass over IndexedDB is tracked as
-  an open item; v2.0 relies on OS-level encryption plus device
-  revocation.
+- IndexedDB stores outbox rows and cached events.
+- Android File-Based Encryption is assumed; no second encryption layer in v2.0.
+- Forced upgrade and lost-phone flows are the theft defences.
+- Future IndexedDB at-rest encryption remains open.
 
 ## Master data governance
 
-Items, parties, and unit rates accumulate over time. The
-contract for keeping them clean.
-
 ### Duplicate item merge
 
-- Triggered by owner action only.
-- The merge creates an `item_merged` event:
+- Owner-only; appends `item_merged`:
   ```
   { fromItemId, toItemId, by, at, schemaVersion, reason }
   ```
-- The source item is **archived**, not deleted. Future event
-  reads transparently re-route `fromItemId → toItemId` via the
-  items projection.
-- Historical bill events that referenced `fromItemId` continue
-  to show that id in audit; in projections they are folded as
-  the merged item.
-- Stock-on-hand is summed. Rate history is unioned.
-- An `R3` reconciliation invariant asserts post-merge stock =
-  pre-merge sum-of-stock.
+- Source item is archived, not deleted.
+- Future reads reroute `fromItemId → toItemId` via items projection.
+- Historical bill audit keeps `fromItemId`; projections fold as merged item.
+- Stock-on-hand is summed; rate history is unioned.
+- `R3`: post-merge stock = pre-merge sum-of-stock.
 
 ### Duplicate party merge
 
-- Same shape as item merge; event type `party_merged`.
-- Outstanding balances are summed. Bill history union-merged.
-- An `O3` reconciliation invariant asserts post-merge
-  outstanding = pre-merge sum-of-outstanding.
+- Event type: `party_merged`; same shape as item merge.
+- Outstanding balances are summed; bill history union-merged.
+- `O3`: post-merge outstanding = pre-merge sum-of-outstanding.
 
 ### Rate change history
 
-- Item rate changes are events (`item_rate_changed` per
-  [`event-schemas.md`](./event-schemas.md)) — never silent
-  edits.
-- A bill at time T uses the **rate as of T**, not the current
-  rate. The bill event captures the resolved rate in its
-  payload so historical bills always re-fold to the same
-  totals.
-- Rate-change events have a mandatory `reason` (free text;
-  flagged by suspicion engine if generic).
-- The accumulated history is surfaced as the **Rate history per
-  item** projection (see
-  [`projections.md`](./projections.md#rate-history-per-item)): the
-  owner sees the full chronological sequence of rate set-points
-  (with reasons) alongside the transacted buy / sell trend over
-  time.
+- Item rate changes are `item_rate_changed` events; see [`event-schemas.md`](./event-schemas.md).
+- A bill at time T uses rate as of T; event payload captures the resolved rate.
+- Rate-change events require `reason`; generic reasons are flagged by suspicion engine.
+- Owner sees chronological rate set-points and transacted buy/sell trend in [`projections.md`](./projections.md#rate-history-per-item).
 
 ### Archived items / parties
 
-- Archived rows are **hidden** from picker UIs but remain in
-  history, audit, and reports.
-- An archived item cannot be the subject of a new sale or
-  purchase. The picker exposes an `Include archived` filter for
-  owner-only views.
+- Hidden from picker UIs; retained in history, audit, and reports.
+- Archived item cannot be used in a new sale or purchase.
+- Owner-only views expose `Include archived`.
 - Unarchiving is an event.
 
 ### Typo correction
 
-- For an item / party name typo: owner edits via Admin; the
-  service appends `item_updated` (or `party_updated`) with the
-  old and new value in the payload.
-- For an in-flight bill that already references the wrong name:
-  the bill keeps the name as it was when the bill was created
-  (point-in-time integrity). Re-rendered prints show the
-  current name only if explicitly reprinted.
+- Item/party name typo: owner edit appends `item_updated` or `party_updated` with old and new value.
+- In-flight bill keeps the name captured at bill creation.
+- Re-rendered prints show current name only when explicitly reprinted.
 
 ### Hindi / English name changes
 
-- Items and parties carry both `nameHi` and `nameEn`.
-- Either may be edited independently; the audit trail records
-  both old and new values.
-- Picker matches against both fields.
+- Items and parties carry `nameHi` and `nameEn`.
+- Either may be edited independently; audit records old and new values.
+- Picker matches both fields.
 
 ## Retention
-
-How long each kind of data is kept.
 
 | Data | Retention | Why |
 |---|---|---|
@@ -193,43 +128,27 @@ How long each kind of data is kept.
 | Backups | 90 days rolling | See [`../../plan/rebuild/backup-restore.md`](../../plan/rebuild/backup-restore.md) |
 | Deleted user records | Forever (status `rejected`, sign-in blocked) | Audit attribution needs the user to still exist |
 
-The audit log and event ledger are **never** thinned. Storage
-cost is trivial relative to the value of an honest history.
+Audit log and event ledger are never thinned.
 
 ## When staff leaves
 
-- Owner sets the user's status to `suspended` first (preserves
-  identity for audit). Optionally, later, `rejected`.
-- Token refresh fails on the staff's device; all writes from
-  that device cease.
-- Existing audit / event attribution is preserved — the user
-  row stays, only their ability to sign in is removed.
-- Any unsynced events on the staff's device follow
-  [`failure-modes.md`](./failure-modes.md) §F19 / F20.
+- Owner sets user status to `suspended`, optionally later `rejected`.
+- Token refresh fails; writes from that device cease.
+- User row remains for audit attribution.
+- Unsynced events follow [`failure-modes.md`](./failure-modes.md) §F19 / F20.
 
 ## Lost or replaced device
 
-- Owner revokes the user (or rotates their credential) via
-  Admin.
-- Owner may also force-purge the **device's** cache via the
-  next sign-in on a fresh device: cache is rebuilt from events;
-  no shop data is permanently device-local.
-- The runbook lives in
-  [`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md)
-  §Lost phone.
+- Owner revokes user or rotates credential via Admin.
+- Fresh device sign-in can force-purge old device cache; cache rebuilds from events.
+- Human runbook: [`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md) §Lost phone.
 
 ## Security and abuse prevention
 
-- **App Check is a production gate.** Firebase App Check is
-  required in production for every Firebase client: reCAPTCHA v3
-  on web and Play Integrity on Android.
-- App Check is enforced alongside strict Firestore rules.
-  Possession of the public web config alone is not sufficient to
-  issue Firestore requests.
+- Firebase App Check is required in production for every Firebase client: reCAPTCHA v3 on web, Play Integrity on Android.
+- App Check is enforced with strict Firestore rules; public web config possession cannot issue Firestore requests.
 
 ## Export
-
-The owner can export:
 
 | Export | Format | Includes | Excludes |
 |---|---|---|---|
@@ -240,48 +159,25 @@ The owner can export:
 | Audit log (range) | CSV + JSON | Full event envelope | — |
 | Full event ledger | JSON | Every event, every field | — |
 
-Exports are owner-only, watermarked with shop name, date, and
-the exporting user; the export action is itself an event
-(`data_exported`) in the audit log.
+Exports are owner-only, watermarked with shop name/date/exporting user, and append `data_exported` to the audit log.
 
 ## Bill numbering and legal posture
 
-- Each bill carries a human-readable bill number. Numbering
-  is per-shop, monotonic-by-cash-session, with the format
-  defined in [`event-schemas.md`](./event-schemas.md)
-  (`retail_sale_created` payload).
-- Bill numbers are **never** reused after a void; the voided
-  bill keeps its number and a void event references it.
-- Offline-allocated numbers (per the open item in
-  [`offline-sync.md`](./offline-sync.md)) carry an `offline-
-  issued` marker until server-reconciled.
-- Printed bill wording defaults to "Bill / बिल"; "Invoice"
-  wording with `GSTIN: …` is configurable per shop profile.
-  Until a GSTIN is set, no invoice wording is printed.
-- Accountant exports (CSV with all bills + payments for a
-  period) are the supported integration point.
-- No GST returns, no e-invoicing, no e-way bills in v2.0.
+- Bill number is per-shop, monotonic-by-cash-session; format is in [`event-schemas.md`](./event-schemas.md) (`retail_sale_created` payload).
+- Bill numbers are never reused after void; void references the original bill number.
+- Offline-allocated numbers carry `offline-issued` until server-reconciled.
+- Printed wording defaults to `Bill / बिल`; `Invoice` with `GSTIN: …` is configurable per shop profile.
+- Until GSTIN is set, no invoice wording prints.
+- Accountant export is CSV with all bills + payments for a period.
+- No GST returns, e-invoicing, or e-way bills in v2.0.
 
 ## Validation gates
 
-Master data is the input to billing, stock, and reports. Wrong
-stock often starts as a duplicate item or an item with no
-unit. This section is the **enforcement** complement to the
-governance policies above: the rules the storage adapter
-checks at write time, and the rejection / warning codes the
-UI surfaces.
-
-These gates apply to **all** writes against `items`, `parties`,
-and rates — owner UI, import tool, programmatic admin, and
-agent-initiated writes alike.
+Applies to all writes against `items`, `parties`, and rates from owner UI, import tool, programmatic admin, and agent writes.
 
 ### Gate codes
 
-Adapter results match the canonical set
-(`OK, SCHEMA_INVALID, INVARIANT_VIOLATION, PERMISSION_DENIED,
-REFERENCE_INVALID, IDEMPOTENCY_CONFLICT, BLOCKED_BY_RULE,
-OUT_OF_ORDER, UNAUTHORIZED`). For master-data quality, the
-relevant codes are:
+Adapter results use `OK, SCHEMA_INVALID, INVARIANT_VIOLATION, PERMISSION_DENIED, REFERENCE_INVALID, IDEMPOTENCY_CONFLICT, BLOCKED_BY_RULE, OUT_OF_ORDER, UNAUTHORIZED`.
 
 | Code | When |
 |---|---|
@@ -290,11 +186,7 @@ relevant codes are:
 | `INVARIANT_VIOLATION` | Hard-uniqueness collision (impossible state) or post-merge reconciliation failure |
 | `REFERENCE_INVALID` | Bill or purchase references an archived item; party reference does not exist |
 
-A `BLOCKED_BY_RULE` is intended to be **resolvable** by the
-user choosing "merge", "create anyway", or "edit existing". A
-`SCHEMA_INVALID` requires fixing the form input. A
-`REFERENCE_INVALID` requires fixing the parent record (e.g.
-unarchive the item).
+`BLOCKED_BY_RULE` is resolved by merge/create-anyway/edit-existing. `SCHEMA_INVALID` fixes form input. `REFERENCE_INVALID` fixes the parent record.
 
 ### Items
 
@@ -302,11 +194,11 @@ unarchive the item).
 |---|---|---|
 | `nameEn` and `nameHi` together cannot both be empty (at least one must have a non-whitespace value) | `SCHEMA_INVALID` | UI shows: "Please enter at least one of English / Hindi name" |
 | `unit` is one of the supported units (`kg`, `piece`) at create time | `SCHEMA_INVALID` | New units require a `domainVersion` bump |
-| Rate is a positive integer in the unit's atomic representation (`paisePerKg` for weight, `paisePerPiece` for piece) | `SCHEMA_INVALID` | Zero rate is forbidden; if the item is genuinely free, use a discount, not a zero rate |
-| Rate is below the per-item sanity ceiling `shopProfile.items.rateCeilingPaise` (default `₹1,00,00,000` = `1_000_000_000` paise) | `BLOCKED_BY_RULE` | Owner can confirm-override; raises a `rate-suspicious` low-severity flag |
-| Soft-uniqueness: no other non-archived item has the same `(unit, normalize(nameEn ∪ nameHi))` where normalize is lowercase + collapse whitespace + strip common punctuation | `BLOCKED_BY_RULE` | UI shows the existing item and offers: (a) merge into existing, (b) create anyway with a `duplicate-item-confirmed` flag, (c) cancel |
+| Rate is a positive integer in the unit's atomic representation (`paisePerKg` for weight, `paisePerPiece` for piece) | `SCHEMA_INVALID` | Zero rate is forbidden; free items use a discount |
+| Rate is below `shopProfile.items.rateCeilingPaise` per [`configuration.md`](./configuration.md) | `BLOCKED_BY_RULE` | Owner can confirm-override; raises `rate-suspicious` low flag |
+| Soft-uniqueness: no other non-archived item has the same `(unit, normalize(nameEn ∪ nameHi))` where normalize is lowercase + collapse whitespace + strip common punctuation | `BLOCKED_BY_RULE` | UI offers merge into existing, create anyway with `duplicate-item-confirmed` flag, or cancel |
 | Cannot create a sale or purchase line referencing an `archived` item | `REFERENCE_INVALID` | UI shows: "Item is archived. Unarchive first." |
-| Hard rule: every rate change appends an `item_rate_changed` event (cannot silently update the item row) | `BLOCKED_BY_RULE` | The owner's UI flow always goes through the event; programmatic updates that skip the event are refused by the adapter |
+| Hard rule: every rate change appends an `item_rate_changed` event (cannot silently update the item row) | `BLOCKED_BY_RULE` | Owner UI always uses the event; programmatic updates skipping it are refused |
 | Cannot delete an item ever (per ownership matrix) | `PERMISSION_DENIED` | Only `item_archived` |
 
 ### Parties (customers / suppliers)
@@ -324,9 +216,9 @@ unarchive the item).
 
 | Rule | Code on violation | Notes |
 |---|---|---|
-| `item_rate_changed` carries a non-empty `reason` (free text) | `SCHEMA_INVALID` | Empty `reason` is `SCHEMA_INVALID`; generic `reason` ("update", "change", "abc") triggers a `rate-reason-generic` low-severity flag per the suspicion engine — accepted, not blocked |
-| Bill at time T uses the rate as of T, captured into the event payload | (architectural) | Enforced by domain helper; tests assert that a rate change after T does not alter T's bill replay |
-| Two rate changes within `shopProfile.items.rateChangeMinIntervalSec` (default 60 s) on the same item raise a `rate-flapping` flag | (accepted) | Low-severity; the brother sees the pattern in the Review Queue |
+| `item_rate_changed` carries a non-empty `reason` (free text) | `SCHEMA_INVALID` | Empty `reason` rejected; generic `reason` ("update", "change", "abc") triggers `rate-reason-generic` low flag and is accepted |
+| Bill at time T uses the rate as of T, captured into the event payload | (architectural) | Domain helper enforces; tests assert later rate changes do not alter T's bill replay |
+| Two rate changes within `shopProfile.items.rateChangeMinIntervalSec` on the same item raise a `rate-flapping` flag | (accepted) | Low severity; Review Queue shows the pattern |
 
 ### Merge contracts (cross-cutting)
 
@@ -337,98 +229,41 @@ unarchive the item).
 | Merging an archived item **into** a non-archived one is allowed; the reverse is rejected | `BLOCKED_BY_RULE` | Direction must be: archived → live |
 | Post-merge stock sum equals pre-merge stock sum (`R3`) | `INVARIANT_VIOLATION` | Merge transaction is aborted; nothing is partially applied |
 | Post-merge outstanding sum equals pre-merge outstanding sum (`O3`) | `INVARIANT_VIOLATION` | Same |
-| Merge appends exactly one `item_merged` (or `party_merged`) event | (architectural) | No "shadow" updates of historical bill events; rerouting happens at projection time |
+| Merge appends exactly one `item_merged` (or `party_merged`) event | (architectural) | No shadow updates of historical bill events; rerouting happens at projection time |
 
 ### Required tests
 
-Listed in [§Required tests](#required-tests) below for the
-governance-level scenarios. The gate-level tests below
-complement them at the schema / adapter layer:
+Gate-level tests complement [§Required tests](#required-tests):
 
-- `item-empty-names-rejected` — both name fields empty →
-  `SCHEMA_INVALID`.
-- `item-zero-rate-rejected` — zero `paisePerKg` →
-  `SCHEMA_INVALID`.
-- `item-rate-above-ceiling-blocked` — over `rateCeilingPaise`
-  → `BLOCKED_BY_RULE` + flag.
-- `item-duplicate-soft-unique-blocked-suggest-merge` — case-
-  and-whitespace-insensitive match against an existing item.
-- `item-create-anyway-records-flag` — caller opts past the
-  soft block; `duplicate-item-confirmed` flag present.
+- `item-empty-names-rejected` — both name fields empty → `SCHEMA_INVALID`.
+- `item-zero-rate-rejected` — zero `paisePerKg` → `SCHEMA_INVALID`.
+- `item-rate-above-ceiling-blocked` — over `shopProfile.items.rateCeilingPaise` → `BLOCKED_BY_RULE` + flag.
+- `item-duplicate-soft-unique-blocked-suggest-merge` — case/whitespace-insensitive match.
+- `item-create-anyway-records-flag` — caller opts past soft block; `duplicate-item-confirmed` flag present.
 - `archived-item-in-bill-rejected` → `REFERENCE_INVALID`.
 - `party-phone-not-10-digits-rejected` → `SCHEMA_INVALID`.
 - `party-duplicate-phone-blocked-suggest-merge`.
 - `rate-change-empty-reason-rejected` → `SCHEMA_INVALID`.
-- `rate-change-generic-reason-flagged` (accepted, low flag).
-- `rate-flapping-flagged` — two changes within 60 s → flag.
+- `rate-change-generic-reason-flagged` — accepted, low flag.
+- `rate-flapping-flagged` — two changes within `shopProfile.items.rateChangeMinIntervalSec` → flag.
 - `merge-from-equals-to-rejected` → `SCHEMA_INVALID`.
 - `merge-live-into-archived-rejected` → direction enforced.
-- `merge-stock-sum-mismatch-aborts` → `INVARIANT_VIOLATION`,
-  no partial state.
+- `merge-stock-sum-mismatch-aborts` → `INVARIANT_VIOLATION`, no partial state.
 
 ## Required tests
 
-- `merge-items-projection-stable` — pre-merge stock sum =
-  post-merge stock; rate history unioned; bill projections
-  re-fold identically.
-- `merge-parties-outstanding-stable` — pre-merge balance sum =
-  post-merge balance.
-- `archived-item-blocked-from-new-bill` — picker excludes it;
-  service rejects it.
-- `historical-bill-uses-rate-at-time` — bill total replays
-  exactly even after a rate change.
-- `revoked-user-cannot-write` — server refuses every write
-  after revocation.
-- `export-action-is-audit-event` — every export appends
-  `data_exported`.
-- `voice-transcript-not-persisted-when-no-event` — discarded
-  on flow abandon.
-- `retention-print-records-pruned-after-1-year` — background
-  job removes per the retention table.
+- `merge-items-projection-stable` — pre-merge stock sum = post-merge stock; rate history unioned; bill projections re-fold identically.
+- `merge-parties-outstanding-stable` — pre-merge balance sum = post-merge balance.
+- `archived-item-blocked-from-new-bill` — picker excludes it; service rejects it.
+- `historical-bill-uses-rate-at-time` — bill total replays exactly after rate change.
+- `revoked-user-cannot-write` — server refuses every write after revocation.
+- `export-action-is-audit-event` — every export appends `data_exported`.
+- `voice-transcript-not-persisted-when-no-event` — discarded on flow abandon.
+- `retention-print-records-pruned-after-1-year` — background job follows retention table.
 
 ## Open items
 
-- `TODO(spec)` — at-rest encryption for IndexedDB beyond OS-
-  level FBE. Default v2.0: rely on FBE + device revocation.
-- `TODO(spec)` — accountant export schema (column order,
-  charset, date format). Default: UTF-8 CSV, ISO-8601 dates,
-  amounts in rupees (₹) with two decimals.
-- `TODO(spec)` — exact merge UX (preview, confirm with both
-  candidates side by side, undo window). Default: owner-only
-  with explicit preview screen; no undo (merge is an event).
-- `TODO(spec)` — telemetry purge cadence. Default: 90 days
-  rolling, enforced by Firebase project setting.
-
-## Recent changes
-
-- _2026-06-16_ (later) · §Rate change history now points to the new
-  **Rate history per item** projection in
-  [`projections.md`](./projections.md#rate-history-per-item), so
-  "rate history" has a defined view (rate set-points with reasons +
-  transacted buy / sell trend over time), not just the underlying
-  events.
-- _2026-06-16_ (later) · Removed a duplicated `## Recent changes`
-  heading, and repointed the intro "audit log" link from the
-  non-existent `review-queue.md#audit` anchor to
-  [`projections.md#audit-log`](./projections.md#audit-log), where
-  the audit-log projection is actually defined.
-- _2026-06-16_ · added `## Validation gates` section between
-  `## Master data governance` and `## Required tests`. Folds
-  the data-quality-gates rules (duplicate item / party
-  detection, impossible rate ceilings, empty-name rejection,
-  archived item in bill, rate-flapping flag, merge contracts)
-  into governance rather than spawning a separate file. Each
-  rule maps to the canonical adapter result code
-  (`SCHEMA_INVALID`, `BLOCKED_BY_RULE`,
-  `INVARIANT_VIOLATION`, `REFERENCE_INVALID`,
-  `PERMISSION_DENIED`) and to a UI-level recovery (merge,
-  create-anyway-with-flag, unarchive-first). Required tests
-  extended with gate-level cases.
-- _2026-06-15_ · file created. Ownership / access matrix
-  (delete is forbidden; corrections are events); minimised
-  PII inventory with voice-transcript discard rule;
-  master-data governance for merges, rate history, archive,
-  typo correction, Hindi/English names; retention table;
-  staff-leaves and lost-phone flows; export contract with
-  audit-event coupling; bill-numbering and legal posture
-  with GST out of scope; required tests.
+- `TODO(spec, blocks: M0)` — Add IndexedDB at-rest encryption beyond OS-level FBE? **Default:** rely on FBE + device revocation for v2.0.
+- `TODO(spec, blocks: M9)` — Define accountant export schema: column order, charset, date format? **Default:** UTF-8 CSV, ISO-8601 dates, amounts in rupees (₹) with two decimals.
+- `TODO(spec, blocks: M2)` — Define exact merge UX: preview, side-by-side confirmation, undo window? **Default:** owner-only explicit preview screen; no undo because merge is an event.
+- `TODO(spec, blocks: M0)` — Define telemetry purge cadence? **Default:** 90 days rolling, enforced by Firebase project setting.

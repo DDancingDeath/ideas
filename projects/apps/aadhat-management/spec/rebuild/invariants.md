@@ -1,7 +1,7 @@
 # Invariants — rebuild
 
 > **These are business laws.** They must hold at all times across the
-> system. Any violation in test, in CI, or in production is a `Sev-1`
+> system. Any violation in test, in CI, or in production is a `block`
 > defect. Many of these are enforced by automated invariant tests
 > (see `quality-bar.md`); some are runtime assertions that raise a
 > `flag_raised` event when violated.
@@ -181,26 +181,3 @@ optional extras.
    the Review Queue. The user is told to retry or escalate.
 4. If a projection ever disagrees with a replay (R1–R4): the
    projection is wrong. Rebuild it from events.
-
-## Recent changes
-
-- _2026-06-16_ (later) · Added `## Calculation integrity — what
-  catches a wrong number`: an honest split between an *inconsistent*
-  number (caught by reject-at-append + `recon.*` + the property test)
-  and a *consistently-wrong shared formula* (caught only by fixtures
-  with externally-known numbers + the independent closed-form
-  rounding test). Makes explicit that calculation-edge fixture
-  coverage is a correctness control, not just test hygiene.
-- _2026-06-16_ (later) · Namespaced the T2 backdate-tolerance key to
-  `shopProfile.time.backdateToleranceDays` (was the un-prefixed
-  `shopProfile.backdateToleranceDays`) to match the
-  `shopProfile.time.*` namespace used by the other clock keys in
-  [`time-clock.md`](./time-clock.md) and
-  [`suspicion-engine.md`](./suspicion-engine.md).
-- _2026-06-16_ · added `## Constitution — the "no false data"
-  rules` section at the top. Eight AC rules (AC1–AC8) restate
-  the accuracy contract in plain language and map each to the
-  M / S / C / B / R label that enforces it. The constitution is
-  a summary, not an independent source of truth — changes flow
-  from M/S/C/B/R rows into the AC summary, never the other way.
-

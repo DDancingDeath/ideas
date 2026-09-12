@@ -232,47 +232,19 @@ These adapter behaviours are part of `security` and
 
 ## Open items
 
-- `TODO(spec)` — should the staff UI render `clientAt` or `at`
-  on the History row when they differ? Default: `at`, with the
+- `TODO(spec, blocks: M5)` — should the staff UI render `clientAt` or `at`
+  on the History row when they differ? **Default:** `at`, with the
   `clientAt` shown in the detail.
-- `TODO(spec)` — the no-session bucket — should it block
-  bills entirely, or just flag? Default: flag (staff may need
+- `TODO(spec, blocks: M8)` — the no-session bucket — should it block
+  bills entirely, or just flag? **Default:** flag (staff may need
   to ring up a bill before opening the session).
-- `TODO(spec)` — auto-suggest opening a session if first bill
-  of the day lacks one. Default: yes, with one-tap "Open
+- `TODO(spec, blocks: M8)` — auto-suggest opening a session if first bill
+  of the day lacks one. **Default:** yes, with one-tap "Open
   session" inline.
-- `TODO(spec)` — **unify the clock-skew config key.** Three docs
-  currently name what is essentially the same client-vs-server
-  skew knob differently, with different defaults:
-  `shopProfile.time.toleranceMin` (this file, 5 min silent / 30 min
-  band), `shopProfile.time.clockSkewMaxMin`
-  ([`failure-modes.md`](./failure-modes.md), default 15 min →
-  raises `T1`), and `shopProfile.time.skewToleranceSec`
-  ([`suspicion-engine.md`](./suspicion-engine.md), `bill.client-clock-skew`
-  low flag). Collapse to one key + one band model (this file's
-  band model is the most complete) and confirm the final
-  thresholds with the owner before M0. Do **not** silently pick a
-  threshold — they differ on purpose until decided.
 
-## Recent changes
-
-- _2026-06-16_ (later) · Namespaced the backdate key to
-  `shopProfile.time.backdateToleranceDays` throughout this file (was
-  the un-prefixed `shopProfile.backdateToleranceDays`), and added an
-  Open-items `TODO(spec)` to unify the three competing clock-skew
-  keys — `time.toleranceMin` (here), `time.clockSkewMaxMin`
-  ([`failure-modes.md`](./failure-modes.md)), and
-  `time.skewToleranceSec` ([`suspicion-engine.md`](./suspicion-engine.md))
-  — without silently choosing a threshold.
-- _2026-06-16_ (later) · Renamed the timezone-override audit event
-  from `shop-timezone-changed` to `shop_timezone_changed` to match
-  the snake_case event-naming convention used by all 22 types in
-  [`event-schemas.md`](./event-schemas.md); the event is listed in
-  that file's "Referenced events not yet specified here" table.
-- _2026-06-16_ · file created. Two-timestamp model
-  (`at` authoritative, `clientAt` audit-only); offline
-  preservation rule; clock-skew tolerance bands; backdated
-  events accepted-with-flag; future-dated events blocked;
-  shop day = open cash session per decisions row 9; reports
-  always in shop timezone; storage-adapter responsibilities;
-  required tests.
+**Resolved** — the clock-skew key is unified. Two keys with distinct
+meanings, both in [`configuration.md`](./configuration.md):
+`shopProfile.time.toleranceMin` (`5`) is the silent-accept band and
+`shopProfile.time.clockSkewMaxMin` (`15`) is the flag threshold.
+`shopProfile.time.skewToleranceSec` was a third name for the same knob in a
+third unit and is retired.

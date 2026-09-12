@@ -16,7 +16,7 @@ Before the user does anything:
 - Active cash session `cs-001` is open with
   `openingCount = 200000` (₹2000 in paise).
 - `item-atta-aashirvaad` exists in the items projection with
-  `stockQty = 50000` mg (= 50 kg) and `movingAvgRate = 4500`
+  `stockQty = 50_000_000` mg (= 50 kg) and `movingAvgRate = 4500`
   paise/kg.
 - Staff is signed in. UI shows the Billing page in retail mode.
 
@@ -59,7 +59,7 @@ the source of business truth", [`bill-lifecycle.md`](./bill-lifecycle.md),
     lines: [
       { itemId: 'item-atta-aashirvaad',
         qtyMg: 2_000_000,                 // 2 kg as integer mg
-        rateMilliPaisePerKg: 50_00_000 }, // ₹50/kg as paise×1000
+        ratePerKgPaise: 5_000 },          // ₹50/kg in paise
     ],
     payment: { cash: 10_000, online: 0, due: 0 }, // ₹100 in paise
     notes: '',
@@ -100,7 +100,7 @@ The service:
     "lines": [
       { "itemId": "item-atta-aashirvaad",
         "qtyMg": 2000000,
-        "rateMilliPaisePerKg": 5000000,
+        "ratePerKgPaise": 5000,
         "lineTotal": 10000 }
     ],
     "payment":    { "cash": 10000, "online": 0, "due": 0 },
@@ -142,7 +142,7 @@ type:
 
 | Projection | Reaction |
 |---|---|
-| Live stock | `item-atta-aashirvaad.qty -= 2_000_000` mg → `48_000_000` |
+| Live stock | **unchanged** at `50_000_000` mg — retail sales do not move stock (invariant `S3`) |
 | Cash on hand | `+= 10_000` → ₹2100 in `cs-001`'s active session |
 | History | new `BillRow` prepended; `state = created`, `printState = pending` |
 | Today summary | `totalSales += 10_000`; `paymentSplit.cash += 10_000`; bill count `+= 1` |
@@ -249,7 +249,7 @@ Every layer above is pinned by a test in the rebuild repo:
 | Test layer | What it asserts for this flow |
 |---|---|
 | `unit` | `domain.bill.computeRetailTotal({lines:[…]}) === 10_000`; M1/M3 enforced |
-| `scenario` | `simple-retail-day` fixture (one of the 15 in [`scenarios.md`](./scenarios.md)) replays to: stock = 48 kg, cash = ₹2100, bill in History, audit log = 3 rows, no flags |
+| `scenario` | `simple-retail-day` fixture (one of the 15 in [`scenarios.md`](./scenarios.md)) replays to: stock = 50 kg (unchanged, `S3`), cash = ₹2100, bill in History, audit log = 3 rows, no flags |
 | `invariant` | All M/S/C/B/A/R labels green on this fixture and on the property-based suite |
 | `security` | Staff is **allowed** to append `retail_sale_created`; staff is **forbidden** from appending `print_succeeded` (worker-only); cross-shop variant of this event from `shop-2` is invisible to `shop-1` |
 | `integration` | Same `clientActionId` called twice produces exactly one event; same `clientActionIdForPrint` called twice produces exactly one `print_attempt` |
@@ -282,9 +282,3 @@ Re-read this list whenever a design decision is unclear:
    is wrong.
 8. **No feature is done without all eight test layers green for
    its scope** (see [`feature-acceptance.md`](./feature-acceptance.md)).
-
-## Recent changes
-
-- _2026-06-15_ · file created. One worked example end-to-end —
-  UI intent → service → event → projection → print job → audit →
-  tests — pinning every layer in the architecture.

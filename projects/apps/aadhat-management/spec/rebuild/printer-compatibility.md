@@ -251,15 +251,3 @@ production smoke is forbidden — see
   Default: v2.1 research.
 - `TODO(spec)` — Drawer-kick support. Default: out of scope for
   v2.0; revisit only if the shop adopts a cash drawer.
-
-## Recent changes
-
-- _2026-06-16_ · file created. Supported printer table with 58
-  mm / 80 mm reference profiles; ESC/POS command subset;
-  Devanagari = always bitmap rule; Android BT Classic SPP
-  pairing path with foreground service + battery whitelist; iOS
-  refused in v2.0 with v2.1 gate; PWA does not print directly;
-  print timeouts table; retry behaviour anchored to
-  print-queue.md and idempotency.md; four-layer duplicate-print
-  prevention; manual-print fallback with audit event; required
-  tests including production smoke gate.

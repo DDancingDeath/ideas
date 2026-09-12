@@ -50,7 +50,7 @@
 10. [`release-health-gates.md`](./release-health-gates.md) — the
     10-gate pre-release checklist (CI green, platform matrix
     green, printer smoke, offline / reconnect smoke, migration
-    checks, no Sev-1 flags, rollback path known, brother
+    checks, no `block` flags, rollback path known, brother
     sign-off, backup verified, release notes drafted); hot-fix
     subset; sign-off record; rollback-trigger rules.
 
@@ -88,7 +88,7 @@ the rebuild because:
 - _2026-06-16_ · Added `release-health-gates.md` — the 10-gate
   pre-release checklist (CI green; platform matrix green;
   printer smoke; offline / reconnect smoke; migration checks;
-  no Sev-1 flags; rollback path known; brother sign-off;
+  no `block` flags; rollback path known; brother sign-off;
   backup verified; release notes drafted) with hot-fix subset,
   sign-off record fields, and rollback-trigger rules. Pairs
   with the new spec docs `platform-compatibility.md`,

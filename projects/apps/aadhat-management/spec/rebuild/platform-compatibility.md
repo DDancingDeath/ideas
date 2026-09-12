@@ -195,12 +195,3 @@ gate before any release:
   device in the ₹15–20k band per
   [`../../plan/rebuild/decisions.md`](../../plan/rebuild/decisions.md)
   row 6.
-
-## Recent changes
-
-- _2026-06-16_ · file created. Per-platform capability matrix
-  (Web/PWA / Android / iOS); iOS deferred to v2.1 with named
-  gates (BLE Classic SPP, WebKit IndexedDB eviction, background
-  BLE); foreground / background / suspended contract; storage
-  limits per platform; forced-upgrade deep-link targets;
-  required tests cross-linked to platform-test-matrix.

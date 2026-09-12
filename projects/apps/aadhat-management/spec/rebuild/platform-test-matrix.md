@@ -80,7 +80,7 @@ and stored against the release artefact.
 | `G-PWA-SAFARI` | Same as above on iOS Safari (read-only views) | P6 | release engineer | v2.1+ |
 
 A release that lands in production without a green entry for
-every required gate above is a Sev-1 process defect — recorded
+every required gate above is a `block` process defect — recorded
 in [`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md)
 and surfaced to the brother + owner.
 
@@ -173,13 +173,3 @@ in the brother's release-notes summary.
 - `TODO(spec)` — should the manifest also pin the printer
   firmware version? Default: yes once a printer model is
   selected; not before.
-
-## Recent changes
-
-- _2026-06-16_ · file created. Eight physical surfaces
-  (P1–P8); job-family × surface matrix; manual smoke gates
-  G-PRINT-PROD / G-OFFLINE-RECON / G-CASH-CYCLE /
-  G-COLD-START / G-FORCE-UPGRADE / G-PWA-OWNER /
-  G-PWA-SAFARI; per-platform constraints; release-gate
-  matrix by release type; release-record JSON manifest
-  shape; explicit "not tested" list.

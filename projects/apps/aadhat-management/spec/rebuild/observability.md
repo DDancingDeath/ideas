@@ -201,13 +201,3 @@ on the app version badge, or Settings → Diagnostics):
   high + block opt-in by default; medium opt-in; low off.
 - `TODO(spec)` — debug bundle retention server-side if the
   owner uploads one. Default: 30 days then auto-deleted.
-
-## Recent changes
-
-- _2026-06-15_ · file created. Notification catalogue with
-  severity / channel / audience; channels (in-app always, push
-  / WhatsApp / email opt-in); idempotent delivery with
-  high-severity bypass; supportability surface (app / device /
-  user / network / outbox / queues / cache); trace ids;
-  one-tap debug bundle with PII-exclusion contract;
-  Crashlytics / Analytics PII boundary; required tests.

@@ -92,7 +92,7 @@ the behavioural reference; reproduce them over v2 projections.
 | Insight | Reads | Surfacing rule (from v1) |
 |---|---|---|
 | **Items to focus** — purchased-qty ÷ sold-qty over window | Live-stock + History | `>2` overstocked, `<0.3` running out |
-| **Dead / slow stock** — positive stock with no sale in N days | Live-stock + History (last-sale-`at`) | `shopProfile.analytics.deadStockDays` (`TODO(spec)` default) |
+| **Dead / slow stock** — positive stock with no sale in N days | Live-stock + History (last-sale-`at`) | `shopProfile.analytics.deadStockDays` |
 | **Low-stock alert** — qty under reorder point | Live-stock | feeds Smart Suggestions |
 | **Top performers** — top items by revenue and by margin | History + Live-stock | top 5 each |
 
@@ -167,14 +167,3 @@ Analytics is **M9** in [`../../plan/rebuild/roadmap.md`](../../plan/rebuild/road
 projection layer (M2) and the suspicion/rate-history work (M5) it
 reads from. The forecasts and aging views are the new build; the
 trend/focus/customer views are v1 formulas re-homed on projections.
-
-## Recent changes
-
-- _2026-06-16_ · File created. Re-homes v1's forward-looking
-  Analytics page on the v2 event ledger and adds the business
-  analytics the owner asked for (receivables / payables aging,
-  payment-mix and peak-hour trends, margin-per-item, dead-stock),
-  each mapped to the projection and events behind it. Documents the
-  retail-customer-attribution data limit explicitly. Replaces the
-  bare period-binning stub that was the only analytics in
-  `projections.md`.

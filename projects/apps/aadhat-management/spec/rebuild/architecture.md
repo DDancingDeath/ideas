@@ -217,15 +217,3 @@ they are how the code is built so the invariants are cheap to keep.
   database (server-side) or computed in the client on subscription.
   Default assumption: client-side projections in v2.0, with the
   option to move to server-side later.
-
-## Recent changes
-
-- _2026-06-17_ · Added `## Engineering conventions` — two cross-cutting
-  guidelines the agents and code follow: (1) **entity identity** —
-  reference every entity by a stable opaque id (`itemId`, `partyId`,
-  `billId`, …), never by name (names are mutable display data; keying
-  by name caused the v1 WALK-27 ghost-stock bug); (2) **robust data
-  structures and algorithms** — keyed maps over name scans, no
-  super-linear work on hot paths, exact integer money math with
-  BigInt, deterministic/total algorithms (no NaN leaks), append-only
-  immutable data, bound everything.

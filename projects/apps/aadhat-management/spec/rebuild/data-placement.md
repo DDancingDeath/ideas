@@ -1,73 +1,22 @@
 # Data placement — rebuild
 
-> Where each piece of data lives, who owns the truth, what the
-> phone keeps in cache, how staleness is shown, and what the
-> read/write budget is. Lives in `spec/` because these are
-> contracts every layer must honour — not opinions.
+> Where data lives, who owns truth, cache/staleness rules, and read/write budgets.
 
 ## Principle
 
-> Truth on the server. Speed in the app. Consistency in the
-> shared domain.
-
-The staff device must feel **instant** during billing. Anything
-slow, uncertain, remote, or hardware-dependent must move behind
-a queue, cache, projection, or background worker.
-
-This contradicts neither
-[`event-ledger.md`](./event-ledger.md) ("events are truth") nor
-[`projections.md`](./projections.md) ("projections are derived
-folds"). It refines them: the **event log is authoritative on
-the server**, but the **device keeps local projections it needs
-for daily work** so no read on the hot path waits on the network.
+Truth is server events. Speed is device cache. Consistency is shared domain code. This refines [`event-ledger.md`](./event-ledger.md) and [`projections.md`](./projections.md): devices keep local projections for daily work; the server event log remains authoritative.
 
 ## Three-layer model
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│  Shared domain (pure TS)                                        │
-│  • event schemas (Zod)                                          │
-│  • projection apply() folds                                     │
-│  • invariants, suspicion rules                                  │
-│  • total / cash / stock / outstanding math                      │
-│  Runs in app, server, and tests — identical bytes.              │
-└──────────────┬─────────────────────────────────┬───────────────┘
-               │                                 │
-               ▼                                 ▼
-┌─────────────────────────────┐    ┌──────────────────────────────┐
-│  App layer (device)         │    │  Server layer (Firestore)    │
-│  • UI                       │    │  • events collection         │
-│  • local projection cache   │    │  • security rules (A1–A5)    │
-│  • bill-draft store         │    │  • idempotency key index     │
-│  • outbox (pending writes)  │    │  • materialized reads (later)│
-│  • print queue worker       │    │  • reconciliation job        │
-│  • read budgets             │    │  • write budgets             │
-└─────────────────────────────┘    └──────────────────────────────┘
-```
+| Layer | Owns |
+|---|---|
+| Shared domain (pure TS) | Zod event schemas, `apply()` folds, invariants, suspicion rules, total/cash/stock/outstanding math. Runs identical bytes in app, server, tests. |
+| App layer (device) | UI, local projection cache, bill-draft store, outbox, print queue worker, read budgets. |
+| Server layer (Firestore) | `events` collection, security rules (A1–A5), idempotency index, materialized reads later, reconciliation job, write budgets. |
 
-Rules:
-
-1. **Domain code is shared**: same `apply` runs in the app
-   (build a local projection) and on the server (build a
-   materialized projection or run reconciliation). They cannot
-   disagree without a domain bug.
-2. **App never owns truth**: it owns convenience. Any number
-   shown by the app must be reproducible by the server from
-   events alone.
-3. **Server never owns UI behaviour**: hover states, draft
-   text, focus, animations live only on the device.
-4. **The line between them is `services.*`**: every read /
-   write the UI does goes through a service that picks the
-   right layer (cache vs network) and surfaces a single
-   `Result<Value, AppError>` to the UI.
+Rules: domain code is shared; app owns convenience, not truth; server does not own UI behaviour; UI reads/writes only through `services.*` returning `Result<Value, AppError>`.
 
 ## Data placement table
-
-For every data type the app touches, the **authoritative
-location**, the **local cache rule**, the **sync rule**, the
-**staleness tolerance** (how long a user-visible value may lag
-truth before it is marked stale or refetched), and the
-**offline behaviour**.
 
 | Data | Authoritative | Local cache | Sync rule | Staleness tolerance | Offline behaviour |
 |---|---|---|---|---|---|
@@ -88,62 +37,32 @@ truth before it is marked stale or refetched), and the
 | **Shop profile / settings** | Server | Full mirror in IndexedDB | Subscribe; refetch on app start | 60 s | Read-only OK |
 | **User session / role** | Server (Firebase Auth) | Token in memory + secure storage | Refresh per Firebase rules | n/a — auth is real-time | Read-only mode; new writes queued **only if** identity still valid; no privilege escalation possible offline |
 
-Notes:
-
-- "Subscribe" means a Firestore `onSnapshot` listener (or
-  equivalent) keeps the local cache live.
-- "Local fold" means the device runs the same `apply` from
-  [`projections.md`](./projections.md) over the cached events to
-  derive the projection — no separate code path.
-- "Server-materialized" is a future optimization (post-M9) where
-  reports are precomputed on the server; the app's interface
-  does not change.
+`Subscribe` = Firestore `onSnapshot` or equivalent. `Local fold` = same `apply` from [`projections.md`](./projections.md). `Server-materialized` = post-M9 optimization with unchanged app interface.
 
 ## Cache rules
 
-1. **Cache the projection inputs, then fold.** Do not cache the
-   projection output as the only truth. If folding is too slow,
-   memoize the fold result keyed by the event count; invalidate
-   on any new event in the projection's input set.
-2. **Bounded by default.** Every cache has a bound: number of
-   rows (autocomplete top N), days of events (sliding window),
-   or megabytes (IndexedDB quota). On bound breach, evict by
-   LRU.
-3. **Versioned by schema.** Each cache key includes the
-   projection's `apply` version. A domain-package bump
-   invalidates every dependent cache automatically.
-4. **No stale writes.** A queued write that was built against
-   stale projection inputs (e.g. stock that has since gone
-   negative on the server) must be revalidated by the server
-   before commit; on rejection it surfaces in the Review Queue.
-5. **No cross-shop cache.** Cache keys are
-   `(shopId, projectionName, params)`; an app instance can
-   never have two shops' caches active at once.
+| Rule | Contract |
+|---|---|
+| Cache inputs, then fold | Do not cache projection output as truth. Memoize by event count only if needed; invalidate on new input event. |
+| Bounded by default | Bound by rows, days, or MB. Evict by LRU. |
+| Versioned by schema | Cache key includes projection `apply` version; domain bump invalidates dependent caches. |
+| No stale writes | Server revalidates queued writes built against stale projection inputs; rejection surfaces in Review Queue. |
+| No cross-shop cache | Cache keys are `(shopId, projectionName, params)`; one active shop per app instance. |
 
 ## Staleness display rules
 
-The app must be honest about freshness. The rule for every
-read-only view:
+| State | UI behaviour |
+|---|---|
+| Within tolerance | Show normally. |
+| Older than tolerance, network up | Refetch silently; show `Updating…` if refetch takes > 200 ms. |
+| Older than tolerance, network down | Show value with **As of HH:MM:SS** badge and page banner `Offline — cached`. |
+| Cache cannot answer | Show `Older data requires network`. |
 
-- If the projection's freshness is within its staleness
-  tolerance (see table above): show normally.
-- If older than tolerance but the network is up: refetch silently;
-  show a small `Updating…` indicator if the refetch takes > 200 ms.
-- If older than tolerance and the network is down: show the value
-  with an explicit **As of HH:MM:SS** badge near the value, and
-  an `Offline — cached` banner at the page level.
-- If the cache cannot answer the query at all (data outside the
-  cached window): show "Older data requires network" rather than
-  guess.
-
-No silent staleness. No spinners that hide cached values. No
-fabricated zeros.
+No silent staleness, no spinners hiding cached values, no fabricated zeros.
 
 ## Read path budgets
 
-These are the per-data budgets the read path must honour on the
-reference device profile in
-[`performance-budgets.md`](./performance-budgets.md):
+Reference device profile: [`performance-budgets.md`](./performance-budgets.md).
 
 | Read | Budget | Source |
 |---|---|---|
@@ -161,18 +80,9 @@ reference device profile in
 | Review Queue first page | ≤ 500 ms | Local cache |
 | Recent events full text | n/a (out of scope for v2.0) | — |
 
-If a budget is not met, the responsible service either:
-1. Adds an index / memoization, or
-2. Moves the work to a Web Worker, or
-3. Falls back to a server-materialized read.
-
-It never silently degrades the user experience.
+If a budget fails, the service adds indexing/memoization, moves work to a Web Worker, or falls back to server-materialized reads. It never silently degrades UX.
 
 ## Write path budgets
-
-The write path is short by design — the UI hands the intent to a
-service, the service appends an event, the projection updates
-synchronously, and the row is visible.
 
 | Write | Budget | Path |
 |---|---|---|
@@ -183,13 +93,9 @@ synchronously, and the row is visible.
 | Cash session open / close | UI feedback ≤ 100 ms; projection update ≤ 300 ms | Same as Save bill |
 | Open review flag resolve | UI feedback ≤ 100 ms; queue removed ≤ 300 ms | Same |
 
-Critical rule: **"Bill visible locally" is the user-perceived
-success.** The server ack is recorded, surfaced in History
-("sync: ok / pending / failed"), but does not gate the UI.
+User-perceived success is `bill visible locally`; server ack appears in History as `sync: ok / pending / failed`.
 
 ## Server vs app responsibilities
-
-Mirrors the user's table; this is now the contract.
 
 | Concern | Lives on |
 |---|---|
@@ -212,72 +118,27 @@ Mirrors the user's table; this is now the contract.
 
 ## Offline behaviour contract
 
-The shop must keep working when the network is gone. The
-guarantees:
+- Read cached data with staleness badges.
+- Write online-allowed staff events into the outbox.
+- Print locally.
+- Reject actions needing current server state with a clear message.
 
-- **Read** all data that was in cache when the network was last
-  up, with honest staleness badges.
-- **Write** any event the staff can write online (sale,
-  purchase, cash close, settlement, etc.), into the outbox.
-- **Print** any bill, because the printer is local hardware.
-- **Reject** any action that requires up-to-date server state
-  (e.g. authoritative bill-number allocation — see Open items)
-  with a clear message rather than guess.
+Reconnect: drain oldest-first; server reapplies by idempotency key; permanent rejections raise Review Queue flags per [`role-permission-matrix.md`](./role-permission-matrix.md); app re-folds from confirmed server event ids; divergence raises a flag.
 
-When the network returns:
-
-1. Outbox drains oldest-first.
-2. Each event is reapplied on the server, idempotency-keyed.
-3. Server-side rejections (schema, permission, idempotency
-   conflict) raise a flag in the Review Queue per
-   [`role-permission-matrix.md`](./role-permission-matrix.md).
-4. The app reconciles its projections from the server's
-   confirmed event ids; any divergence is itself a flag.
-
-Outbox retention: **30 days**. Beyond that, surface a warning
-("Your device hasn't synced in 30 days") and do not silently
-drop. (See `decisions.md` row M11.)
+Outbox retention: **30 days**. After that, warn `Your device hasn't synced in 30 days`; do not silently drop. See `decisions.md` row M11.
 
 ## Open items
 
-- `TODO(spec)` — **Bill number allocation offline.** Pre-allocate
-  a small block per device on session open? Use a UUID locally
-  and resolve to a human bill number on server reconcile? Pick
-  before M5. Default: pre-allocate a small block on each session
-  open; surface "offline-issued" badge on bills until reconciled.
-- `TODO(spec)` — **Server-materialized reports threshold.** When
-  does the app stop folding locally and start reading from a
-  materialized view? Pick after measuring M9 perf. Default: 30
-  days of events.
-- `TODO(spec)` — **Background sync window after close-app.** Do
-  we wake the app to flush outbox? In v2.0 keep it foreground-
-  only; revisit after pilot.
-- `TODO(spec)` — **Cross-device cache coherence.** Two devices on
-  the same shop should not show conflicting Today summaries for
-  more than the staleness tolerance. Document the protocol
-  before M8.
+- `TODO(spec, blocks: M5)` — Bill number allocation offline: pre-allocate a small block per device on session open, or use UUID and assign human number on reconcile? **Default:** pre-allocate a small block on each session open; surface `offline-issued` badge until reconciled.
+- `TODO(spec, blocks: M9)` — Server-materialized reports threshold: when does the app stop folding locally and start reading from a materialized view? **Default:** 30 days of events.
+- `TODO(spec, blocks: M11)` — Background sync window after close-app: wake the app to flush outbox? **Default:** foreground-only in v2.0; revisit after pilot.
+- `TODO(spec, blocks: M8)` — Cross-device cache coherence: how do two devices on the same shop avoid conflicting Today summaries beyond the staleness tolerance? **Default:** none agreed.
 
 ## Tests this spec requires
 
-- For every row in the placement table: a test that on the
-  reference dataset, the read path meets its budget.
-- For every read budget: a Playwright assertion at the phone
-  viewport on the synthetic dataset.
-- For every write budget: an integration test on the in-memory
-  adapter plus a real-Firestore-emulator test.
-- For staleness rules: a Playwright test that flips the network
-  off mid-session and asserts that every page either shows fresh
-  data, marks itself stale, or refuses to fabricate.
-- For offline behaviour: the existing `offline-bill-replay`
-  fixture in [`scenarios.md`](./scenarios.md) plus a new
-  `offline-week-long` fixture that queues a week of activity
-  and asserts no duplicate sales after reconnect.
+- Placement table rows meet budgets on the reference dataset.
+- Read budgets have Playwright phone-viewport assertions on the synthetic dataset.
+- Write budgets have in-memory adapter and Firestore-emulator integration tests.
+- Staleness tests flip network off mid-session and assert fresh/stale/refuse states.
+- Offline tests cover [`scenarios.md`](./scenarios.md) `offline-bill-replay` plus `offline-week-long`, with no duplicate sales after reconnect.
 
-## Recent changes
-
-- _2026-06-15_ · file created. Three-layer model (shared domain
-  · app layer · server layer); per-data placement table with
-  staleness tolerance and offline behaviour; read- and
-  write-path budgets per data type; server-vs-app
-  responsibilities table; offline contract with outbox
-  retention; cache versioning by domain version.
