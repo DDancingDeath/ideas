@@ -331,6 +331,19 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-09-12_ · Demoted six values in
+  [`spec/rebuild/configuration.md`](./spec/rebuild/configuration.md) that had been
+  written down by reading a prior build attempt rather than decided on their merits.
+  Five are now marked ⚠ **provisional** with a section stating exactly what each
+  still needs confirmed (`time.maxFutureMin`, `pricing.maxRateMultiple`,
+  `printer.maxRetries`, `stock.negativeBlockMg`, `stock.adjustmentLargeMg`) — safe
+  to build against, not settled. `cash.mismatchLarge` reverted to ₹200, the only
+  figure anyone signed off on (`decisions.md` M8); the ₹500 alternative came from
+  that same non-authoritative attempt and carried no recorded reasoning. A
+  fabricated justification ("day-to-day experience at the shop points to ₹500")
+  was removed — it was invented to avoid citing code and was worse than the
+  citation.
+
 - _2026-09-12_ · Established a **one-way dependency**: a project references this
   idea, never the reverse. The spec no longer cites, tracks, or defers to any
   implementation — it is normative on its own authority. Rule added to repo
