@@ -331,20 +331,19 @@ aadhat-management/
 
 ## Recent changes
 
-- _2026-09-12_ · Reconciled [`spec/rebuild/configuration.md`](./spec/rebuild/configuration.md)
-  against the **implementation** in [`DDancingDeath/bahi`](https://github.com/DDancingDeath/bahi)
-  (`DEFAULT_SHOP_PROFILE`, `packages/domain/src/suspicion.ts`, at `6d21b41`). The
-  registry had been populated from spec and plan prose, which diverged from shipped
-  code in six keys — and because bahi's rule is "the spec wins", those values would
-  have driven an agent to change working, tested behaviour. Corrected to match code:
-  `time.maxFutureMin` 5→60, `pricing.maxRateMultiple` 2→5, `printer.maxRetries` now
-  3 retries (4 attempts), `stock.adjustmentLargeMg` 10→20 kg, and
-  `stock.negativeBlockMg` 5 kg promoted from open question to confirmed default.
-  Two genuine conflicts are now open questions rather than silent wrong numbers:
-  `cash.mismatchLarge` (code ₹500 vs `decisions.md` M8 ₹200) and
-  `pricing.maxDiscountPctByRole` (spec's per-role map vs the code's flat
-  `maxDiscountBps`). Ten reconciled keys are marked ✅; fourteen unimplemented keys
-  are listed as forward-looking.
+- _2026-09-12_ · Established a **one-way dependency**: a project references this
+  idea, never the reverse. The spec no longer cites, tracks, or defers to any
+  implementation — it is normative on its own authority. Rule added to repo
+  [`AGENTS.md`](../../../AGENTS.md).
+- _2026-09-12_ · Corrected six values in
+  [`spec/rebuild/configuration.md`](./spec/rebuild/configuration.md) that had been
+  populated from spec and plan prose and were wrong on inspection:
+  `time.maxFutureMin` 5→60, `pricing.maxRateMultiple` 2→5, `printer.maxRetries`
+  now 3 retries (4 attempts), `stock.adjustmentLargeMg` 10→20 kg, and
+  `stock.negativeBlockMg` confirmed at 5 kg. Two values are recorded as open
+  questions with recommended defaults rather than asserted: `cash.mismatchLarge`
+  (₹500 recommended, superseding `decisions.md` M8's ₹200) and
+  `pricing.maxDiscountPctByRole` (flat 10% cap recommended over a per-role map).
 
 - _2026-09-12_ · Encoded a **crispness contract** into the spec-authoring
   agents after a full-tree review found four structural defects (decisions
@@ -361,7 +360,7 @@ aadhat-management/
 - _2026-06-20_ · `event-schemas.md` · added optional `payee` (who was paid) to
   `expense_recorded`, alongside the existing `note?`, to support v1's Expenses
   payee/person + reason fields (page-spec `04-expenses`); mirrors
-  `withdrawal_recorded.payee`. Implemented in bahi v2.
+  `withdrawal_recorded.payee`.
 - _2026-06-20_ · Mined the (now-deleted) `AadhatManagementApp-staging` repo's
   May-2026 audit/fix pass for v2-relevant findings (most were already covered).
   Added the carried-over spec rules: **no ad-hoc date parsing**
@@ -378,7 +377,7 @@ aadhat-management/
   voice-grammar refinements ([`spec/voice-billing-v2.md`](./spec/voice-billing-v2.md)).
   The v2-side correctness gaps it surfaced (caller-supplied bill numbers, UTC
   bill-date defaults, unpersisted per-bill settlement allocations, receipt ESC/POS
-  hygiene) are tracked in the bahi repo's `PENDING-ITEMS.md`.
+  hygiene) are implementation concerns, tracked wherever v2 is being built.
 - _2026-06-16_ (later, 3) · Added a v2 **analytics** spec
   ([`spec/rebuild/analytics.md`](./spec/rebuild/analytics.md)) —
   forecasts, profit/margin trends, items-to-focus, dead stock,
