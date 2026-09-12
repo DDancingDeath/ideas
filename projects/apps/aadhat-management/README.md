@@ -232,19 +232,29 @@ priority ones:
 
 ## Reading order
 
-Two tracks, listed with file-by-file line counts in
+Three tracks, listed file-by-file with line counts in
 [`READING-TRACKS.md`](./READING-TRACKS.md):
 
-- **Human** — this README, [`idea.md`](./idea.md),
-  [`spec/rebuild/README.md`](./spec/rebuild/README.md) (the 36-doc index),
-  [`worked-example.md`](./spec/rebuild/worked-example.md),
+- **Owner** (~1 500 lines) — what the app promises and what it refuses to
+  let happen: this README, [`idea.md`](./idea.md),
   [`scope-boundaries.md`](./spec/rebuild/scope-boundaries.md),
-  [`invariants.md`](./spec/rebuild/invariants.md),
-  [`decisions.md`](./plan/rebuild/decisions.md) and
+  [`suspicion-engine.md`](./spec/rebuild/suspicion-engine.md),
+  [`role-permission-matrix.md`](./spec/rebuild/role-permission-matrix.md),
+  [`analytics.md`](./spec/rebuild/analytics.md),
+  [`decisions.md`](./plan/rebuild/decisions.md),
   [`roadmap.md`](./plan/rebuild/roadmap.md).
+- **Engineer** (~900 lines) — whether the design holds up: the
+  [index](./spec/rebuild/README.md),
+  [`worked-example.md`](./spec/rebuild/worked-example.md),
+  [`invariants.md`](./spec/rebuild/invariants.md),
+  [`architecture.md`](./spec/rebuild/architecture.md),
+  [`event-ledger.md`](./spec/rebuild/event-ledger.md).
 - **Agent** — everything. Enter at
   [`spec/rebuild/README.md`](./spec/rebuild/README.md) and follow its order;
   [`spec/README.md`](./spec/README.md) covers the v1 docs.
+
+**Ten-minute version (~390 lines):** the index → the worked example → the
+`Constitution` table at the top of `invariants.md`.
 
 **Building v2?** Start with
 [`prompts/rebuild-m0-foundation.md`](./prompts/rebuild-m0-foundation.md) for

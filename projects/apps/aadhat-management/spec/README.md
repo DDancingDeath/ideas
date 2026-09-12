@@ -10,18 +10,18 @@ This is the source of truth for what the app does.
 > testability. When the two disagree, the rebuild subtree wins for v2
 > work; for the live app, the page-specs win.
 
-## Two reading tracks
+## Three reading tracks
 
-The spec is written for two audiences. Either may read the other's track —
-nothing is hidden — but neither needs to.
+The spec is written for three audiences asking different questions. Read
+your own; read another's whenever you need to — nothing is hidden.
 
 | Track | Who | What to read | Why |
 |---|---|---|---|
-| **Human** | The owner, the brother, anyone deciding what to build | [`rebuild/README.md`](./rebuild/README.md) (the index), [`rebuild/worked-example.md`](./rebuild/worked-example.md), [`rebuild/scope-boundaries.md`](./rebuild/scope-boundaries.md), [`rebuild/invariants.md`](./rebuild/invariants.md), plus [`../idea.md`](../idea.md), [`../plan/rebuild/decisions.md`](../plan/rebuild/decisions.md) and [`../plan/rebuild/roadmap.md`](../plan/rebuild/roadmap.md) | Enough to know what the app promises, what was decided, and in what order it gets built — without reading a schema |
-| **Agent** | Whatever builds it | Everything. Start at [`rebuild/README.md`](./rebuild/README.md) and follow its order | Payload shapes, permission cells, thresholds and fixtures are needed to implement, and are noise for a human |
+| **Owner** | Deciding what to build | [`rebuild/scope-boundaries.md`](./rebuild/scope-boundaries.md), [`rebuild/suspicion-engine.md`](./rebuild/suspicion-engine.md), [`rebuild/role-permission-matrix.md`](./rebuild/role-permission-matrix.md), [`rebuild/analytics.md`](./rebuild/analytics.md), plus [`../idea.md`](../idea.md), [`../plan/rebuild/decisions.md`](../plan/rebuild/decisions.md), [`../plan/rebuild/roadmap.md`](../plan/rebuild/roadmap.md) | What the app promises the shop, what it catches when something goes wrong, and who may do what |
+| **Engineer** | Judging the design | [`rebuild/README.md`](./rebuild/README.md), [`rebuild/worked-example.md`](./rebuild/worked-example.md), [`rebuild/invariants.md`](./rebuild/invariants.md), [`rebuild/architecture.md`](./rebuild/architecture.md), [`rebuild/event-ledger.md`](./rebuild/event-ledger.md) | Whether the event model, layering and invariants actually hold |
+| **Agent** | Building it | Everything. Start at [`rebuild/README.md`](./rebuild/README.md) and follow its order | Payload shapes, permission cells, thresholds and fixtures are needed to implement, and are noise for a human |
 
-See [`READING-TRACKS.md`](../READING-TRACKS.md) for the exact file list and
-line counts of each track.
+Exact file lists and line counts: [`READING-TRACKS.md`](../READING-TRACKS.md).
 
 ## Reading order — v1 (live app)
 
