@@ -114,23 +114,36 @@ yet)
 - Voice billing v1 (the v1 spec covers the parser; reuse).
 - All Playwright bill flows green.
 
-### M8 — Stock + History + Outstanding + Cash
+### M8 — Stock + History + Outstanding + Cash + Expenses
 
 - Stock view (derived).
 - History view, with print status and void / correction surfacing.
 - Outstanding per-party.
-- Cash sessions (open / activity / close).
+- Cash sessions (open / activity / close / **reconcile**), including counted
+  cash, signed mismatch, tolerance bands and deposits
+  (`spec/page-specs/16-cash-management.md`).
+- Expenses (business and personal) and withdrawals. These belong here rather
+  than later because both move the cash drawer — a cash session cannot be
+  reconciled while the things that empty it are unbuilt.
 
-### M9 — Today + Finance + Reports + Analytics
+### M9 — Today + Money + Insights
 
-- Today page (shop control room).
-- Finance, Reports, Analytics all reading from the period helper.
-- R4 (cross-page agreement) test must stay green.
+- Today page (shop control room), including the embedded cash surface.
+- **Money** (formerly Finance) — the shop's position: what it owns and owes.
+- **Insights** (formerly Reports + Analytics, merged) — performance over a
+  period. Both pages are being redesigned rather than carried over, so their
+  content depends on the product questions in Happa's `docs/ui/redesign-brief.md`
+  being answered first.
+- All three read from the period helper. R4 (cross-page agreement) must stay
+  green.
 
-### M10 — Review Queue + Diagnostics + Admin + Settings
+### M10 — Review Queue + Ask + Diagnostics + Admin + Settings
 
 - Review Queue page with the actions in
   `spec/rebuild/review-queue.md`.
+- **Ask** — the assistant tab carried over from v1: thirteen deterministic
+  intents answered from local state, no model call. It reads every projection,
+  so it lands after they exist.
 - Diagnostics: queue, sync, printer, reconciliation status.
 - Admin: users, roles, shop profile.
 - Settings: per-user preferences.

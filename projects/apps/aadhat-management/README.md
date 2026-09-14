@@ -331,6 +331,18 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-09-14_ · **Page inventory and navigation settled**
+  ([`spec/rebuild/navigation.md`](./spec/rebuild/navigation.md)). Sixteen pages;
+  bottom nav is Today · Bill · Udhaar · Stock · More. Reports + Analytics merge
+  into **Insights**, Finance becomes **Money**. Checked destination-by-destination
+  against the live app and caught one miss in my own draft: v1's chat is a working
+  rule-based assistant with 13 deterministic intents, so deferring it would have
+  been a regression — it is now **Ask**, Core, in M10 (the LLM fallback, never in
+  v1, stays out of scope). navigation.md carries a parity table for all 15 v1
+  destinations. Roadmap fixed: Expenses and withdrawals had no milestone at all
+  and now sit in M8 with Cash, since both empty the drawer a session must
+  reconcile.
+
 - _2026-09-14_ · **Closed the v1 parity gaps that were blocking UI design.**
   Specified drawer reconciliation (counted cash, signed mismatch, tolerance bands,
   Review-Queue resolution — the spec previously defined only the *expected*

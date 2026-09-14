@@ -23,6 +23,7 @@ click into place.
 |---|---|---|
 | 1 | [`scope-boundaries.md`](./scope-boundaries.md) | Core vs configurable vs shop-custom vs explicitly out |
 | 2 | [`architecture.md`](./architecture.md) | Layering: domain core → services → storage adapters → UI → devices. UI never owns business truth |
+| 3a | [`navigation.md`](./navigation.md) | The page inventory, the bottom-nav destinations, and who sees each screen |
 | 3 | [`platform-compatibility.md`](./platform-compatibility.md) | Per-platform capability matrix; iOS deferred to v2.1 with named gates; foreground/background/suspended contract; storage limits |
 
 ### Data and lifecycle

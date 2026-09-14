@@ -72,6 +72,11 @@ of who chose.
 | S17 | `auth.session-anomaly` signals | New device only | `tentative` | Location needs geo-IP the app does not otherwise collect, and a shop phone does not move |
 | S18 | High-severity notification | In-app badge plus the Today digest; push and WhatsApp deferred to v2.1 | `tentative` | No provider, consent or delivery contract exists yet for the others |
 | S19 | Full shop-day fixture | At M8 | `tentative` | Cash sessions bound the shop's day, so M8 is the first milestone where a whole day is expressible |
+| S20 | Page inventory | 16 pages; Reports + Analytics merge into **Insights**, Finance becomes **Money**, chat becomes **Ask** and is Core | `tentative` | Reports and Analytics answer the same question — how is the business doing over time — and both are being redesigned anyway. Position and performance stay separate, because conflating them is what makes v1's Finance contradict itself. Every one of v1's 15 nav destinations is present; nothing is dropped |
+| S21 | Bottom navigation | **Today · Bill · Udhaar · Stock · More** | `tentative` | `ui-standards.md` allows 4–5 primary destinations. These are what the counter does all day; everything else is a sheet away |
+| S22 | Wholesale placement | A third mode inside **Bill**, not its own tab | `tentative` | Already how `roadmap.md` M7 describes it. All three are "make a bill", and a tab costs one of five slots. **Contested:** this is an *aadhat* business, so wholesale is core revenue — if the owner thinks wholesale-first it earns a tab and Stock moves to More |
+| S23 | Expenses and withdrawals milestone | M8, with Cash | `tentative` | Neither appeared in any milestone. Both move the cash drawer, and a session cannot be reconciled while the things that empty it are unbuilt |
+| S24 | Ask (the v1 assistant) | **Core for v2.0**, not deferred | `tentative` | Reverses an earlier default to defer it. v1 ships a working rule-based assistant with 13 deterministic intents answered from local state, and the shop uses it — deferring would be a regression, not a scope choice. The LLM fallback, which was never in v1, stays out of scope |
 
 **The two worth arguing with first:** S2, because it changes how often anyone
 is warned about a wrong price; and S12, which is the only row here that is not

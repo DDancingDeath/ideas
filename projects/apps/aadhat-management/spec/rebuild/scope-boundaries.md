@@ -105,7 +105,14 @@ reference customer** until at least one other shop is piloted.
 - `TODO(spec, blocks: M5)` — Is Voice billing v2 (see `../voice-billing-v2.md`) Core or Configurable? **Default:** Configurable, off by default for shops without a Hindi-capable mic environment.
   Zero-touch / hands-free **activation** (no-touch app launch + full bill by voice) is a v2.1 sub-goal recorded in `../voice-billing-v2.md` §9.
 - `TODO(spec, blocks: M5)` — Is OS-assistant launch the zero-touch voice activation mechanism? **Default:** OS-assistant launch over an always-listening in-app wake-word.
-- `TODO(spec, blocks: M10)` — Is the AI Assistant chat tab (see `../chat-design.md`) Core or Not-doing for v2.0? **Default:** defer to v2.1, ship the rest first.
+- **Ask (the assistant tab) is Core for v2.0** — carried over, not deferred.
+  v1's assistant is a local rule-based query interface with thirteen
+  deterministic intents (stock by item, top outstanding parties, profit for a
+  period, today's sales, navigation, help), answered from state with no model
+  call, understanding Hindi item names. It ships in v1 and the shop uses it, so
+  dropping it would be a regression rather than a scope choice. An **LLM
+  fallback stays out of scope for v2.0** — that is the part that was never in
+  v1. See [`../chat-design.md`](../chat-design.md) for the intent list.
 - `TODO(spec, blocks: M5)` — Is WhatsApp share of bill PDF Core or Configurable? **Default:** Core (every shop wants it).
 
 ## v1 parity gaps (2026-06-17 audit)
