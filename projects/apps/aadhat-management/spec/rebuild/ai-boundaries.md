@@ -103,14 +103,6 @@ test:
 
 ## Open items
 
-- `TODO(spec)` — exact UX of the "draft → confirm" step for
-  voice billing on noisy shop floors. Default per
-  [`../voice-billing-v2.md`](../voice-billing-v2.md): hands-
-  free read-back + tap to confirm.
-- `TODO(spec)` — retention of `ai_suggestion` events.
-  Default: match the parent business event (forever for
-  ledger events; per [`data-governance.md`](./data-governance.md)).
-- `TODO(spec)` — provider boundaries (which model / API,
-  prompt-injection mitigation, server-side AI access).
-  Default: kept out of v2.0 spec; revisit when AI flows leave
-  voice billing scope.
+- TODO(spec, blocks: M10) — What draft-to-confirm UX should voice billing use on noisy shop floors? **Default:** hands-free read-back + tap to confirm.
+- TODO(spec, blocks: M10) — How long are `ai_suggestion` events retained? **Default:** match the parent business event (forever for ledger events; per [`data-governance.md`](./data-governance.md)).
+- TODO(spec, blocks: M10) — Should provider boundaries cover model/API choice, prompt-injection mitigation, and server-side AI access in v2.0? **Default:** kept out of v2.0 spec; revisit when AI flows leave voice billing scope.

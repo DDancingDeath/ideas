@@ -42,8 +42,7 @@ safe.
 
 ## Worker behaviour
 
-- Single worker per device. Multiple devices are not supported for
-  the same printer in v2.0 (`TODO(spec)`: confirm).
+- Single worker per device. TODO(spec, blocks: M11) — Are multiple devices supported for the same printer in v2.0? **Default:** no.
 - The worker drains the queue serially. While a job is in
   `connecting` or `sending`, no other job advances.
 - Retry policy: bounded exponential backoff with a maximum attempt
@@ -96,9 +95,7 @@ safe.
 - If the device is online but the printer is unreachable, the bill
   is still in the ledger and visible everywhere; the print just
   stays `queued` until the printer comes back.
-- `TODO(spec)`: Decide whether `print_attempt` events sync to the
-  server in real time or batch. Default: real time, with the same
-  outbox path as other events.
+- TODO(spec, blocks: M11) — Should `print_attempt` events sync to the server in real time or batch? **Default:** real time, with the same outbox path as other events.
 
 ## Tests this spec requires
 
@@ -111,10 +108,7 @@ safe.
   two `print_attempt` events, one `print_succeeded` after retry.
 - Reprint after success: two job rows, two `print_succeeded`, no
   duplicate sale events.
-- App killed mid-print: queue persists, worker resumes on next
-  launch, idempotent on the printer side as far as ESC/POS can be
-  made so (best-effort; `TODO(spec)` how we mark a possible
-  duplicate-print scenario for review).
+- App killed mid-print: queue persists, worker resumes on next launch, idempotent on the printer side as far as ESC/POS can be made so. TODO(spec, blocks: M11) — How do we mark a possible duplicate-print scenario for review? **Default:** none agreed.
 - Bill corrected after print succeeded: new reprint job uses the
   corrected payload; old printout's hash is in audit.
 - Voided bill: the queue cancels any non-terminal job for that

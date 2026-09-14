@@ -237,14 +237,6 @@ Per [`ci-contract.md`](./ci-contract.md) `unit` and
 
 ## Open items
 
-- `TODO(spec)` — whether Devanagari numerals on display are
-  per-shop or per-user. Default: per-shop (`shopProfile.locale.numerals`),
-  with the per-user override added in v2.1 if requested.
-- `TODO(spec)` — exact behaviour when a v1 import row has a
-  `kg` value of more precision than 3 dp (e.g. `0.1234`).
-  Default: round to mg, surface a warning row in the import
-  report.
-- `TODO(spec)` — should the helper expose a "preview" mode
-  that returns rounded **and** unrounded values for the UI to
-  show transparency? Default: no — UI shows only the rounded
-  result. Revisit if the brother asks for it.
+- TODO(spec, blocks: M1) — Are Devanagari numerals on display per-shop or per-user? **Default:** per-shop (`shopProfile.locale.numerals`), with the per-user override added in v2.1 if requested.
+- TODO(spec, blocks: M1) — What happens when a v1 import row has a `kg` value with more than 3 dp (e.g. `0.1234`)? **Default:** round to mg, surface a warning row in the import report.
+- TODO(spec, blocks: M1) — Should the helper expose a preview mode returning rounded **and** unrounded values for UI transparency? **Default:** no — UI shows only the rounded result; revisit if the brother asks for it.

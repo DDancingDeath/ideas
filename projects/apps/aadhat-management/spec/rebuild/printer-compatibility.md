@@ -241,13 +241,7 @@ production smoke is forbidden — see
 
 ## Open items
 
-- `TODO(spec)` — exact list of supported production printer
-  models with firmware versions. Default: filled when the shop
-  procures.
-- `TODO(spec)` — bundled Devanagari font choice and licence.
-  Default: a permissively-licensed Open Type font (e.g. Noto
-  Sans Devanagari) rasterised at 203 dpi.
-- `TODO(spec)` — Wi-Fi printer path for the iOS unblock.
-  Default: v2.1 research.
-- `TODO(spec)` — Drawer-kick support. Default: out of scope for
-  v2.0; revisit only if the shop adopts a cash drawer.
+- `TODO(spec, blocks: M11)` — Which production printer models and firmware versions are supported? **Default:** filled when the shop procures.
+- `TODO(spec, blocks: M11)` — Which bundled Devanagari font and licence should be used? **Default:** a permissively-licensed Open Type font (e.g. Noto Sans Devanagari) rasterised at 203 dpi.
+- `TODO(spec, blocks: M11)` — What is the Wi-Fi printer path for the iOS unblock? **Default:** v2.1 research.
+- `TODO(spec, blocks: M11)` — Is drawer-kick support in scope? **Default:** out of scope for v2.0; revisit only if the shop adopts a cash drawer.

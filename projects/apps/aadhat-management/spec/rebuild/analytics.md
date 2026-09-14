@@ -60,8 +60,7 @@ only new read projections. What the existing events carry:
 - **Category granularity is the owner's free text.** Expense
   breakdown is only as clean as the `category` field; the
   data-governance generic-value flag helps but does not normalise.
-- `TODO(spec)` — decide whether to add an **optional phone** on
-  retail for a future loyalty view. Deferred; not v2.0.
+- TODO(spec, blocks: M9) — Should retail capture an **optional phone** for a future loyalty view? **Default:** deferred; not v2.0.
 
 ## The analytics catalogue
 

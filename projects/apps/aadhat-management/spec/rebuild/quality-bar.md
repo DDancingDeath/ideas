@@ -156,9 +156,7 @@ Snapshot diffs above a small tolerance fail the build.
 
 ### 9. Performance tests
 
-The "no UI hang" bar is a product requirement, not polish. The
-following must hold on a mid-range Android phone (`TODO(spec)`:
-pick a reference device):
+The "no UI hang" bar is a product requirement, not polish. The following must hold on the reference device defined in [`performance-budgets.md`](./performance-budgets.md) §Reference device — a mid-range Android in the ₹15 000–20 000 band (`decisions.md` row 6, confirmed).
 
 | Action | Budget |
 |---|---|

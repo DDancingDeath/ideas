@@ -121,9 +121,7 @@ and where a flag surfaces.
   advances zero times — the existing number is returned.
 - Voided bills do not roll back the counter. The number stays
   assigned to the voided event; the audit trail makes it visible.
-- `TODO(spec)`: Confirm whether corrections reuse the original bill
-  number (recommended) or get a new one. Default assumption:
-  reuse, with a `rev` suffix shown in print.
+- TODO(spec, blocks: M5) — Do corrections reuse the original bill number or get a new one? **Default:** reuse, with a `rev` suffix shown in print.
 
 ## Draft autosave
 
@@ -133,8 +131,7 @@ and where a flag surfaces.
 - Drafts are local-device only by default. They are not synced to
   the server, so closing the tab on one device does not leave a
   draft visible on another.
-- `TODO(spec)`: Decide whether drafts should sync per user for
-  resume-on-another-device. Off by default in v2.0.
+- TODO(spec, blocks: M5) — Should drafts sync per user for resume-on-another-device? **Default:** off in v2.0.
 
 ## Voiding
 
@@ -143,11 +140,7 @@ and where a flag surfaces.
 - Projections that depend on the bill (stock, outstanding, cash,
   reports) recompute as if the original were not present, but the
   event log still shows both.
-- Permission: staff cannot void without owner approval. The action
-  either requires the owner role at the time of execution, or
-  enqueues an approval request that the brother/owner clears from
-  the Review Queue. `TODO(spec)`: pick one before M0; default
-  assumption is approval-required.
+- Permission: staff cannot void without owner approval. The action either requires the owner role at the time of execution, or enqueues an approval request that the brother/owner clears from the Review Queue. TODO(spec, blocks: M5) — Should staff voids require owner role at execution or enqueue owner approval? **Default:** approval-required.
 
 ## Correction (instead of edit)
 

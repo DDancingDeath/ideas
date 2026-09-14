@@ -208,10 +208,6 @@ billing path.
 
 ## Open items
 
-- `TODO(spec)` — exact audio cue files (and licence) for Save
-  / Print succeeded. Default v2.0: ship silent, owner enables
-  per shop.
-- `TODO(spec)` — left-handed layout toggle. Default v2.0:
-  right-handed only; revisit after pilot.
-- `TODO(spec)` — minimum supported Android version. Default:
-  Android 9 (consistent with the v1 production app).
+- TODO(spec, blocks: M10) — What audio cue files and licences should Save / Print succeeded use? **Default:** ship silent, owner enables per shop.
+- TODO(spec, blocks: M10) — Should v2.0 include a left-handed layout toggle? **Default:** right-handed only; revisit after pilot.
+- TODO(spec, blocks: M0) — What is the minimum supported Android version? **Default:** Android 9 (consistent with the v1 production app).

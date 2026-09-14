@@ -1,7 +1,8 @@
 # Scope boundaries — rebuild
 
-> Every feature lives in exactly one bucket. Disputed items go to
-> `TODO(spec)` and back to the owner, not silently into Core.
+> Every feature lives in exactly one bucket. Disputed items go back to the owner, not silently into Core.
+>
+> - `TODO(spec, blocks: M<N>)` — Should disputed scope items go back to the owner instead of silently into Core? **Default:** back to the owner.
 
 The rebuild starts as a custom app for one family shop with one
 regular staff member and the brother as monitor. It is designed so
@@ -101,18 +102,11 @@ reference customer** until at least one other shop is piloted.
 
 ## Disputed / unresolved
 
-- `TODO(spec)`: Voice billing v2 (see `../voice-billing-v2.md`) —
-  Core or Configurable? Default assumption: Configurable, off by
-  default for shops without a Hindi-capable mic environment.
-  Zero-touch / hands-free **activation** (no-touch app launch + full
-  bill by voice) is a v2.1 sub-goal recorded in
-  `../voice-billing-v2.md` §9; mechanism `TODO(spec)` (OS-assistant
-  launch recommended over an always-listening in-app wake-word).
-- `TODO(spec)`: AI Assistant chat tab (see `../chat-design.md`) —
-  Core or Not-doing for v2.0? Default assumption: defer to v2.1,
-  ship the rest first.
-- `TODO(spec)`: WhatsApp share of bill PDF — Core or Configurable?
-  Default assumption: Core (every shop wants it).
+- `TODO(spec, blocks: M5)` — Is Voice billing v2 (see `../voice-billing-v2.md`) Core or Configurable? **Default:** Configurable, off by default for shops without a Hindi-capable mic environment.
+  Zero-touch / hands-free **activation** (no-touch app launch + full bill by voice) is a v2.1 sub-goal recorded in `../voice-billing-v2.md` §9.
+- `TODO(spec, blocks: M5)` — Is OS-assistant launch the zero-touch voice activation mechanism? **Default:** OS-assistant launch over an always-listening in-app wake-word.
+- `TODO(spec, blocks: M10)` — Is the AI Assistant chat tab (see `../chat-design.md`) Core or Not-doing for v2.0? **Default:** defer to v2.1, ship the rest first.
+- `TODO(spec, blocks: M5)` — Is WhatsApp share of bill PDF Core or Configurable? **Default:** Core (every shop wants it).
 
 ## v1 parity gaps (2026-06-17 audit)
 
@@ -125,39 +119,18 @@ today, Bluetooth printing, admin / settings, diagnostics + audit,
 offline / PWA, the notification contract, WhatsApp share, and data
 export (see `data-governance.md` §Export). Four v1 features were
 present in the v1 inventory (`../capabilities.md`) but had **no
-bucket here**. They are recorded below with a recommended bucket;
-each is `TODO(spec)` until the owner confirms.
+bucket here**. They are recorded below with a recommended bucket.
 
-- `TODO(spec)`: **Frequency-sorted item dropdown / "most-used"
-  badges** (v1 `itemFrequency`, 90-day half-life decay). The
-  `itemFrequency` collection already survives in v2
-  (`firestore-rules-design.md` §4.8), but the dropdown-sort /
-  most-used behaviour is unspecified. Recommended bucket: **Core**
-  (a billing-speed feature; the data plumbing is already kept). Needs
-  the sort/score behaviour written into the billing/items rebuild
-  contract.
-- `TODO(spec)`: **Bulk item import + item-master export (Excel /
-  CSV)** (v1 SheetJS `xlsx`: export the catalog, import to replace
-  it). v2 `data-governance.md` §Export covers bills / stock /
-  outstanding / reports / audit / ledger export but **not** an
-  item-master export row, and there is no ongoing bulk-import tool
-  (the one-time v1→v2 item import lives in `migration-cutover.md`,
-  not a reusable feature). Recommended bucket: **Configurable** —
-  add an "Item master (CSV)" export row to §Export and an owner-only
-  bulk-import tool that runs every row through the normal
-  `item_created` / `item_updated` validation gates.
-- `TODO(spec)`: **Custom finance accounts** (v1
-  `customFinanceAccounts`: owner-defined asset / liability accounts
-  that feed the Assets / net-worth view). Not modelled in the
-  rebuild Finance / analytics spec. Recommended bucket:
-  **Configurable**, off by default (owner-only manual net-worth
-  adjustment line items, audited like any other config).
-- `TODO(spec)`: **Native contact picker** (v1 Capacitor Contacts API
-  to fill the customer / supplier name on billing forms). Not in
-  `platform-compatibility.md` (which lists WhatsApp share and file
-  export as native capabilities, but not Contacts). Recommended
-  bucket: **Configurable**, Android-only, off by default (a typing
-  shortcut, not a data-integrity feature).
+- `TODO(spec, blocks: M<N>)` — Should the owner confirm each recommended v1 parity bucket below? **Default:** use the recommended bucket until the owner confirms.
+
+- `TODO(spec, blocks: M5)` — Is Frequency-sorted item dropdown / "most-used" badges Core or Configurable? **Default:** Core (a billing-speed feature; the data plumbing is already kept).
+  v1 `itemFrequency` uses a 90-day half-life decay. The `itemFrequency` collection already survives in v2 (`firestore-rules-design.md` §4.8), but the dropdown-sort / most-used behaviour is unspecified. Needs the sort/score behaviour written into the billing/items rebuild contract.
+- `TODO(spec, blocks: M2)` — Is Bulk item import + item-master export (Excel / CSV) Core or Configurable? **Default:** Configurable; add an "Item master (CSV)" export row to §Export and an owner-only bulk-import tool that runs every row through the normal `item_created` / `item_updated` validation gates.
+  v1 SheetJS `xlsx` exports the catalog and imports to replace it. v2 `data-governance.md` §Export covers bills / stock / outstanding / reports / audit / ledger export but **not** an item-master export row, and there is no ongoing bulk-import tool (the one-time v1→v2 item import lives in `migration-cutover.md`, not a reusable feature).
+- `TODO(spec, blocks: M9)` — Is Custom finance accounts Core or Configurable? **Default:** Configurable, off by default (owner-only manual net-worth adjustment line items, audited like any other config).
+  v1 `customFinanceAccounts` are owner-defined asset / liability accounts that feed the Assets / net-worth view. Not modelled in the rebuild Finance / analytics spec.
+- `TODO(spec, blocks: M5)` — Is Native contact picker Core or Configurable? **Default:** Configurable, Android-only, off by default (a typing shortcut, not a data-integrity feature).
+  v1 used the Capacitor Contacts API to fill the customer / supplier name on billing forms. Not in `platform-compatibility.md` (which lists WhatsApp share and file export as native capabilities, but not Contacts).
 
 Deliberate v2 simplifications that look like gaps but are **not** —
 do not re-add them:

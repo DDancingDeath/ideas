@@ -14,8 +14,7 @@ one of `approve`, `dismiss`, or `correct`.
 
 ## Who can use it
 
-- View: roles with `reviewQueue.read` permission. Default: `owner`.
-  `TODO(spec)`: confirm whether `manager` can read.
+- View: roles with `reviewQueue.read` permission. TODO(spec, blocks: M10) — Can `manager` read the Review Queue? **Default:** `owner` only.
 - Resolve: roles with `reviewQueue.resolve` permission. Default:
   `owner`.
 - Staff: cannot see this page.
@@ -91,17 +90,9 @@ references the underlying events.
 
 ## Notification
 
-`TODO(spec)`: how the brother is alerted to new `high`-severity
-flags. Candidates: in-app badge, push notification (FCM via
-Capacitor), email digest, WhatsApp message via a chosen integration.
-Default for v2.0: in-app badge + a **daily digest** on the Today
-page. The daily digest lists **every flag raised that day, grouped
-by severity** (low / medium / high), unresolved ones highlighted — so
-a flag that was "saved anyway" at the counter (e.g. an unusually low
-rate) is still reviewed at day-close. How the flag also surfaces
-**inline while the bill is being made** is in
-[`suspicion-engine.md`](./suspicion-engine.md) §When and where a
-flag surfaces.
+- TODO(spec, blocks: M10) — How is the brother alerted to new `high`-severity flags? **Default:** in-app badge + a **daily digest** on the Today page.
+
+Candidates: in-app badge, push notification (FCM via Capacitor), email digest, WhatsApp message via a chosen integration. The daily digest lists **every flag raised that day, grouped by severity** (low / medium / high), unresolved ones highlighted — so a flag that was "saved anyway" at the counter (e.g. an unusually low rate) is still reviewed at day-close. How the flag also surfaces **inline while the bill is being made** is in [`suspicion-engine.md`](./suspicion-engine.md) §When and where a flag surfaces.
 
 ## Example bug reports → what to change
 

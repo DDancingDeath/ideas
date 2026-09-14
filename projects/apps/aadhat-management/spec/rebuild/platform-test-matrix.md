@@ -164,12 +164,6 @@ in the brother's release-notes summary.
 
 ## Open items
 
-- `TODO(spec)` — exact reference device model + Android
-  version. Default: filled when the shop's staff phone is
-  procured.
-- `TODO(spec)` — whether `G-COLD-START` should be promoted to
-  required for hot-fix patches. Default: optional (a single-
-  file fix should not require a cold-start re-measurement).
-- `TODO(spec)` — should the manifest also pin the printer
-  firmware version? Default: yes once a printer model is
-  selected; not before.
+- `TODO(spec, blocks: M11)` — What reference device model and Android version should be used? **Default:** filled when the shop's staff phone is procured.
+- `TODO(spec, blocks: M0)` — Should `G-COLD-START` be required for hot-fix patches? **Default:** optional (a single-file fix should not require a cold-start re-measurement).
+- `TODO(spec, blocks: M11)` — Should the manifest also pin the printer firmware version? **Default:** yes once a printer model is selected; not before.

@@ -182,16 +182,7 @@ gate before any release:
 
 ## Open items
 
-- `TODO(spec)` — choose the Web Bluetooth fallback for the PWA
-  build. Default v2.0: PWA users print to a paired Android
-  device instead; the PWA does not attempt Bluetooth.
-- `TODO(spec)` — define the "Wi-Fi printer" path that would
-  unblock iOS. Tracked as a v2.1 research item; do not block
-  v2.0 architecture on it.
-- `TODO(spec)` — desktop signed PWA install vs browser tab.
-  Default: browser tab only; no installer.
-- `TODO(spec)` — fixed list of validated production Android
-  models for the staff phone. Default: any current Android 12+
-  device in the ₹15–20k band per
-  [`../../plan/rebuild/decisions.md`](../../plan/rebuild/decisions.md)
-  row 6.
+- `TODO(spec, blocks: M11)` — What is the Web Bluetooth fallback for the PWA build? **Default:** PWA users print to a paired Android device instead; the PWA does not attempt Bluetooth.
+- `TODO(spec, blocks: M11)` — What Wi-Fi printer path would unblock iOS? **Default:** v2.1 research item; do not block v2.0 architecture on it.
+- `TODO(spec, blocks: M11)` — Should desktop use a signed PWA install or browser tab? **Default:** browser tab only; no installer.
+- `TODO(spec, blocks: M11)` — Which production Android models are validated for the staff phone? **Default:** any current Android 12+ device in the ₹15–20k band per [`../../plan/rebuild/decisions.md`](../../plan/rebuild/decisions.md) row 6.

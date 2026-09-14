@@ -331,6 +331,17 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-09-14_ · **Spec finalization pass (Happa step 2).** Reshaped all 97 open
+  `TODO(spec)` items into the reviewable form — question, blocking milestone,
+  recommended default — so none is a bare marker; 82 now carry a concrete default
+  and are adopted unless the owner objects. Closed two that were already settled
+  and had gone stale (the reference device, `decisions.md` row 6; and v1 data
+  import on cutover, row 10). The remaining 15 genuine questions, plus the 5 ⚠
+  provisional config values and 3 known contradictions, are batched for a single
+  owner pass in
+  [`plan/rebuild/spec-finalization.md`](./plan/rebuild/spec-finalization.md) —
+  each with a recommendation, so "all recommendations accepted" closes the step.
+
 - _2026-09-12_ · Demoted six values in
   [`spec/rebuild/configuration.md`](./spec/rebuild/configuration.md) that had been
   written down by reading a prior build attempt rather than decided on their merits.

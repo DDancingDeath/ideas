@@ -213,7 +213,4 @@ they are how the code is built so the invariants are cheap to keep.
   (offline-first with sync) or splits a small server component for
   authoritative event ordering. Default assumption: client-only with
   Firestore / backend-as-a-service, matching v1.
-- `TODO(spec)`: Decide if event projections are materialized in the
-  database (server-side) or computed in the client on subscription.
-  Default assumption: client-side projections in v2.0, with the
-  option to move to server-side later.
+- TODO(spec, blocks: M1) — Are event projections materialized server-side or computed in the client on subscription? **Default:** client-side projections in v2.0, with the option to move to server-side later.

@@ -194,10 +194,6 @@ on the app version badge, or Settings → Diagnostics):
 
 ## Open items
 
-- `TODO(spec)` — exact WhatsApp template wording (per language)
-  and the configured template id with Meta. Owner to provide;
-  defaults to in-app + push only until then.
-- `TODO(spec)` — push preference defaults. Recommended:
-  high + block opt-in by default; medium opt-in; low off.
-- `TODO(spec)` — debug bundle retention server-side if the
-  owner uploads one. Default: 30 days then auto-deleted.
+- TODO(spec, blocks: M10) — What WhatsApp template wording and Meta template id should each language use? **Default:** in-app + push only until owner provides them.
+- TODO(spec, blocks: M10) — What are the push preference defaults? **Default:** high + block opt-in by default; medium opt-in; low off.
+- TODO(spec, blocks: M10) — How long are uploaded debug bundles retained server-side? **Default:** 30 days then auto-deleted.

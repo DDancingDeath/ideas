@@ -140,8 +140,9 @@ fails
 
 ### …two devices try to write the same intent at the same time
 
-Not supported in v2.0 (`TODO(spec)`: confirm). If it happens
-anyway:
+TODO(spec, blocks: M1) — Are simultaneous same-intent writes from two devices supported in v2.0? **Default:** no.
+
+If it happens anyway:
 
 1. Whichever request reaches the adapter first wins.
 2. The other gets `IDEMPOTENCY_CONFLICT` and the user is told the

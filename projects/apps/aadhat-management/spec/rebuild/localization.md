@@ -111,11 +111,7 @@ auto-fills; a manual Hindi edit survives further English typing).
 
 ## Numbers, currency, dates
 
-- **Currency**: always `₹`, Indian digit grouping (`₹1,24,500.00`),
-  `tabular-nums`. `TODO(spec)`: decide whether money uses **Latin
-  numerals even in Hindi mode** (recommended for unambiguous money) or
-  Devanagari numerals — default recommendation: Latin numerals for all
-  amounts/quantities, Hindi for words.
+- **Currency**: always `₹`, Indian digit grouping (`₹1,24,500.00`), `tabular-nums`. TODO(spec, blocks: M1) — Should money use **Latin numerals even in Hindi mode** or Devanagari numerals? **Default:** Latin numerals for all amounts/quantities, Hindi for words.
 - **Dates / relative time**: localized ("2 days ago" / "2 दिन पहले"),
   shop-timezone aware (`time-clock.md`).
 - **Units**: kg / किलो, packet / पैकेट, etc., come from the catalog.
@@ -125,8 +121,7 @@ auto-fills; a manual Hindi edit survives further English typing).
 - A clear control in Settings/Admin (and ideally a quick switch), per
   the owner-configurable model. Setting is **per device** at minimum
   (it is a display preference), persisted, and applied on next render.
-- `TODO(spec)`: default language for a fresh install — Hindi or
-  English? Recommendation: **Hindi** (staff-primary), owner can flip.
+- TODO(spec, blocks: M5) — Should the default language for a fresh install be Hindi or English? **Default:** **Hindi** (staff-primary), owner can flip.
 - Switching language must **never** change any stored data or any
   money value — it is presentation only (asserted in tests).
 

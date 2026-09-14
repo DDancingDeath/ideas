@@ -46,8 +46,9 @@ more `references` to prior events.
 | `user_status_changed` | targetUserId, fromStatus, toStatus, by | auth / audit |
 | `shop_profile_updated` | changedFields | config |
 
-> `TODO(spec)`: Confirm the final event list before M0. The list
-> above covers every v1 workflow; new event types may be added but
+> - TODO(spec, blocks: M1) — Is the final event list confirmed before implementation? **Default:** none agreed.
+>
+> The list above covers every v1 workflow; new event types may be added but
 > must be justified in this file before implementation.
 
 ## Hard rules
@@ -104,15 +105,16 @@ produce the expected projection values exactly.
 - Events are retained for the lifetime of the shop's account by
   default. The audit log surface filters to a configurable window
   (v1 default: 90 days; v2 default: same, configurable per shop).
-- No event is ever expunged by app code without explicit owner
-  action and an `event_retention_purged` event recording what was
-  removed and why. `TODO(spec)`: agree retention model with owner
-  before implementing purge.
+- No event is ever expunged by app code without explicit owner action and an `event_retention_purged` event recording what was removed and why. TODO(spec, blocks: M1) — What retention model must the owner agree before purge is implemented? **Default:** retain events for the lifetime of the shop's account; purge only by explicit owner action.
 
 ## Migration from v1 data
 
-`TODO(spec)`: Decide whether v1 production data is imported into
-the v2 event log on cutover. Two candidates:
+- **Resolved** — v1 production data is **not** replayed into the v2 event log.
+  Cutover imports opening balances as a snapshot and starts a fresh event log
+  (`decisions.md` row 10, `confirmed`). Full replay is deferred to v2.1 as
+  research (D3).
+
+Two candidates:
 
 - **Snapshot import.** v1's final state becomes a synthetic
   `migration_snapshot` event at t=cutover. History before that is

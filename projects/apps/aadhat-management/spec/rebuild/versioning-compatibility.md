@@ -173,12 +173,6 @@ release must respect:
 
 ## Open items
 
-- `TODO(spec)` — exact distribution channel for the APK in
-  v2.0 (Play Store internal track? direct APK?). Default for
-  the family shop: direct APK with version pinning.
-- `TODO(spec)` — auto-upgrade window for non-forced upgrades.
-  Default: PWA SW activates on next reload; APK silently
-  downloads, user-approved install.
-- `TODO(spec)` — server-side schema validator retention policy.
-  Default: keep forever (cheap; needed for any historical
-  replay).
+- `TODO(spec, blocks: M12)` — What is the APK distribution channel for v2.0? **Default:** direct APK with version pinning.
+- `TODO(spec, blocks: M12)` — What is the auto-upgrade window for non-forced upgrades? **Default:** PWA SW activates on next reload; APK silently downloads, user-approved install.
+- `TODO(spec, blocks: M12)` — What is the server-side schema validator retention policy? **Default:** keep forever (cheap; needed for any historical replay).
