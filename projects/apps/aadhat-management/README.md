@@ -331,6 +331,19 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-09-14_ · **v1 → v2 feature coverage audit**
+  ([`plan/rebuild/v1-coverage-audit.md`](./plan/rebuild/v1-coverage-audit.md)).
+  Read all 93 files / ~29 000 lines of the live app against the spec. Split by the
+  owner's assessment that Stock, Finance, Analytics and Reports do not work well
+  in v1 — parity is the goal only for the pages that do work, and the weak four
+  are redesigned from requirements rather than matched. Result: 14 parity gaps
+  (drawer reconciliation, cash deposits, session notes, retail oversell warning,
+  print-comments flag, bill-line edit/delete, labor-charge config keys and more),
+  8 items on the weak pages kept as requirements, and 5 already-declared scope
+  drops needing owner confirmation. Also confirmed three non-gaps: purchase is a
+  mode inside `02-billing.md`, `configure.html` is dead markup whose settings
+  moved to `admin.js`, and v1 having no print queue is an improvement in v2.
+
 - _2026-09-14_ · **Spec finalization pass (Happa step 2).** Reshaped all 97 open
   `TODO(spec)` items into the reviewable form — question, blocking milestone,
   recommended default — so none is a bare marker; 82 now carry a concrete default
