@@ -17,6 +17,8 @@ rebuilt — the events stay correct.
 
 ## Event types (v2.0, initial set)
 
+The v2.0 canonical event list is confirmed at 24 event types.
+
 Each event has: `id` (UUID v7), `type`, `at` (server timestamp),
 `by` (userId), `shopId`, `idempotencyKey`, `payload`, and zero or
 more `references` to prior events.
@@ -25,6 +27,7 @@ more `references` to prior events.
 |---|---|---|
 | `item_created` | itemId, names, defaultRates, unit, isHeavy | item master |
 | `item_updated` | itemId, changedFields | item master |
+| `item_rate_changed` | itemId, rateKind, oldRate, newRate, reason | item master, rate history |
 | `item_archived` | itemId, reason | item master |
 | `purchase_recorded` | billId, party, lines[{itemId, weights[], rate}], labor, payment, billNumber, billDate | stock, outstanding, cash |
 | `retail_sale_created` | billId, lines, payment, billNumber, billDate | outstanding, cash |
@@ -45,11 +48,9 @@ more `references` to prior events.
 | `user_role_changed` | targetUserId, fromRole, toRole, by | auth / audit |
 | `user_status_changed` | targetUserId, fromStatus, toStatus, by | auth / audit |
 | `shop_profile_updated` | changedFields | config |
+| `shop_timezone_changed` | oldTimezone, newTimezone | config, reports |
 
-> - TODO(spec, blocks: M1) — Is the final event list confirmed before implementation? **Default:** none agreed.
->
-> The list above covers every v1 workflow; new event types may be added but
-> must be justified in this file before implementation.
+The list above covers every v1 workflow and includes the v2.0 additions required by hard dependents: `item_rate_changed` for rate history and `shop_timezone_changed` for shop-local reporting. New event types may be added but must be justified in this file before implementation.
 
 ## Hard rules
 

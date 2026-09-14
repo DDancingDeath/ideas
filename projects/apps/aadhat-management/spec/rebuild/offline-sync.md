@@ -89,6 +89,8 @@ No silent loss, overwrite, or automatic merge; conflicts surface in Review Queue
 4. After each successful batch, device pulls new shop events from any device, re-folds projections, and stays within the staleness tolerance in [`data-placement.md`](./data-placement.md).
 5. Projection divergence raises `reconciliation.mismatch` and forces rebuild from server events.
 
+There is no cross-device cache coherence protocol in v2.0 beyond pull, re-fold, and the staleness badges defined in [`data-placement.md`](./data-placement.md).
+
 ## UI requirements
 
 | Surface | Required copy/behaviour |
@@ -129,8 +131,7 @@ Each scenario specifies setup, sequence, expected projections, expected flags, a
 
 ## Open items
 
-- `TODO(spec, blocks: M5)` — Bill number allocation offline? **Default:** pre-allocate a small block per session per [`data-placement.md`](./data-placement.md); surface `offline-issued` badge until reconciled.
+- Bill number allocation offline: pre-allocate a small block per device per [`data-placement.md`](./data-placement.md); surface `offline-issued` badge until reconciled.
 - `TODO(spec, blocks: M11)` — Stale `references.itemVersion` window: how old can an offline item reference be before server forces refetch? **Default:** 24 h.
 - `TODO(spec, blocks: M11)` — Background sync after app close? **Default:** foreground-only in v2.0; revisit after pilot.
-- `TODO(spec, blocks: M8)` — Cross-device cache coherence protocol? **Default:** none agreed.
 

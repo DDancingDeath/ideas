@@ -21,7 +21,7 @@ Rules: domain code is shared; app owns convenience, not truth; server does not o
 | Data | Authoritative | Local cache | Sync rule | Staleness tolerance | Offline behaviour |
 |---|---|---|---|---|---|
 | **Active bill draft** | App | App in memory + IndexedDB autosave | Local-only until `Save` appends event | n/a — user owns it | Fully usable; restores after reload |
-| **Item master** | Server (`items` events) | Full mirror, IndexedDB | Subscribe; reconcile on app start | 60 s (UI badge `as of HH:MM:SS` if older) | Read-only OK; new items blocked offline |
+| **Item master** | Server (`items` events) | Full mirror, IndexedDB | Subscribe; reconcile on app start | 60 s (UI badge `as of HH:MM` if older) | Read-only OK; new items blocked offline |
 | **Recent parties (autocomplete)** | Server (`party_*` events) | Top N most-recent in IndexedDB | Subscribe; LRU evict beyond N | 60 s | Read-only OK |
 | **Event ledger (recent)** | Server (`events` collection) | Sliding window: last 30 days + opening snapshot | Subscribe over window; older fetched on demand | 5 s for "today's" window; 1 min for older | Reads served from cache; writes queued |
 | **Pending writes (outbox)** | App | IndexedDB | Drain on `online`, with idempotency keys | n/a | This is the offline surface — drains on reconnect |
@@ -55,10 +55,12 @@ Rules: domain code is shared; app owns convenience, not truth; server does not o
 |---|---|
 | Within tolerance | Show normally. |
 | Older than tolerance, network up | Refetch silently; show `Updating…` if refetch takes > 200 ms. |
-| Older than tolerance, network down | Show value with **As of HH:MM:SS** badge and page banner `Offline — cached`. |
+| Older than tolerance, network down | Show value with **As of HH:MM** badge and page banner `Offline — cached`. |
 | Cache cannot answer | Show `Older data requires network`. |
 
 No silent staleness, no spinners hiding cached values, no fabricated zeros.
+
+There is no cross-device cache coherence protocol in v2.0. Drift within the staleness tolerance is accepted and labelled: the `As of HH:MM` badge required by AC8 tells the user the number's age. The shop runs one or two devices, and a coherence protocol is real complexity for a rare confusion. Revisit this only if the pilot shows it actually bites.
 
 ## Read path budgets
 
@@ -129,10 +131,9 @@ Outbox retention: **30 days**. After that, warn `Your device hasn't synced in 30
 
 ## Open items
 
-- `TODO(spec, blocks: M5)` — Bill number allocation offline: pre-allocate a small block per device on session open, or use UUID and assign human number on reconcile? **Default:** pre-allocate a small block on each session open; surface `offline-issued` badge until reconciled.
+- Bill number allocation offline: pre-allocate a small block per device and surface `offline-issued` badge until reconciled.
 - `TODO(spec, blocks: M9)` — Server-materialized reports threshold: when does the app stop folding locally and start reading from a materialized view? **Default:** 30 days of events.
 - `TODO(spec, blocks: M11)` — Background sync window after close-app: wake the app to flush outbox? **Default:** foreground-only in v2.0; revisit after pilot.
-- `TODO(spec, blocks: M8)` — Cross-device cache coherence: how do two devices on the same shop avoid conflicting Today summaries beyond the staleness tolerance? **Default:** none agreed.
 
 ## Tests this spec requires
 

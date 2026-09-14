@@ -46,15 +46,17 @@ Stale-detection: none; recompute on every read in v2.0.
 
 ### Rate history per item
 
-Tracks configured sell-rate set-points and transacted buy/sell rates. Replaces v1 Analytics Rate Trends; see [`../page-specs/11-analytics.md`](../page-specs/11-analytics.md) §Rate Trends.
+Tracks configured sell-rate set-points, transacted sell rates, and purchase-implied buy rates in one merged projection. Replaces v1 Analytics Rate Trends; see [`../page-specs/11-analytics.md`](../page-specs/11-analytics.md) §Rate Trends. Two projections over one rate concept drift apart, so all rate points share one chronological stream.
 
 ```
 type RatePoint = {
   at: IsoTimestamp;
-  kind: 'master-set' | 'buy' | 'sell';   // master-set = owner changed the item's rate
+  source: 'master' | 'transacted' | 'purchase-implied';
   rate: Paise;                            // ₹/kg in paise
-  fromRate?: Paise;                       // master-set only: the previous rate
-  reason?: string;                        // master-set only: mandatory reason
+  rateKind?: 'retail' | 'wholesale' | 'purchase';  // master only
+  fromRate?: Paise;                       // master only: the previous rate
+  reason?: string;                        // master only: mandatory reason
+  billId?: BillId;                        // transacted and purchase-implied only
   sourceEventId: string;
 };
 
@@ -62,19 +64,22 @@ empty = { history: new Map<ItemId, RatePoint[]>() }
 
 apply(state, event):
   case 'item_rate_changed':
-    push { at, kind: 'master-set', rate: payload.newRate,
-           fromRate: payload.oldRate, reason: payload.reason }
+    push { at, source: 'master', rate: payload.newRate,
+           rateKind: payload.rateKind, fromRate: payload.oldRate,
+           reason: payload.reason }
   case 'purchase_recorded':
-    for each line: push { at, kind: 'buy',  rate: line.rate }
+    for each line: push { at, source: 'purchase-implied', rate: line.rate,
+                          billId: payload.billId }
   case 'retail_sale_created' | 'wholesale_sale_created':
-    for each line: push { at, kind: 'sell', rate: line.rate }
+    for each line: push { at, source: 'transacted', rate: line.rate,
+                          billId: payload.billId }
 ```
 
-Reads: item-detail screen shows master-set step chart with reason on hover, plus optional transacted buy/sell points over 7 / 30 / 90-day window. Margin compression is read from this series. Series is append-only; corrections append `item_rate_changed`.
+Reads: item-detail screen shows master step chart with reason on hover, plus optional transacted and purchase-implied points over 7 / 30 / 90-day windows. Margin compression is read from this series. Series is append-only; corrections append `item_rate_changed`.
+
+Retention: same window as the ledger.
 
 Stale-detection: none; recompute on read in v2.0.
-
-- `TODO(spec, blocks: M2)` — Should rate history use one merged projection instead of separate master-rate/transacted-rate views, which retention/windowing applies for high-volume items, and should purchase-implied buy rate also raise `master-set`? **Default:** none agreed.
 
 ### Live stock
 
@@ -244,5 +249,5 @@ Read every shop event in `[genesis, now]`, fold through `apply`, and write state
 | Projection invalidation | Rebuilds after every affecting event type |
 | Snapshot replay | Snapshot + replay-from-snapshot equals full replay |
 | Cross-projection invariants | R1–R4 hold for every fixture |
-| Rate history | `item_rate_changed` + purchase + sale sequence yields chronological `RatePoint[]` with correct `master-set` / `buy` / `sell`; later rate change appends and does not alter earlier points or historical bill re-fold |
+| Rate history | `item_rate_changed` + purchase + sale sequence yields chronological `RatePoint[]` with correct `master` / `transacted` / `purchase-implied` sources; later rate change appends and does not alter earlier points or historical bill re-fold |
 | Performance | Full rebuild for expected 2-year volume meets [`performance-budgets.md`](./performance-budgets.md) |

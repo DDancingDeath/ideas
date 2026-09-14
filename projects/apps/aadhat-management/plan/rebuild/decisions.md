@@ -39,6 +39,44 @@
 | 9 | Time-of-day boundary for "today" | Open cash-session window, fall back to midnight if no session is open | `confirmed` | The shop's "day" is bounded by opening and closing cash, not by midnight. This matches how the owner already thinks about Today. Documented in `quality-bar.md` and `scenarios.md`. | owner | 2026-06-15 |
 | 10 | v1 → v2 cutover data strategy | **Snapshot** (import opening balances; start fresh event log) | `confirmed` | Snapshot is simpler, lower-risk, and avoids replaying v1's mutable history through v2's strict invariants. Full replay is deferred to v2.1 and treated as an optional research item (D3). See [`migration-cutover.md`](./migration-cutover.md). | owner | 2026-06-15 |
 
+## Spec-finalization batch — 2026-09-14
+
+Every open question in `spec/` has been closed so the spec has no holes and
+work can proceed. **All rows are `tentative`** — the agent's recommended
+default, adopted so nothing is blocked, not signed off. Flip any row to
+`confirmed` when you agree, or `superseded` with a reason when you do not; the
+spec is edited to match either way.
+
+The spec now asserts these as fact. That is deliberate: a spec full of
+questions cannot be built from, and a `tentative` row here is the honest record
+of who chose.
+
+| # | Decision | Choice | Status | Rationale |
+|---|---|---|---|---|
+| S1 | `time.maxFutureMin` | `60` | `tentative` | An hour of clock drift ahead of the server is generous for a shop phone; beyond that the event is rejected |
+| S2 | `pricing.maxRateMultiple` | **`2`** (was 5) | `tentative` | At 5×, an item normally ₹40/kg must be billed at ₹200/kg before anyone is warned. The rule exists to catch a mis-keyed rate; 2× actually does |
+| S3 | `printer.maxRetries` | `3` retries (4 attempts) | `tentative` | Matches the phase timeouts already specified in `printer-compatibility.md` |
+| S4 | `stock.negativeBlockMg` | `5_000_000` (5 kg) | `tentative` | Small enough to catch a mis-keyed quantity, large enough to survive normal purchase-entry lag |
+| S5 | `stock.adjustmentLargeMg` | `20_000_000` (20 kg) | `tentative` | Above this, a manual adjustment is worth a human look |
+| S6 | `cash.mismatchLarge` | `20000` (₹200) | `tentative` | The figure recorded in row M8; no competing figure has any authority behind it |
+| S7 | Discount cap shape | Single flat `pricing.maxDiscountBps = 1000` (10%), not a per-role map | `tentative` | The shop has one staff role in practice. Revisit when `manager` is actually surfaced |
+| S8 | Event types frozen into v2.0 | Add `item_rate_changed` and `shop_timezone_changed` | `tentative` | Both already have hard dependents — the rate-history projection and the shop-timezone rule |
+| S9 | Event types deferred to v2.1 | `party_updated`, `item_merged`, `party_merged`, `print_manual_recorded` | `tentative` | Merges and manual-print marking are rare enough to do by hand in year one, and each type costs a schema, a permission row, a count test and an access-control entry |
+| S10 | How a party enters the ledger | Implicitly, on first use — no `party_created` event | `tentative` | A shopkeeper billing a walk-in who becomes a regular must never stop to "create a customer" first |
+| S11 | Cross-device cache coherence | None in v2.0; drift is accepted and labelled `as of HH:MM` | `tentative` | One or two devices. A coherence protocol is real complexity for a rare confusion |
+| S12 | Offline bill-number block scope | **Per device**, not per session | `tentative` | Not a preference: two devices sharing a session allocate colliding numbers, breaking invariant `B5` |
+| S13 | Rate-history projection | One merged projection with a `source` field (`master` / `transacted` / `purchase-implied`) | `tentative` | Two projections over one concept is how they drift apart |
+| S14 | Owner override of a blocked rule | Appends an owner-approval event that the new attempt references | `tentative` | An override leaving no trace defeats the audit trail, which is the point of the suspicion engine |
+| S15 | Possible duplicate print | Mark the job `duplicate-suspect` and raise a low-severity flag | `tentative` | ESC/POS gives no acknowledgement, so an honest "we are not sure" is the only truthful state |
+| S16 | Printed-marker persistence | Persisted, not in-memory | `tentative` | A marker that dies with the process cannot prevent the duplicate print it exists to prevent |
+| S17 | `auth.session-anomaly` signals | New device only | `tentative` | Location needs geo-IP the app does not otherwise collect, and a shop phone does not move |
+| S18 | High-severity notification | In-app badge plus the Today digest; push and WhatsApp deferred to v2.1 | `tentative` | No provider, consent or delivery contract exists yet for the others |
+| S19 | Full shop-day fixture | At M8 | `tentative` | Cash sessions bound the shop's day, so M8 is the first milestone where a whole day is expressible |
+
+**The two worth arguing with first:** S2, because it changes how often anyone
+is warned about a wrong price; and S12, which is the only row here that is not
+really a preference — per-session blocks cannot satisfy `B5`.
+
 ## Deferred to v2.1 or later
 
 | # | Item | Why deferred |

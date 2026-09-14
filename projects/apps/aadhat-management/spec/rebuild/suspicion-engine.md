@@ -15,8 +15,8 @@
 |---|---|---|---|
 | `low` | info note on the line | logged | listed |
 | `medium` | **inline confirm before save** | Review Queue entry + Today "Needs review" widget | listed, grouped by rule |
-| `high` | **inline confirm before save** | prominent Review Queue entry; brother notified (mechanism: `TODO(spec, blocks: M10)` — **Default:** in-app badge + the Today digest; push and WhatsApp deferred to v2.1) | listed at the top, highlighted |
-| `block` | **save refused inline**; owner-approval override path | the override attempt shows in the Review Queue | listed |
+| `high` | **inline confirm before save** | prominent Review Queue entry; brother notified by in-app badge plus the Today digest; push and WhatsApp are deferred to v2.1 | listed at the top, highlighted |
+| `block` | **save refused inline**; owner-approval override path | owner override appends an owner-approval event; the new attempt references it and shows in the Review Queue | listed |
 
 The only severity vocabulary is `block` / `high` / `medium` / `low`. Do not use any other scale.
 
@@ -24,7 +24,7 @@ The only severity vocabulary is `block` / `high` / `medium` / `low`. Do not use 
 
 | Surface | Required behaviour |
 |---|---|
-| Billing time | Client advisory pre-check for cashier-facing rules (`price.*`, discount, zero-rate, stock-negative, unit, archived-item). Inline warning while typed; Save confirm names issue and expected range. `block` offers only Fix plus owner-approval override. |
+| Billing time | Client advisory pre-check for cashier-facing rules (`price.*`, discount, zero-rate, stock-negative, unit, archived-item). Inline warning while typed; Save confirm names issue and expected range. `block` offers only Fix plus owner-approval override; override appends an owner-approval event, and the new attempt references it. |
 | Authoritative append | Application service re-runs engine and appends `flag_raised` in the same transaction. Offline/tampered clients cannot suppress flags. `Save anyway` records the flag. |
 | Review Queue | Every `medium` / `high` flag persists for brother/owner resolution in [`review-queue.md`](./review-queue.md). |
 | Daily report | Today digest and [`../../plan/rebuild/operations-runbook.md`](../../plan/rebuild/operations-runbook.md) §Daily list every flag raised that day, grouped by severity, unresolved highlighted. |
@@ -40,7 +40,7 @@ Config defaults live in [`configuration.md`](./configuration.md); this file name
 | Rule id | Triggers when | Severity | Action |
 |---|---|---|---|
 | `stock.negative` | A sale would push computed stock below zero | `medium` | Flag; allow save. |
-| `stock.negative.large` | A sale would push computed stock below `−(shopProfile.stock.negativeBlockMg)` | `block` | Refuse save unless owner override. |
+| `stock.negative.large` | A sale would push computed stock below `−(shopProfile.stock.negativeBlockMg)` | `block` | Refuse save unless owner-approval override is recorded; the new attempt references the approval event. |
 | `stock.zero-after-recent-purchase` | An item went from positive to zero within an hour of a purchase being recorded — possible duplicate sale | `medium` | Flag; allow save. |
 | `stock.adjustment.large` | An adjustment of magnitude greater than `shopProfile.stock.adjustmentLargeMg` | `medium` | Flag; allow save/request per permissions. |
 
@@ -49,8 +49,8 @@ Config defaults live in [`configuration.md`](./configuration.md); this file name
 | Rule id | Triggers when | Severity | Action |
 |---|---|---|---|
 | `price.below-cost` | Sale rate < latest moving-average purchase rate for that item | `medium` | Confirm; flag if saved. |
-| `price.discount.large` | Discount exceeds `shopProfile.pricing.maxDiscountPctByRole[staff]` for the user's role | `medium` | Confirm; flag if saved. |
-| `price.discount.exceeds-limit` | Discount exceeds the absolute discount limit for the user's role | `block` | Refuse save unless owner override. |
+| `price.discount.large` | Discount exceeds `shopProfile.pricing.maxDiscountBps` | `medium` | Confirm; flag if saved. |
+| `price.discount.exceeds-limit` | Discount exceeds the absolute discount limit | `block` | Refuse save unless owner-approval override is recorded; the new attempt references the approval event. |
 | `price.zero-rate` | Sale rate == 0 with non-zero quantity | `medium` | Confirm; flag if saved. |
 | `price.unusually-high` | Sale rate > `shopProfile.pricing.maxRateMultiple` × moving-average for that item | `medium` | Confirm; flag if saved. |
 | `price.unusually-low` | Sale rate is above cost but below `(1 / shopProfile.pricing.maxRateMultiple)` × the item's typical sell rate | `medium` | Confirm; flag if saved. |
@@ -99,7 +99,7 @@ Sale high/low anchors on item master rate, else recent median from [`projections
 |---|---|---|---|
 | `auth.staff-edits-old-bill` | Staff submits a correction or void against a bill from before today | `medium` (requires owner approval) | Queue approval request; no direct append. |
 | `auth.role-escalation-attempt` | A request was rejected because the principal lacked permission; multiple within `shopProfile.auth.escalationWindowMin` triggers this | `high` | Flag; notify brother/owner path. |
-| `auth.session-anomaly` | Sign-in from a new device, country, or after a long absence (`TODO(spec, blocks: M3)` — **Default:** none agreed.) | `low` | Flag. |
+| `auth.session-anomaly` | Sign-in from a new device. Location is excluded because it needs geo-IP the app does not otherwise collect, and a shop phone does not move. | `low` | Flag. |
 
 ### Item / unit rules
 

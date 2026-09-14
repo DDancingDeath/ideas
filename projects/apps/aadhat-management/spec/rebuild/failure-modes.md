@@ -53,9 +53,9 @@ Each entry defines **Trigger**, **Expected**, **Forbidden**, and **Test**. New e
 
 - **Trigger**: printer confirms delivery; appending `print_succeeded` fails due to offline, server error, or crash.
 - **Expected**:
-  - Queue keeps an in-memory physically-printed marker keyed by `clientActionId`.
-  - Retry that detects printer accepted this `clientActionId` (vendor echo or local no-resend guard within N seconds) does not reprint; it retries only the `print_succeeded` append.
-  - If the marker is lost before persistence, the next attempt may reprint once.
+  - Queue persists a physically-printed marker keyed by `clientActionId`.
+  - Retry that detects printer accepted this `clientActionId` (vendor echo or persisted local no-resend guard within N seconds) does not reprint; it retries only the `print_succeeded` append.
+  - The marker survives app restart; a marker that dies with the process cannot prevent the duplicate print it exists to prevent.
 - **Forbidden**: success without event; History counted as printed before `print_succeeded`.
 - **Test**: `print-ack-event-fails`; `print-succeeded-marker-survives-restart`.
 

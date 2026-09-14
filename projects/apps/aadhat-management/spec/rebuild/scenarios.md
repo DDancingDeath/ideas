@@ -292,7 +292,7 @@
 | # | t | Action | Expected |
 |---|---|---|---|
 | 1 | t0 | submit `wholesale_sale_created` 200 kg Aloo | adapter returns `BLOCKED_BY_RULE`; UI offers owner override path |
-| 2 | t+1m | owner overrides | a new attempt is appended with `references` to an owner-approval event; OR — `TODO(spec, blocks: M<N>)` — Is the override a different rule short-circuit? **Default:** none agreed. |
+| 2 | t+1m | owner overrides | owner approval appends an owner-approval event, and the new attempt references it. The override is not a rule short-circuit; it remains visible in the audit trail. |
 
 **Expected projections:** no sale appended unless override flow completes.
 
@@ -330,7 +330,7 @@
 
 Keep this in sync when adding a fixture or event type. Audited 2026-06-16.
 
-**Event-type coverage (the 22 ledger types in [`event-schemas.md`](./event-schemas.md)).** "Sibling test" means a named test in another doc's *Tests this spec requires* section, not a full replay.
+**Event-type coverage (the canonical ledger event types in [`event-ledger.md`](./event-ledger.md)).** "Sibling test" means a named test in another doc's *Tests this spec requires* section, not a full replay.
 
 | Event | Catalog fixture | Sibling test / other coverage |
 |---|---|---|
@@ -357,12 +357,13 @@ Keep this in sync when adding a fixture or event type. Audited 2026-06-16.
 | `user_role_changed` | — | role-permission-matrix (matrix tests) |
 | `user_status_changed` | — | role-permission-matrix |
 | `shop_profile_updated` | — | suspicion-engine (config), review-queue |
+| `shop_timezone_changed` | — | time-clock and reports coverage for shop-local reporting |
 
-**13 / 22 events have a catalog fixture; 9 do not.** Remaining coverage is lower-level sibling tests, not full shop-day replay.
+Some canonical ledger events have catalog fixtures; the rest have lower-level sibling tests rather than full shop-day replay.
 
 **Scenario-shaped tests outside this catalog:** `time-clock.md` (10, e.g. `future-date-blocked`, `drift-ema-detected`), `money-units-rounding.md` (8, e.g. `rounding-half-to-even-runs`, `migration-roundtrip-equality`), `concurrency.md` (e.g. `bill-number-server-allocated-online`, `double-tap-during-reconnect`), `data-governance.md`, `projections.md`, `offline-sync.md`, `idempotency.md`, `suspicion-engine.md`, `failure-modes.md` (20 pinned tests).
 
-**Known scenario gaps (no full shop-day fixture yet).** `TODO(spec, blocks: M<N>)` — Which scenario gaps become catalog fixtures in each milestone? **Default:** none agreed. Move a gap into the Catalog table and delete its line here when implemented.
+**Known scenario gaps (no full shop-day fixture yet).** A full shop-day fixture lands at M8 because cash sessions bound the shop's day, making M8 the first milestone where a whole day is expressible. Remaining gaps land as their own milestone arrives. Move a gap into the Catalog table and delete its line here when implemented.
 
 **Core lifecycle (the original 9):**
 

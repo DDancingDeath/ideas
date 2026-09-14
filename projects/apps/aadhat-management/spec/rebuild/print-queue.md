@@ -19,7 +19,7 @@ Each job has:
 - `billId` (foreign key into the event log)
 - `jobKey` (deduplication key — see below)
 - `state`: `queued` | `connecting` | `sending` | `printed` |
-  `failed` | `cancelled`
+  `failed` | `cancelled` | `duplicate-suspect`
 - `attempts[]`: each with `attemptNo`, `startedAt`, `finishedAt`,
   `outcome`, `printerInfo`, `errorCode?`, `errorMessage?`
 - `createdAt`, `updatedAt`, `createdBy`
@@ -108,7 +108,7 @@ safe.
   two `print_attempt` events, one `print_succeeded` after retry.
 - Reprint after success: two job rows, two `print_succeeded`, no
   duplicate sale events.
-- App killed mid-print: queue persists, worker resumes on next launch, idempotent on the printer side as far as ESC/POS can be made so. TODO(spec, blocks: M11) — How do we mark a possible duplicate-print scenario for review? **Default:** none agreed.
+- App killed mid-print: queue persists, worker resumes on next launch. If the app dies mid-print and cannot know whether paper emerged, the job is marked `duplicate-suspect` and raises a low-severity Review Queue flag. ESC/POS gives no acknowledgement, so an honest "we are not sure" state is the only truthful state; the app never silently reprints and never silently swallows the job.
 - Bill corrected after print succeeded: new reprint job uses the
   corrected payload; old printout's hash is in audit.
 - Voided bill: the queue cancels any non-terminal job for that

@@ -113,6 +113,19 @@ payload: {
 Validation: at least one field in `changes`; storage adapter rejects `itemId` mutation. Invariants: M4, X3. Idempotency key: `item.update:{itemId}:{changeHash}`.
 
 
+### `item_rate_changed`
+```ts
+payload: {
+  itemId: ItemId;
+  rateKind: 'retail' | 'wholesale' | 'purchase';
+  oldRate: Paise;
+  newRate: Paise;
+  reason: string;
+}
+```
+Validation: item exists and is not archived; `rateKind` selects one rate from `defaultRates`; `oldRate` equals the current stored rate at append time; `oldRate` and `newRate` are non-negative integers; `oldRate != newRate`; `reason` non-empty (≥ 5 chars); generic reasons raise `rate-reason-generic`. Invariants: M4, S4. Idempotency key: `item.rate:{itemId}:{rateKind}:{newRate}:{clientActionId}`.
+
+
 ### `item_archived`
 ```ts
 payload: { itemId: ItemId; reason: string }
@@ -371,28 +384,42 @@ payload: {
 ```
 Validation: owner principal only; `changes` non-empty; cannot disable a `block`-severity rule (`suspicion-engine.md` §Configurability). Role config: validate `changes.roleConfig` against **hard floors** in `role-permission-matrix.md` §Owner-configurable role visibility & capabilities; clamp grants beyond matrix ceiling; reject floor violations (escalation, owner key, visibility ⊇ action, lock-out-billing) with `SCHEMA_INVALID`. Idempotency key: `shop.profile:{changeHash}`.
 
+
+### `shop_timezone_changed`
+```ts
+payload: {
+  oldTimezone: string;                 // IANA timezone name
+  newTimezone: string;                 // IANA timezone name
+}
+```
+Validation: owner principal only; `oldTimezone` and `newTimezone` are valid IANA timezone names; `oldTimezone` equals the current shop timezone at append time; `oldTimezone != newTimezone`. Reports use the timezone active for their event window and re-render after this event. Idempotency key: `shop.timezone:{newTimezone}:{clientActionId}`.
+
 ---
 
-## Referenced events not yet specified here
+## Referenced events deferred from v2.0
 
-The 22 types above have frozen payload schemas. Names below are referenced by other rebuild docs but are not accepted by the storage adapter until they get a `###` schema block and the count is updated.
+The 24 types above have frozen payload schemas and are the v2.0 canonical event set accepted by the storage adapter.
+
+### Deferred to v2.1
+
+These event types are out of scope for v2.0. Merges and manual-print marking are rare enough to handle by hand in year one, and each added type costs a schema, a permission row, a count test, and an access-control entry.
 
 | Event | Referenced in | Purpose | Payload hints already stated | Status |
 |---|---|---|---|---|
-| `item_rate_changed` | [`data-governance.md`](./data-governance.md) §Rate change history | Record an item rate change as an event, never a silent edit; feeds the **Rate history per item** projection ([`projections.md`](./projections.md#rate-history-per-item)) | Mandatory non-empty `reason`; generic reason → `rate-reason-generic` flag; must carry old + new rate so bills re-fold to the rate-as-of-T | `TODO(spec, blocks: M<N>)` — Confirm whether this is its own type or a constrained `item_updated`? **Default:** none agreed. |
-| `party_updated` | [`data-governance.md`](./data-governance.md) §Typo correction | Record a party (customer / supplier) field change | Carries old and new value in payload | `TODO(spec, blocks: M<N>)` — What is the full schema for `party_updated`? **Default:** none agreed. |
-| `item_merged` | [`data-governance.md`](./data-governance.md) §Duplicate item merge | Merge a duplicate item into a survivor; rerouting happens at projection time, never by rewriting history | Exactly one event per merge; references both ids; no shadow updates of historical bills | `TODO(spec, blocks: M<N>)` — What is the full schema for `item_merged`? **Default:** none agreed. |
-| `party_merged` | [`data-governance.md`](./data-governance.md) §Duplicate party merge | Same as `item_merged` for parties; survivor outstanding = pre-merge sum-of-outstanding | Same shape as `item_merged` | `TODO(spec, blocks: M<N>)` — What is the full schema for `party_merged`? **Default:** none agreed. |
-| `print_manual_recorded` | [`printer-compatibility.md`](./printer-compatibility.md) §Manual print fallback | Owner marks a bill "printed manually"; audit-only, does **not** modify the sale | Audit-only; low-severity flag if manual marks spike | `TODO(spec, blocks: M<N>)` — What is the full schema for `print_manual_recorded`? **Default:** none agreed. |
-| `shop_timezone_changed` | [`time-clock.md`](./time-clock.md) §Reports use shop timezone | Audit the owner changing the shop timezone; triggers a report-projection re-render | Old + new IANA tz; owner-only | `TODO(spec, blocks: M<N>)` — What is the full schema for `shop_timezone_changed`? **Default:** none agreed. |
+| `party_updated` | [`data-governance.md`](./data-governance.md) §Typo correction | Record a party (customer / supplier) field change | Carries old and new value in payload | Deferred to v2.1 |
+| `item_merged` | [`data-governance.md`](./data-governance.md) §Duplicate item merge | Merge a duplicate item into a survivor; rerouting happens at projection time, never by rewriting history | Exactly one event per merge; references both ids; no shadow updates of historical bills | Deferred to v2.1 |
+| `party_merged` | [`data-governance.md`](./data-governance.md) §Duplicate party merge | Same as `item_merged` for parties; survivor outstanding = pre-merge sum-of-outstanding | Same shape as `item_merged` | Deferred to v2.1 |
+| `print_manual_recorded` | [`printer-compatibility.md`](./printer-compatibility.md) §Manual print fallback | Owner marks a bill "printed manually"; audit-only, does **not** modify the sale | Audit-only; low-severity flag if manual marks spike | Deferred to v2.1 |
 | `overpayment_recorded` | [`concurrency.md`](./concurrency.md) §Open items | Explicit owner-recorded overpayment, distinct from a failed settlement | Owner-only; out of scope for v2.0 unless requested | **Proposed** — deferred, not in v2.0 |
+
+### Party ledger entry
+
+A party enters the ledger implicitly on first use. A sale that names a party creates it. There is no separate `party_created` event. A shopkeeper billing a walk-in who becomes a regular must never have to stop and create a customer first.
 
 Not ledger events:
 
 - `screen_view`, `action_started`, `action_succeeded`, `action_failed` — analytics / telemetry events in [`observability.md`](./observability.md) §Analytics.
 - `print_failed` — bill print-state in [`bill-lifecycle.md`](./bill-lifecycle.md); failed print is `print_attempt` outcome plus `flag_raised`.
-
-`TODO(spec, blocks: M<N>)` — How does a party first enter the ledger: explicit `party_created`, or implicitly on first sale that names it? **Default:** none agreed.
 
 ---
 

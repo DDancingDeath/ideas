@@ -331,6 +331,20 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-09-14_ · **Spec finalization closed.** All fifteen `Default: none agreed`
+  questions are answered and asserted as fact; zero none-agreed, zero malformed
+  and zero ⚠ provisional markers remain. Adopted at the recommended defaults and
+  recorded as [`decisions.md`](./plan/rebuild/decisions.md) rows S1–S19 with
+  status `tentative` — the agent's default, unreviewed — so each is a one-line
+  override. Material changes: `maxRateMultiple` 5→2, offline bill blocks are
+  per-device not per-session (per-session breaks invariant `B5`),
+  `item_rate_changed` and `shop_timezone_changed` frozen into v2.0 with full
+  schemas while four other proposed types defer to v2.1 (24 event types total),
+  a flat `maxDiscountBps` replacing the per-role map, parties entering the ledger
+  implicitly, and the print marker persisted rather than in-memory. 76 TODO(spec)
+  items remain, all milestone-scoped with concrete defaults — questions to confirm
+  at their milestone, not holes.
+
 - _2026-09-14_ · Added a **design-system decision brief**
   ([`plan/rebuild/design-system-decision.md`](./plan/rebuild/design-system-decision.md))
   for step 4 of Happa's build order. Reframes the Fluent-vs-Material question:

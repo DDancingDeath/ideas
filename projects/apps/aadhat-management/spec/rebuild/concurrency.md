@@ -33,6 +33,8 @@ Per [`../../plan/rebuild/decisions.md`](../../plan/rebuild/decisions.md) row M5,
 | Block binding | Pre-issued blocks are bound to `(shopId, deviceId)` and non-overlapping, e.g. 100–149 vs 150–199. |
 | Void | Voided numbers are never reused per [`invariants.md`](./invariants.md) B5. |
 
+Blocks are per device, not per session: two devices sharing one cash session would otherwise allocate colliding numbers, breaking B5. Device-bound blocks cannot collide.
+
 `billId` is a device UUID allocated at intent time; bill number is the printed human identifier.
 
 ## Idempotency keys under concurrency
