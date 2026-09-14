@@ -331,6 +331,17 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-09-14_ · Added a **design-system decision brief**
+  ([`plan/rebuild/design-system-decision.md`](./plan/rebuild/design-system-decision.md))
+  for step 4 of Happa's build order. Reframes the Fluent-vs-Material question:
+  with SvelteKit already frozen (`decisions.md` row 1), neither candidate ships a
+  component library worth using, so either answer means building our own set —
+  which `ui-standards.md` requires anyway. The real question is which language to
+  borrow tokens, metrics and interaction patterns from. Recommends Material 3 for
+  interaction and accessibility metrics (it is what Android and the users' other
+  apps speak, and `ergonomics.md` already cites it for the 48 dp rule), Fluent's
+  discipline for how the token layer is built, and our own components either way.
+
 - _2026-09-14_ · Added the three missing **labor-charge settings** to
   [`spec/rebuild/configuration.md`](./spec/rebuild/configuration.md) —
   `labor.heavyPacketThresholdMg` (30 kg), `labor.ratePerHeavyPacketPaise` (₹6) and
