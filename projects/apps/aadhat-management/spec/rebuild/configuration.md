@@ -45,6 +45,9 @@
 | `shopProfile.items.rateCeilingPaise` | integer paise | `1_000_000_000` (₹1,00,00,000) | owner | [`data-governance.md`](./data-governance.md) |
 | `shopProfile.items.rateFloorPaise` | integer paise | `1` | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
 | `shopProfile.items.rateChangeMinIntervalSec` | integer seconds | `60` | owner | [`data-governance.md`](./data-governance.md) — `rate-flapping` |
+| `shopProfile.labor.heavyPacketThresholdMg` | integer milligrams | `30_000_000` (30 kg) | owner | [`../page-specs/02-billing.md`](../page-specs/02-billing.md) §Labor charges — a packet at or above this weight counts as heavy |
+| `shopProfile.labor.ratePerHeavyPacketPaise` | integer paise | `600` (₹6) | owner | [`../page-specs/02-billing.md`](../page-specs/02-billing.md) §Labor charges — `autoCalculatedLabor = rate × heavyPacketsCount` |
+| `shopProfile.labor.autoCalculateDefault` | boolean | `true` | owner | [`../page-specs/02-billing.md`](../page-specs/02-billing.md) — whether a new purchase bill starts with automatic labor on; always manually overridable |
 | `shopProfile.pricing.maxDiscountPctByRole` | map `role → integer percent` | flat `1000` bps (10%) — **unsettled**, see [open questions](#open-questions) | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
 | `shopProfile.pricing.maxRateMultiple` | decimal multiplier | `5` ⚠ | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
 | `shopProfile.bills.duplicateWindowSec` | integer seconds | `120` | owner | [`suspicion-engine.md`](./suspicion-engine.md) `bill.duplicate.window` |

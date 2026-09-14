@@ -331,6 +331,14 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-09-14_ · Added the three missing **labor-charge settings** to
+  [`spec/rebuild/configuration.md`](./spec/rebuild/configuration.md) —
+  `labor.heavyPacketThresholdMg` (30 kg), `labor.ratePerHeavyPacketPaise` (₹6) and
+  `labor.autoCalculateDefault` (`true`). They are owner-tunable in the live app and
+  feed invariant `M3`, where labor is *deducted* from the supplier's payment, but
+  the registry's 34 keys did not include them even though
+  `scope-boundaries.md:55` names them as in-scope. Gap A7 from the coverage audit.
+
 - _2026-09-14_ · **v1 → v2 feature coverage audit**
   ([`plan/rebuild/v1-coverage-audit.md`](./plan/rebuild/v1-coverage-audit.md)).
   Read all 93 files / ~29 000 lines of the live app against the spec. Split by the
