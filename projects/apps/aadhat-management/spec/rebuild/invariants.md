@@ -62,11 +62,13 @@ not drift independently.
 
 | # | Invariant | How checked |
 |---|---|---|
-| C1 | Expected closing cash = opening count + Σ(cash inflows in session) − Σ(cash outflows in session). | Domain rule |
-| C2 | Mismatch = closing count − expected closing. Any non-zero mismatch above `shopProfile.cash.mismatchTolerance` raises a flag. | Suspicion engine |
+| C1 | Expected closing cash = opening count + Σ signed cash entries in the session. Cash entries include cash legs of sales, purchases, expenses, withdrawals, outstanding payments, and `cash_deposit_recorded` as an outflow. Online legs never affect drawer cash. | Domain rule at close; replay test |
+| C2 | Mismatch = closing count − expected closing. If `abs(mismatch) <= shopProfile.cash.mismatchTolerance`, record it on `cash_session_closed` and raise no flag. If above tolerance and `<= shopProfile.cash.mismatchLarge`, raise `cash.mismatch.above-tolerance` (`medium`). If above `mismatchLarge`, raise `cash.mismatch.large` (`high`). | Suspicion engine in the same append transaction as close |
 | C3 | A new session cannot be opened while another is open for the same shop. | Service contract |
-| C4 | A session cannot be closed without a closing count (no implicit zero). | Service contract |
+| C4 | A session cannot be closed without a mandatory counted cash figure (`closingCount`); implicit expected, zero, or blank closes are rejected. | Service contract + schema validation |
 | C5 | Cash on hand displayed anywhere matches the projection from cash events. No screen calculates it locally. | Invariant test |
+| C6 | Opening and closing notes, when supplied, are carried only on `cash_session_opened.openingNote` and `cash_session_closed.closingNote`; events remain immutable and notes are not edited in place. | Schema validation + audit-log immutability |
+| C7 | A cash deposit is money leaving the drawer inside an open session. It must be recorded as `cash_deposit_recorded.amount > 0` and folded into expected cash as an outflow. | Schema validation + cash projection replay |
 
 ## Bill lifecycle
 

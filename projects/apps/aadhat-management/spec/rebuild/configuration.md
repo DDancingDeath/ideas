@@ -34,8 +34,8 @@
 | `shopProfile.time.maxFutureMin` | integer minutes | `60` | owner | [`time-clock.md`](./time-clock.md) — reject events claiming the future |
 | `shopProfile.time.maxSyncDelayMin` | integer minutes | `1440` (24 h) | owner | [`time-clock.md`](./time-clock.md) |
 | `shopProfile.time.backdateToleranceDays` | integer days | `1` (today + yesterday) | owner | [`invariants.md`](./invariants.md), [`time-clock.md`](./time-clock.md) |
-| `shopProfile.cash.mismatchTolerance` | integer paise | `5000` (₹50) | owner | [`invariants.md`](./invariants.md) C2, [`suspicion-engine.md`](./suspicion-engine.md) |
-| `shopProfile.cash.mismatchLarge` | integer paise | `20000` (₹200) | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
+| `shopProfile.cash.mismatchTolerance` | integer paise | `5000` (₹50) | owner | [`invariants.md`](./invariants.md) C2, [`suspicion-engine.md`](./suspicion-engine.md), [`../page-specs/16-cash-management.md`](../page-specs/16-cash-management.md) |
+| `shopProfile.cash.mismatchLarge` | integer paise | `20000` (₹200) | owner | [`invariants.md`](./invariants.md) C2, [`suspicion-engine.md`](./suspicion-engine.md), [`../page-specs/16-cash-management.md`](../page-specs/16-cash-management.md) |
 | `shopProfile.cash.maxSessionHours` | integer hours | `14` | owner | [`suspicion-engine.md`](./suspicion-engine.md) |
 | `shopProfile.stock.negativeBlockMg` | integer milligrams | `5_000_000` (5 kg) | owner | [`suspicion-engine.md`](./suspicion-engine.md) `stock.negative.large` |
 | `shopProfile.stock.adjustmentLargeMg` | integer milligrams | `20_000_000` (20 kg) | owner | [`suspicion-engine.md`](./suspicion-engine.md), [`event-schemas.md`](./event-schemas.md) |

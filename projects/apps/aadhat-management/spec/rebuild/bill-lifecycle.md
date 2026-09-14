@@ -64,8 +64,9 @@ print state is not a property of the sale.
 
 On **Save / Create**, before the sale event is appended, the
 cashier-facing suspicion rules run as a client-side **advisory
-pre-check** (rate sanity, discount, zero-rate, stock-negative). If a
-line trips one, an inline confirm appears — *"…rate is unusually low;
+pre-check** (rate sanity, discount, zero-rate, and — for stock-moving
+wholesale sales only — stock-negative). If a line trips one, an inline
+confirm appears — *"…rate is unusually low;
 Fix or Save anyway?"* — and **Save anyway proceeds and records the
 flag**, never skips it (a `block` rule refuses the save, with an
 owner-approval override). The server re-runs the engine and appends
@@ -128,6 +129,12 @@ and where a flag surfaces.
 - The form autosaves locally (IndexedDB or equivalent) on a debounce
   and on every focus-out. The draft carries the same `clientActionId`
   as the eventual save.
+- While in `draft`, item lines may be edited or removed. Editing a
+  line means changing the item, rate, unit, or bag-weight list before
+  the sale event exists.
+- Every draft line edit/delete re-runs domain validation and recomputes
+  totals from the current lines. It never patches a stored or displayed
+  total directly.
 - Drafts are local-device only by default. They are not synced to
   the server, so closing the tab on one device does not leave a
   draft visible on another.
@@ -144,9 +151,14 @@ and where a flag surfaces.
 
 ## Correction (instead of edit)
 
+- Draft line editing and post-save correction are different mechanisms.
+  Draft editing changes only local draft state before any sale event is
+  appended.
 - An edit to a saved bill is forbidden as a direct mutation. It is
   expressed as a `bill_correction_recorded` event whose payload is
   the corrected bill, referencing the original `billId`.
+- A saved bill is immutable; deleting or changing a saved line is a
+  correction or a void, never an in-place line edit.
 - Projections always use the latest correction in the chain.
 - The print queue treats a correction as a new printable artifact;
   the previous print remains in the audit trail.

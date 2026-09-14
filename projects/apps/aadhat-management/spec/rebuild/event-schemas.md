@@ -70,6 +70,11 @@ interface BillLine {
 }
 ```
 
+For bill payloads, `comments` are stored bill text. `printComments`
+controls only whether those comments render on the printed slip; omitted
+means `false`, and v2 writers store the boolean explicitly so reprints are
+identical to the original print.
+
 ## Types
 
 ### `item_created`
@@ -144,6 +149,8 @@ payload: {
   laborCharges: Paise;                 // see M3 — deducted from grandTotal
   payment: Payment;
   grandTotal: Paise;                   // = Σlines.itemTotal − laborCharges
+  comments?: string;                   // stored bill comments
+  printComments?: boolean;             // absent/default false; v2 writers store explicitly for reprints
 }
 ```
 Validation: `lines.length >= 1`; each `BillLine.weights.length >= 1`; `grandTotal == Σlines.itemTotal − laborCharges` (M3); `payment.online + payment.cash + payment.due == grandTotal` (M1); `billNumber` positive and counter-produced. Invariants: M1, M3, M4, B1, B5, S4 (rate update), T1, T2 (if backdated). Idempotency key: `bill.create:{idempotencyKey supplied by client form}`.
@@ -160,6 +167,8 @@ payload: {
   payment: Payment;
   grandTotal: Paise;                   // = Σlines.itemTotal (M2, no labor)
   totalDiscountPaise?: Paise;
+  comments?: string;                   // stored bill comments
+  printComments?: boolean;             // absent/default false; v2 writers store explicitly for reprints
 }
 ```
 Validation: `grandTotal == Σlines.itemTotal − Σlines.discountPaise` (M2 + line discounts); `payment.online + payment.cash + payment.due == grandTotal` (M1); discounts within role limit (else `price.discount.*`). Invariants: M1, M2, M4, B1, B5. Retail does **not** touch stock (S3). Idempotency key: `bill.create:{clientActionId}`.
@@ -175,6 +184,8 @@ payload: {
   lines: BillLine[];
   payment: Payment;
   grandTotal: Paise;
+  comments?: string;                   // stored bill comments
+  printComments?: boolean;             // absent/default false; v2 writers store explicitly for reprints
 }
 ```
 Validation: same money rules as retail; `party.partyId` required. Invariants: M1, M2, M4, B1, B5, S1, S2 (if pushes < 0). Idempotency key: `bill.create:{clientActionId}`.
@@ -264,24 +275,42 @@ Idempotency key: `settle.out:{clientActionId}`.
 
 ### `cash_session_opened`
 ```ts
-payload: { sessionId: string; openingCount: Paise; openedAt: IsoTimestamp }
+payload: {
+  sessionId: string;
+  openingCount: Paise;
+  openingNote?: string;
+  openedAt: IsoTimestamp;
+}
 ```
-Validation: `openingCount >= 0`; reject if a session is already open for the same shop (C3). Idempotency key: `cash.open:{clientActionId}`.
+Validation: `openingCount >= 0`; `openingNote`, if present, is stored as typed and may be empty only if omitted; reject if a session is already open for the same shop (C3). Invariants: C3, C6. Idempotency key: `cash.open:{clientActionId}`.
+
+
+### `cash_deposit_recorded`
+```ts
+payload: {
+  sessionId: string;
+  amount: Paise;
+  note?: string;
+  depositedAt: IsoTimestamp;
+}
+references: [{ type: 'caused-by', eventId: <cash_session_opened event> }]
+```
+Validation: referenced session exists, is still open, and belongs to the same `shopId`; `amount > 0`; `note`, if present, is stored as typed; envelope `by` records who removed/recorded the deposit and envelope `at` is the authoritative write time. Projection effect: cash outflow from the drawer, `activity -= amount`; online balances are unaffected. Invariants: C1, C5, C7. Idempotency key: `cash.deposit:{sessionId}:{clientActionId}`.
 
 
 ### `cash_session_closed`
 ```ts
 payload: {
   sessionId: string;
-  closingCount: Paise;
-  expectedClosing: Paise;
+  closingCount: Paise;                 // physically counted drawer cash
+  expectedClosing: Paise;              // openingCount + Σ signed cash entries
   mismatch: number;                    // closingCount − expectedClosing (signed)
-  mismatchReason?: string;
+  closingNote?: string;
   closedAt: IsoTimestamp;
 }
 references: [{ type: 'caused-by', eventId: <cash_session_opened event> }]
 ```
-Validation: `closingCount >= 0`; `expectedClosing` matches domain computation (C1); `mismatch == closingCount − expectedClosing`; if `|mismatch| > shopProfile.cash.mismatchTolerance`, raise `cash.mismatch.above-tolerance` or `.large` with mandatory `mismatchReason` (configurable). Invariants: C1, C2, C4. Idempotency key: `cash.close:{sessionId}`.
+Validation: referenced session exists, is still open, and belongs to the same `shopId`; `closingCount >= 0` and is mandatory; `expectedClosing` matches domain computation from the open session and cash legs only (C1); `mismatch == closingCount − expectedClosing`; `closingNote`, if present, is stored as typed. If `abs(mismatch) <= shopProfile.cash.mismatchTolerance`, record the mismatch and raise no flag. If `abs(mismatch) > shopProfile.cash.mismatchTolerance` and `<= shopProfile.cash.mismatchLarge`, close the session and raise `flag_raised(ruleId: 'cash.mismatch.above-tolerance', severity: 'medium')` referencing this close event. If `abs(mismatch) > shopProfile.cash.mismatchLarge`, close the session and raise `flag_raised(ruleId: 'cash.mismatch.large', severity: 'high')` referencing this close event. A mismatch never blocks close and is never silently absorbed. Invariants: C1, C2, C4, C5, C6. Idempotency key: `cash.close:{sessionId}`.
 
 
 ### `print_attempt`
@@ -398,7 +427,7 @@ Validation: owner principal only; `oldTimezone` and `newTimezone` are valid IANA
 
 ## Referenced events deferred from v2.0
 
-The 24 types above have frozen payload schemas and are the v2.0 canonical event set accepted by the storage adapter.
+The 25 types above have frozen payload schemas and are the v2.0 canonical event set accepted by the storage adapter.
 
 ### Deferred to v2.1
 

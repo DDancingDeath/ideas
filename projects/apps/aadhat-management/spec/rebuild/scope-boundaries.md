@@ -117,20 +117,37 @@ auto-save, derived stock + adjustments, item master, cash sessions,
 outstanding, expenses + withdrawals, reports, finance, analytics,
 today, Bluetooth printing, admin / settings, diagnostics + audit,
 offline / PWA, the notification contract, WhatsApp share, and data
-export (see `data-governance.md` §Export). Four v1 features were
-present in the v1 inventory (`../capabilities.md`) but had **no
-bucket here**. They are recorded below with a recommended bucket.
+export (see `data-governance.md` §Export). Four v1 features had **no
+bucket here**. They are now placed.
 
-- `TODO(spec, blocks: M<N>)` — Should the owner confirm each recommended v1 parity bucket below? **Default:** use the recommended bucket until the owner confirms.
+**Frequency-sorted item dropdown / "most-used" badges — Core.**
+v1 orders the billing item list by usage with a 90-day half-life
+decay, and that ordering is what makes a bill fast to key. Billing is
+a screen that works today; removing the ordering would make every
+bill cost more taps. The `itemFrequency` collection already survives
+in v2 (`firestore-rules-design.md` §4.8). The sort/score behaviour
+must be written into the billing and items contracts.
 
-- `TODO(spec, blocks: M5)` — Is Frequency-sorted item dropdown / "most-used" badges Core or Configurable? **Default:** Core (a billing-speed feature; the data plumbing is already kept).
-  v1 `itemFrequency` uses a 90-day half-life decay. The `itemFrequency` collection already survives in v2 (`firestore-rules-design.md` §4.8), but the dropdown-sort / most-used behaviour is unspecified. Needs the sort/score behaviour written into the billing/items rebuild contract.
-- `TODO(spec, blocks: M2)` — Is Bulk item import + item-master export (Excel / CSV) Core or Configurable? **Default:** Configurable; add an "Item master (CSV)" export row to §Export and an owner-only bulk-import tool that runs every row through the normal `item_created` / `item_updated` validation gates.
-  v1 SheetJS `xlsx` exports the catalog and imports to replace it. v2 `data-governance.md` §Export covers bills / stock / outstanding / reports / audit / ledger export but **not** an item-master export row, and there is no ongoing bulk-import tool (the one-time v1→v2 item import lives in `migration-cutover.md`, not a reusable feature).
-- `TODO(spec, blocks: M9)` — Is Custom finance accounts Core or Configurable? **Default:** Configurable, off by default (owner-only manual net-worth adjustment line items, audited like any other config).
-  v1 `customFinanceAccounts` are owner-defined asset / liability accounts that feed the Assets / net-worth view. Not modelled in the rebuild Finance / analytics spec.
-- `TODO(spec, blocks: M5)` — Is Native contact picker Core or Configurable? **Default:** Configurable, Android-only, off by default (a typing shortcut, not a data-integrity feature).
-  v1 used the Capacitor Contacts API to fill the customer / supplier name on billing forms. Not in `platform-compatibility.md` (which lists WhatsApp share and file export as native capabilities, but not Contacts).
+**Bulk item import + item-master export (CSV) — Configurable.**
+The owner's catalogue lives in a spreadsheet, so round-tripping it is
+not optional in practice. Adds an "Item master (CSV)" row to §Export
+and an owner-only bulk-import tool that runs every row through the
+normal `item_created` / `item_updated` validation gates — import is
+never a back door around validation. CSV rather than `xlsx`: it opens
+in Excel and Sheets and needs no dependency.
+
+**Custom finance accounts — Configurable, off by default.**
+Owner-defined asset / liability lines feeding the net-worth view,
+audited like any other configuration. v1 stores these in
+`localStorage`, which is not a model; v2 needs a real one. This is
+tied to the Finance redesign — Finance is one of the four pages being
+redesigned rather than carried over, so the shape of these accounts
+follows that decision rather than preceding it.
+
+**Native contact picker — Configurable, Android-only, off by default.**
+A typing shortcut for the customer / supplier name, not a
+data-integrity feature. Autocomplete from prior bills covers the
+common case without a permission prompt.
 
 Deliberate v2 simplifications that look like gaps but are **not** —
 do not re-add them:

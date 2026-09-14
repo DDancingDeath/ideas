@@ -24,7 +24,8 @@ existing bills (enforced by `firestore.rules`).
    total, optional manual labor charge.
 4. **Bill-level fields**: heavy-weight toggle (auto-calculates labor
    based on packets), labor charges (overridable), grand total, payment
-   split (cash / online / due).
+   split (cash / online / due), free-text comments, and **Print
+   comments** toggle. The toggle defaults off for each new bill.
 5. **Bottom action row**: WhatsApp share / Save / Print.
    Print uses Bluetooth ESC/POS via Cordova plugin (Android only).
 
@@ -33,10 +34,12 @@ existing bills (enforced by `firestore.rules`).
 |---|---|---|
 | Switch mode | Re-renders form for purchase vs sale | — |
 | Add row | Appends a new item line | — |
+| Edit row | While draft only: change item, rate, or bag weights; validation and totals re-run from the lines | — |
+| Delete row | While draft only: removes the item line; validation and totals re-run from the remaining lines | — |
 | Save | Validates → writes bill + updates stock + updates outstanding | `purchases/` or `retailSales/`, `stock/`, autosave clear |
 | Autosave (debounced) | Saves draft so a crash doesn't lose work | `autoSaves/{uid}_{mode}` |
 | Save as draft | Manual save without finalizing | `drafts/` |
-| Print | Sends ESC/POS to paired BT printer | — |
+| Print | Sends ESC/POS to paired BT printer; includes comments only when the bill's Print comments flag is on | — |
 | WhatsApp share | Opens system share sheet with rendered text | — |
 | Pay-Online / Pay-Cash / All-Due quick buttons | Sets that field to `grandTotal`, others to 0 | — |
 | 🎤 Voice (per section) | Tap-to-talk: dictate item, weight, rate; auto-fills the form | — |
@@ -119,6 +122,13 @@ When the **Pay Online** quick button is clicked: `online = grandTotal,
 cash = 0, due = 0`. **Pay Cash** and **All Due** are symmetric.
 Source: `purchase.js:419-435`, `retail-sale.js:399-414`.
 
+### Comments and print comments
+A bill may store free-text comments. The **Print comments** toggle is
+separate: comments are stored with the bill either way, but appear on the
+printed slip only when the toggle is on. The toggle defaults off for a new
+bill and is saved with the bill, so every reprint renders comments the
+same way as the original print.
+
 ### Bill numbering
 On Save, a Firestore **transaction** runs on `counters/{date}_{type}`
 (e.g. `counters/2026-05-09_purchase`):
@@ -130,15 +140,23 @@ bill.number = nextNumber
 Atomic — no `count + 1` race. Reverted bills do not roll back the counter
 (numbers are strictly increasing per day per type).
 
-### Stock impact (purchase only)
+### Stock impact and oversell
 On a purchase save, for each row:
 ```
 stock[itemKey].quantity  += qty
 stock[itemKey].rate       = movingAvg of (oldRate, rate)   // weighted by qty
 ```
 On retail sale: no stock impact (retail is from over-the-counter
-inventory not tracked here). Wholesale sales DO touch stock — see
-`03-wholesale-sales.md`.
+inventory not tracked here). Retail therefore has no oversell case under
+S3. Wholesale sales DO touch stock — see `03-wholesale-sales.md`.
+
+If a wholesale sale would push computed stock below zero by at most
+`shopProfile.stock.negativeBlockMg` (default `5_000_000` mg), Save shows
+a confirmation naming the actual available and requested quantities from
+the domain calculation. Explicit confirmation allows the save and raises
+`stock.negative`. If the projected stock would be below
+`−shopProfile.stock.negativeBlockMg`, Save is blocked by
+`stock.negative.large`.
 
 ## Data sources
 - `AppState.items` for item autocomplete.
@@ -146,6 +164,9 @@ inventory not tracked here). Wholesale sales DO touch stock — see
 - `AppState.settings` for default labor rate, heavy-weight default.
 
 ## Must NOT do
+- Must not patch totals directly when a draft line is edited or deleted;
+  rebuild validation and totals from the current line set through the
+  domain service.
 - **Must NOT generate bill numbers via `count + 1`.** Use the daily
   counter transaction (already fixed; see REVIEW_ISSUES Section H).
 - Must not allow saving when payment split doesn't equal grand total.

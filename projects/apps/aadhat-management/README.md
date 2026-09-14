@@ -331,6 +331,17 @@ aadhat-management/
 
 ## Recent changes
 
+- _2026-09-14_ · **Closed the v1 parity gaps that were blocking UI design.**
+  Specified drawer reconciliation (counted cash, signed mismatch, tolerance bands,
+  Review-Queue resolution — the spec previously defined only the *expected*
+  closing figure, so the screen meant to catch a drawer mismatch could not be
+  drawn), plus cash deposits, session notes, session-history detail, oversell
+  confirmation (wholesale-only; retail has no oversell case under `S3`), the
+  print-comments flag, and draft line edit/delete. Placed the four unbucketed v1
+  features — frequency-sorted item dropdown to **Core**, since billing works today
+  and the ordering is what makes it fast. Orphan stock buckets needed nothing:
+  already designed out by the entity-by-id rule.
+
 - _2026-09-14_ · **Spec finalization closed.** All fifteen `Default: none agreed`
   questions are answered and asserted as fact; zero none-agreed, zero malformed
   and zero ⚠ provisional markers remain. Adopted at the recommended defaults and
