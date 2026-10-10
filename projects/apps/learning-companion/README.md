@@ -72,6 +72,8 @@ suggested stack as permission to select technologies silently.
 
 ## Reading order for an agent
 
+0. *(Optional quick overview)* [one-pager.md](./one-pager.md) — one-page spec
+   summary with architecture diagrams; the spec wins on conflict.
 1. [idea.md](./idea.md) — problem, users, goals and non-goals.
 2. [spec/README.md](./spec/README.md) — normative reading order, vocabulary,
    configuration and blocking decisions.
@@ -94,6 +96,7 @@ learning-companion/
 
 ## Recent changes
 
+- _2026-10-11_ · Added one-page spec + architecture diagrams summary.
 - _2026-10-11_ · Fidelity pass against supplied source: restored dropped/weakened
   items, resolved proposal-vs-requirement status, recorded source-type decision,
   structural cleanup.
