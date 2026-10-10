@@ -2,10 +2,20 @@
 
 ## Status
 
-**Early-stage idea capture.** No code. No chosen mobile framework, no
-chosen storage model, no chosen Indian-fee data source.
+**v1 planning complete.** Idea-of-record stays here; full v1 plan and
+ongoing build live in the build repo
+[`DDancingDeath/parenting-companion`](https://github.com/DDancingDeath/parenting-companion).
 
-## Next steps
+See that repo's `docs/v1-plan.md` for milestones, `docs/work-items.md`
+for parallel tickets, `docs/orchestration.md` for the multi-agent build
+model, and `docs/knowledge-base.md` for the source-of-truth bibliography
+that backs every shipped claim.
+
+The "Next steps" list below was the original capture order; almost all
+of these items are now resolved decisions (ADR-001..015 in the build
+repo). Retained here as the historical trace.
+
+## Original next-steps capture
 
 1. **Audit nearby commercial apps** — Huckleberry, BabyCenter, Glow
    Baby, Nanit, Mission Indradhanush, Cube Wealth / ET Money. Confirm
@@ -67,4 +77,32 @@ chosen storage model, no chosen Indian-fee data source.
 
 ## Decision log
 
-(empty — no decisions made yet)
+> Full ADR-style entries live in the build repo's `docs/decisions.md`
+> (ADR-001 through ADR-015). High-level summary here:
+
+- **2026-07-26 · v1 platform + scope frozen.** Flutter + Riverpod +
+  `sqflite_sqlcipher` + `fl_chart` + `flutter_local_notifications`.
+  Local-first, no cloud, no AI in v1. Bundled WHO + IAP growth tables
+  (IAP default for Indian context). Bundled IAP / Mission Indradhanush
+  vaccination schedule. Bundled curated Indian fee dataset with
+  `effective_date` banner. Single-parent + single-child experience but
+  `children[]`-ready schema. English + Hindi at v1.0 (English-only as
+  the de-scope lever). Tone bar enforced by manual review +
+  banned-words ARB analyzer.
+- **2026-07-26 · Multi-agent orchestration layer adopted.** Nine roles
+  (engineer, content curator, knowledge curator, QA, tone reviewer,
+  architect, integration, release, orchestrator). Hub-spoke topology
+  over GitHub Issues + PRs. Interface-first: every cross-module
+  boundary frozen as Dart abstract class + Fakes before consumers
+  start. Integration Engineer is the only merger; 3-revision rule
+  before re-route.
+- **2026-07-26 · Knowledge base layer adopted.** Two-layer model:
+  source corpus (`kb/`, curation-time only) → curated artifacts
+  (`assets/`, shipped). Every shipped claim carries `sources: [...]`
+  resolving in `kb/sources.yaml` (~30 vetted sources across 4 trust
+  tiers from WHO/IAP/AAP/Indian-govt down to vetted blogs).
+  CI validator `tools/validate_citations.dart` hard-fails on missing
+  or unknown source IDs. Hard exclusions: anti-vaccine, pseudoscience,
+  uncredentialed influencers, AI content farms. Paraphrase + cite, never
+  reproduce. v2 RAG (deferred) indexes only paraphrased curator notes,
+  never original sources.
