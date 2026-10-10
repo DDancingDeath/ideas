@@ -8,6 +8,7 @@ My strongest recommendation is to build a modular monolith with clearly separate
 
 You can keep the codebase simple while separating the curriculum, planning, teaching, assessment and learner-profile logic. That makes it easier to evolve the product without making every feature dependent on the same AI prompt.
 
+These modules can initially live in one deployable backend. Split them into independent services only when scale or team boundaries justify it. The modules are defined in [the domain contract](../spec/system.md#core-modules).
 ## 5.2 Recommended technology stack
 
 The following is a proposed stack, not a requirement to use every technology immediately.

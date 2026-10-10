@@ -7,7 +7,7 @@ Build only when explicitly requested. Generate the application in a separate dir
 1. Read [the idea](../idea.md).
 2. Read every document in the [spec reading order](../spec/README.md).
 3. Read the [plan](../plan/README.md), including the scope, known gaps and proposed architecture.
-4. Resolve the blocking [open decisions](../spec/README.md#open-decisions); do not silently choose a stack, threshold, consent flow or contract.
+4. Resolve the blocking [open decisions](../spec/README.md#open-decisions). For each one, use the owner's decision if it is recorded; otherwise apply the documented **Default** and state explicitly in your output that you did so. Never silently choose a stack, threshold, consent flow or contract.
 5. Use [the starter tutor instruction](./tutor-system.md) only after its action schema has been validated.
 
 Create a README in the generated application linking back to this idea. Deliver the following supplied brief in reviewable stages rather than building every roadmap phase at once.
@@ -18,7 +18,7 @@ The following is a starter project brief you can paste into a coding agent. It s
 
 ## Implementation brief
 
-Copy the brief below into your coding agent. Ask it to produce the architecture, data model and working MVP in stages.
+The brief below is the prompt to give the coding agent. Ask it to produce the architecture, data model and working MVP in stages.
 
 ### Role
 

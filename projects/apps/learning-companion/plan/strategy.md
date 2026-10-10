@@ -6,23 +6,11 @@ Imported research and opinions supplied with the idea; original research date is
 
 My assessment: high-potential product, technically ambitious, and worth validating through a focused prototype. The vision is compelling, but the competitive advantage will come from how well the product combines its capabilities, not from AI tutoring alone.
 
-Curriculum-aware learning
-
-Strong product foundation
-
-A defined syllabus, measurable learning outcomes, a completion deadline, and continuous progress tracking turn an open-ended chatbot into a system with a clear purpose.
-
-Personalized teaching
-
-Major opportunity
-
-Learning from a child's actual responses and switching between explanations, diagrams, stories, worked examples, and exercises can make the experience substantially more useful.
-
-Discovering interests and strengths
-
-Long-term differentiation
-
-A longitudinal record of what a child enjoys, understands, explores voluntarily, and persists at could help inform future subject choices. This is a hypothesis to validate, not a capability to promise from day one.
+| Capability | Assessment | Why |
+| --- | --- | --- |
+| Curriculum-aware learning | Strong product foundation | A defined syllabus, measurable learning outcomes, a completion deadline, and continuous progress tracking turn an open-ended chatbot into a system with a clear purpose. |
+| Personalized teaching | Major opportunity | Learning from a child's actual responses and switching between explanations, diagrams, stories, worked examples, and exercises can make the experience substantially more useful. |
+| Discovering interests and strengths | Long-term differentiation | A longitudinal record of what a child enjoys, understands, explores voluntarily, and persists at could help inform future subject choices. This is a hypothesis to validate, not a capability to promise from day one. |
 
 ### The most important product insight
 
@@ -68,10 +56,10 @@ links; no hands-on comparison or fresh feature verification was performed.
 | Product / supplied reference | Supplied description | Overlap | Opportunity to investigate |
 | --- | --- | --- | --- |
 | [Khanmigo / Khan Academy](https://www.khanacademy.org) | Guides learners through problems rather than handing over answers; parent offering includes child accounts, conversation history, safety alerts and learning-support tools | Conversational tutoring, guided reasoning, parental visibility | Deadline-aware whole-syllabus journey and long-term interest discovery |
-| [Embibe](https://www.embibe.com) | Indian curriculum-linked content, 3D learning, question banks, tests, knowledge-gap analysis and personalized study journeys | Significant curriculum tracking, personalization, visuals and assessment | Continuously adapting child-centered companion rather than separate tutoring, preparation and analytics features |
+| [Embibe](https://www.embibe.com) | Indian curriculum-linked content, 3D learning, question banks, tests, knowledge-gap analysis and personalized study journeys | Very significant, particularly curriculum tracking, personalization, 3D visuals and assessment | Continuously adapting child-centered companion rather than separate tutoring, preparation and analytics features |
 | [DreamBox Learning](https://dreamboxlearning.zendesk.com) | Adapts difficulty, scaffolding and pacing to interactions and problem-solving approaches | Adaptive learning engine | Adapt across teaching styles, curriculum planning, subjects and parent-guided development |
 | [IXL](https://www.ixl.com) | Diagnostics of current proficiency with continuously updated recommended next steps | Demonstrated ability and next-activity selection | More conversational, visual, exploratory and responsive learning interactions |
-| [Doubtnut](https://www.doubtnut.com) | Image-based question solving and video explanations for school and competitive-exam subjects | Resolving academic doubts | Proactive teaching and assessment to prevent gaps rather than waiting for student questions |
+| [Doubtnut](https://www.doubtnut.com) | Has offered image-based question solving and video explanations for school and competitive-exam subjects | Resolving academic doubts | Proactive teaching and assessment to prevent gaps rather than waiting for student questions |
 
 Additional supplied reference links, retained for provenance rather than
 product decisions:
@@ -98,29 +86,12 @@ My assessment is that this is a high-complexity product overall, but a manageabl
 
 The important thing is to distinguish building an AI-powered educational app from building a system that demonstrably improves learning.
 
-Basic AI tutor
-
-Explain a topic, answer questions and generate quizzes.
-
-Low–medium
-
-Curriculum and study planner
-
-Represent the syllabus, track coverage and build a realistic schedule.
-
-Medium
-
-Adaptive learning engine
-
-Infer knowledge gaps, choose teaching strategies and verify independent mastery.
-
-High
-
-Full learning companion
-
-Combine curriculum, adaptation, multimedia, safety, parent insights and long-term learner development.
-
-Very high
+| Scope | What it involves | Complexity |
+| --- | --- | --- |
+| Basic AI tutor | Explain a topic, answer questions and generate quizzes. | Low–medium |
+| Curriculum and study planner | Represent the syllabus, track coverage and build a realistic schedule. | Medium |
+| Adaptive learning engine | Infer knowledge gaps, choose teaching strategies and verify independent mastery. | High |
+| Full learning companion | Combine curriculum, adaptation, multimedia, safety, parent insights and long-term learner development. | Very high |
 
 These are qualitative planning estimates, not measured engineering benchmarks.
 

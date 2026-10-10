@@ -94,6 +94,9 @@ learning-companion/
 
 ## Recent changes
 
+- _2026-10-11_ · Fidelity pass against supplied source: restored dropped/weakened
+  items, resolved proposal-vs-requirement status, recorded source-type decision,
+  structural cleanup.
 - _2026-10-10_ · Imported the complete supplied Learning Companion design into
   canonical specs, plans and prompts; indexed the idea and separated unverified
   research, implementation proposals and open decisions from product promises.

@@ -61,41 +61,15 @@ It must not silently skip essential concepts and report the syllabus as complete
 
 ### Example schedule
 
-## Week 1
+Illustrative Week 1 schedule for a learner studying fractions (5 sessions):
 
-Illustrative schedule for a learner studying fractions
-
-5 sessions
-
-Mon
-
-Understand fractions
-
-New learning
-
-Tue
-
-Visual models and number lines
-
-New learning
-
-Wed
-
-Equivalent fractions
-
-New learning
-
-Thu
-
-Guided and independent practice
-
-Practice
-
-Fri
-
-Mixed quiz and error review
-
-Assessment
+| Day | Focus | Activity type |
+| --- | --- | --- |
+| Mon | Understand fractions | New learning |
+| Tue | Visual models and number lines | New learning |
+| Wed | Equivalent fractions | New learning |
+| Thu | Guided and independent practice | Practice |
+| Fri | Mixed quiz and error review | Assessment |
 
 The schedule is a plan, not a rigid promise. If the child masters equivalent fractions quickly, the next session can move forward. If the child struggles with the prerequisite, the system can spend more time on visual models.
 

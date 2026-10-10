@@ -5,6 +5,12 @@ teaching, assessment, revision and planning to help a child learn with retention
 and curiosity. Parents manage goals and permissions; content administrators
 approve learning material. See [the idea](../idea.md) for goals and non-goals.
 
+Source §4 (the supplied proposed detailed product requirements) is adopted as
+the product contract for this idea: its recommended behaviours are requirements
+in this spec. Numeric starting assumptions, launch-audience scope and
+technology/stack choices remain proposals in [`plan/`](../plan/README.md),
+pending the [open decisions](#open-decisions) below.
+
 ## Reading order
 
 1. This file — vocabulary, configuration and blocking decisions.
@@ -43,17 +49,20 @@ approve learning material. See [the idea](../idea.md) for goals and non-goals.
 ## Configuration registry
 
 The source does not finalize operational thresholds or contract registries.
-These settings require a decision, not an invented fallback. Supplied numerical
-starting assumptions have one home in [design notes](../plan/design-notes.md#tunable-starting-assumptions).
+Settings marked **required — no default** require a decision, not an invented
+fallback. Settings marked **proposed starting value** have a supplied starting
+assumption whose one home is [design notes](../plan/design-notes.md#tunable-starting-assumptions);
+it is pending approval and must not be treated as a validated optimum.
 Names below are documentation identifiers, not agreed API/config key names.
 
 | Setting | Scope / unit | Default status | Owner / use |
 | --- | --- | --- | --- |
 | Progression evidence criteria | Per objective / question blueprint | required — no default | Assessment service; independent demonstration and delayed retention |
 | Confidence and human-review criteria | Diagnostic, grading, insights | required — no default | Assessment / learner profile services |
-| Session duration and daily limit | Learner / minutes | required — no default | Parent-configured availability and natural stopping points |
-| Unresolved-difficulty replanning trigger | Consecutive sessions | required — no default | Planning service |
-| Revision intervals | Objective / elapsed time | required — no default | Assessment and planning services |
+| Session duration | Learner / minutes | proposed starting value — see [design notes](../plan/design-notes.md#tunable-starting-assumptions); pending approval | Adjustable sessions with natural stopping points |
+| Daily limit | Learner / minutes | required — no default | Parent-configured availability |
+| Unresolved-difficulty replanning trigger | Consecutive sessions | proposed starting value — see [design notes](../plan/design-notes.md#tunable-starting-assumptions); pending approval | Planning service |
+| Revision intervals | Objective / elapsed time | proposed starting value — see [design notes](../plan/design-notes.md#tunable-starting-assumptions); pending approval | Assessment and planning services |
 | Tutor action / visualization registry | Allowed actions, parameters, ranges | required — no default | Session orchestrator and supported client components |
 | Consent, retention and deletion policy | Data category / jurisdiction / time | required — no default | Family controls and safety service |
 | Offline synchronization policy | Supported events and conflict handling | required — no default | Durable learning events and session recovery |
@@ -67,6 +76,11 @@ no safe value, the recommended default is to require an explicit decision.
 - TODO(spec, blocks: M1) — Which launch board, grade range, subject and lesson
   set are approved? **Default:** validate the narrow audience and curated
   mathematics proposal in [design notes](../plan/design-notes.md#initial-audience-and-expansion).
+- TODO(spec, blocks: M1) — Which source types must the first release ingest
+  (source §4.5 lists six [source types](./learner-and-curriculum.md#supported-source-types)
+  “for an initial release”; roadmap M1 uses a curated curriculum)?
+  **Default:** curated content and parent-provided learning objectives at M1;
+  PDFs/scans with automated document ingestion at M4.
 - TODO(spec, blocks: M1) — Which client/backend/provider/deployment stack is
   selected? **Default:** select one client and one backend from the
   [architecture alternatives](../plan/architecture.md); do not combine every option.
@@ -86,9 +100,10 @@ no safe value, the recommended default is to require an explicit decision.
   offline, and how are retry, deduplication and sync conflicts resolved?
   **Default:** cache the current lesson, safely queue supported events and
   preserve confirmed progress; explicitly approve sync semantics.
-- TODO(spec, blocks: M2) — Which replanning and revision settings are approved?
-  **Default:** validate the [starting assumptions](../plan/design-notes.md#tunable-starting-assumptions)
-  rather than treating their illustrative intervals as optimal.
+- TODO(spec, blocks: M2) — Which session-duration, replanning and revision
+  starting values are approved? **Default:** validate the
+  [proposed starting values](../plan/design-notes.md#tunable-starting-assumptions);
+  they are starting defaults, not universal optimal intervals.
 - TODO(spec, blocks: M3) — Which additional language and supported
   speech/visualization components pass demand, accessibility and quality checks?
   **Default:** validate the staged language proposal in

@@ -4,7 +4,7 @@
 
 ## 1. Product vision
 
-## The vision in one sentence
+### The vision in one sentence
 
 A learning companion that turns a child's syllabus into a personalized journey of discovery, adapts to how they understand concepts, keeps their learning on track, and helps them discover what they love and what they might become good at.
 
@@ -23,41 +23,14 @@ Your product challenges six assumptions:
 
 Your system should instead work around six principles.
 
-### 01
-
-Curriculum completeness
-
-Every required learning outcome is tracked, not just chapters marked complete.
-
-### 02
-
-Adaptive teaching
-
-The system learns which explanations, examples, languages and visualizations work for this child.
-
-### 03
-
-Active learning
-
-Children reason, predict, explain, experiment and solve — not merely watch videos.
-
-### 04
-
-Continuous assessment
-
-Understanding is checked throughout lessons, with review based on actual knowledge retention.
-
-### 05
-
-Flexible planning
-
-The schedule is recalculated when the child misses lessons, struggles or progresses faster than expected.
-
-### 06
-
-Long-term discovery
-
-The system builds evidence about interests, strengths and developing skills without prematurely labeling a child.
+| # | Principle | Meaning |
+| --- | --- | --- |
+| 01 | Curriculum completeness | Every required learning outcome is tracked, not just chapters marked complete. |
+| 02 | Adaptive teaching | The system learns which explanations, examples, languages and visualizations work for this child. |
+| 03 | Active learning | Children reason, predict, explain, experiment and solve — not merely watch videos. |
+| 04 | Continuous assessment | Understanding is checked throughout lessons, with review based on actual knowledge retention. |
+| 05 | Flexible planning | The schedule is recalculated when the child misses lessons, struggles or progresses faster than expected. |
+| 06 | Long-term discovery | The system builds evidence about interests, strengths and developing skills without prematurely labeling a child. |
 
 The [domain boundaries](./spec/system.md) keep curriculum, assessment and
 planning under application authority rather than an unconstrained chatbot.
@@ -93,17 +66,11 @@ That last point matters. The system should be accountable for making the best pl
 
 ## 4.2 Target users
 
-Student — primary user
-
-The child uses the tablet to explore lessons, play learning activities, ask questions, solve problems and revisit topics. The experience should feel like discovery, not a compulsory digital classroom.
-
-Parent — guardian and decision-maker
-
-The parent configures the syllabus and schedule, reviews progress, manages permissions and decides whether to accept recommendations about additional practice or future exploration.
-
-Content administrator — initial internal role
-
-Maintains curriculum mappings, reviews generated material, verifies question quality and approves trusted content for production use.
+| Role | Responsibilities |
+| --- | --- |
+| Student — primary user | The child uses the tablet to explore lessons, play learning activities, ask questions, solve problems and revisit topics. The experience should feel like discovery, not a compulsory digital classroom. |
+| Parent — guardian and decision-maker | The parent configures the syllabus and schedule, reviews progress, manages permissions and decides whether to accept recommendations about additional practice or future exploration. |
+| Content administrator — initial internal role | Maintains curriculum mappings, reviews generated material, verifies question quality and approves trusted content for production use. |
 
 ### Initial audience
 

@@ -40,6 +40,9 @@ Illustrative UI metrics and draft protocol values are not defaults.
 
 ## Decision log
 
-No new product decisions were made during import. The source's recommendations
-remain proposals. Close a matching spec question in the same commit whenever a
+No new product decisions were made during import. The
+[spec index](../spec/README.md) records the status of the supplied material:
+source §4's recommended behaviours are spec requirements, while numeric starting
+assumptions, launch-audience scope and technology/stack choices remain proposals
+in this plan. Close a matching spec question in the same commit whenever a
 decision is confirmed.

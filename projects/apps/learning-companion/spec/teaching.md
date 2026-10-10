@@ -185,7 +185,7 @@ Avoid rewards that encourage random tapping, rushing through lessons, excessive 
 Support adjustable short sessions with natural stopping points. The child
 should be able to pause or stop, and the parent should be able to configure
 reasonable daily limits. Duration and limit values are
-[required settings](./README.md#configuration-registry), not universal rules.
+[registry settings](./README.md#configuration-registry), not universal rules.
 
 The tutor should never use guilt, fear, artificial scarcity or streak loss to pressure a child into continuing.
 

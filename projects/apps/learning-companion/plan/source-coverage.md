@@ -6,7 +6,9 @@ read, and all 48 numbered sections/subsections were routed before editorial
 cleanup. The original research date is unspecified.
 
 This is an organized import, not a new product specification commissioned from
-scratch. The source's recommendations remain proposals where not finalized.
+scratch. Source §4's recommended behaviours are adopted as spec requirements;
+numeric starting assumptions, launch-audience scope and technology/stack choices
+remain proposals (status defined in the [spec index](../spec/README.md)).
 There is no duplicated full-source archive: each substantive subject has a
 canonical home below.
 
@@ -39,8 +41,9 @@ canonical home below.
 - Converted card-like UI fragments and numbered stage labels to readable tables;
   kept dashboard figures explicitly illustrative, not learner data or defaults.
 - Moved recommendation/rationale prose out of normative specs into plans.
-  Numerical starting assumptions have one home in design notes; operational
-  criteria remain required without invented defaults in the spec registry.
+  Numerical starting assumptions have one home in design notes; the spec
+  registry marks them as proposed starting values pending approval, and other
+  operational criteria remain required without invented defaults.
 - Harmonized provisional/retained mastery wording with the supplied concept
   state vocabulary. Descriptive dashboard activities are not extra states.
 - Corrected “two children” to “four children” in the source's four-child

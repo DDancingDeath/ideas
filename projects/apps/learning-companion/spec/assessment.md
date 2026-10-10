@@ -7,29 +7,14 @@ Assessment should be embedded throughout the learning journey rather than confin
 
 ### Assessment types
 
-During the lesson
-
-Short questions after each key idea to detect misunderstandings immediately.
-
-End-of-topic check
-
-A small independent assessment before marking a learning objective as demonstrated.
-
-Mixed-chapter revision
-
-Questions from multiple chapters to check whether the child can select the right concept independently.
-
-Spaced recall
-
-Previously learned material revisited after increasing intervals.
-
-Exam simulation
-
-Timed or untimed tests that reflect the relevant examination format.
-
-Explanation-based assessment
-
-The child explains why an answer works, rather than selecting an answer by guessing.
+| Type | Purpose |
+| --- | --- |
+| During the lesson | Short questions after each key idea to detect misunderstandings immediately. |
+| End-of-topic check | A small independent assessment before marking a learning objective as demonstrated. |
+| Mixed-chapter revision | Questions from multiple chapters to check whether the child can select the right concept independently. |
+| Spaced recall | Previously learned material revisited after increasing intervals. |
+| Exam simulation | Timed or untimed tests that reflect the relevant examination format. |
+| Explanation-based assessment | The child explains why an answer works, rather than selecting an answer by guessing. |
 
 ### Question difficulty
 
@@ -82,8 +67,8 @@ This component prevents the product from confusing short-term performance with l
 
 After a child completes a concept, schedule a later recall activity. The timing should depend on mastery, difficulty and subsequent performance.
 
-Revision intervals depend on approved settings, not universal optimal
-intervals. The supplied illustrative sequence is in
+Revision intervals depend on approved [settings](./README.md#configuration-registry),
+not universal optimal intervals. The supplied starting sequence is in
 [design notes](../plan/design-notes.md#tunable-starting-assumptions).
 
 ### Revision selection

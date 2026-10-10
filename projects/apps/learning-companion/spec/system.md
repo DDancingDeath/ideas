@@ -16,7 +16,7 @@
 | Media service | Validated diagrams, videos, animations and interactive visualizations |
 
 Deployment choices and service-splitting rationale are in
-[the architecture plan](../plan/architecture.md).
+[the architecture plan](../plan/architecture.md#5-technical-architecture).
 
 ## 5.4 Core data model
 

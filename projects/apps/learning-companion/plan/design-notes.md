@@ -38,13 +38,13 @@ has been confirmed.
 
 | Topic | Supplied proposal | Qualification |
 | --- | --- | --- |
-| Session duration | Roughly 10–20 minutes for many younger learners | Adjustable, natural stopping points; not a universal rule |
-| Unresolved difficulties | Replan after two or more consecutive sessions | Prefer local adjustments, then periodically recalculate the full plan |
-| Recall timing | Next day, several days later, mixed revision after a week or two, later cumulative revision before the exam | Illustrative sequence, not universal optimal intervals or fixed defaults |
+| Session duration | Roughly 10–20 minutes for many younger learners | Supplied product starting point, pending validation; adjustable, natural stopping points; not a universal rule |
+| Unresolved difficulties | Replan after two or more consecutive sessions | Supplied starting trigger, pending validation; prefer local adjustments, then periodically recalculate the full plan |
+| Recall timing | Next day, several days later, mixed revision after a week or two, later cumulative revision before the exam | Supplied starting defaults, pending validation; not universal optimal intervals |
 
-Runtime settings remain **required — no default** in the
-[configuration registry](../spec/README.md#configuration-registry). These
-starting assumptions must not be silently promoted to hard thresholds.
+The [configuration registry](../spec/README.md#configuration-registry) lists
+these settings as proposed starting values pending approval. They must not be
+silently promoted to hard thresholds.
 
 ## Media and interaction rationale
 
@@ -57,8 +57,24 @@ expense and complexity; reserve it for material educational benefit.
 
 Typing is often a poor primary interface for younger children. Voice should be
 interactive rather than a read-aloud lecture, with touch fallbacks and concise
-questions. Activities and assessment should not turn every interaction into a
-score; otherwise discovery becomes another examination.
+questions.
+
+## Safety, assessment and quality rationale
+
+Safety, privacy and responsible learning: because the primary users are
+children, these are core product requirements rather than features to add after
+launch.
+
+Too many questions can make the experience feel like an examination, defeating
+the product's purpose of learning through discovery. The normative
+over-assessment rule is in
+[safety](../spec/safety.md#73-protect-the-child-from-being-over-assessed).
+
+Interest discovery is useful only if presented honestly; the reporting rules are
+in [safety](../spec/safety.md#74-prevent-false-aptitude-judgments).
+
+The [non-functional requirements](../spec/requirements.md#8-non-functional-requirements)
+affect whether the application will be reliable enough for daily use.
 
 ## Data and AI rationale
 
@@ -68,6 +84,7 @@ are usually more useful for personalization and easier to govern than permanent
 verbatim conversation retention.
 
 Keeping progression, scheduling and permissions outside model output makes the
-system easier to test and less vulnerable to inconsistent responses. Transparent
-rules are a sensible profiling starting point; more sophisticated machine
-learning should follow evidence, not precede it.
+system easier to test and less vulnerable to inconsistent responses. Initially
+avoid sophisticated machine learning for student profiling: start with a
+transparent rules-based engine, collect useful learning events, and improve the
+recommendations only when evidence supports them.

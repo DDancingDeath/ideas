@@ -30,9 +30,7 @@ These requirements should be converted into automated tests wherever possible.
 
 ## 8. Non-functional requirements
 
-These requirements affect whether the application will be reliable enough for daily use.
-
-| Area               | Initial target                                                                                  |
+| Area                | Initial target                                                                                  |
 | ------------------ | ----------------------------------------------------------------------------------------------- |
 | Reliability        | Learning progress survives app closure, network loss and interrupted sessions.                  |
 | Performance        | Cached lesson content opens quickly; ordinary interactions avoid unnecessary model calls.       |

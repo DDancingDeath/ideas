@@ -3,7 +3,8 @@
 
 ## 7. Safety, privacy and responsible learning
 
-Because the primary users are children, these are core product requirements rather than features to add after launch.
+Safety and privacy are core product requirements from launch; the rationale is
+in [design notes](../plan/design-notes.md#safety-assessment-and-quality-rationale).
 
 ## 7.1 Child safety
 
@@ -48,8 +49,6 @@ without turning the experience into an examination.
 The system should be able to teach without turning every conversation into a score.
 
 ## 7.4 Prevent false aptitude judgments
-
-Interest discovery is useful only if presented honestly.
 
 The system should report:
 

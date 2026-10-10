@@ -52,8 +52,6 @@ For a mathematics learner, the diagnostic might include:
 
 The system should assess prerequisite concepts, not merely ask questions from the current textbook.
 
-Prerequisite assessment must not be limited to current-grade textbook questions.
-
 Diagnostic behavior:
 
 1. Begin with easy, age-appropriate questions.
@@ -73,9 +71,9 @@ The application must turn the source material into a structured, verifiable set 
 
 ### Supported source types
 
-The curriculum ingestion capability supports these source types. The
-[roadmap](../plan/roadmap.md) begins with curated content and stages automated
-document ingestion later.
+The curriculum ingestion capability supports these source types. Which of them
+the first release must ingest, given the [roadmap](../plan/roadmap.md)'s
+curated-content start, is an [open decision](./README.md#open-decisions).
 
 - Official syllabus documents.
 - Authorized textbook PDFs.

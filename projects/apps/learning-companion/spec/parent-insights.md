@@ -15,7 +15,7 @@ It should answer five questions:
 
 ### Dashboard sections
 
-## Parent dashboard — illustrative design
+#### Parent dashboard — illustrative design
 
 | Dashboard item | Illustrative display |
 | --- | --- |
@@ -82,7 +82,7 @@ A child might enjoy astronomy without being especially strong in physics yet. An
 
 ### Example of an emerging interest profile
 
-## Emerging interests
+#### Emerging interests
 
 Illustrative profile, not a real assessment
 
@@ -92,7 +92,7 @@ Illustrative profile, not a real assessment
 | Patterns and puzzles | Emerging | Voluntarily attempts additional logic challenges |
 | Space and astronomy | Emerging | Asks follow-up questions across several lessons |
 
-The displayed values are illustrative visualization values, not validated aptitude scores.
+These signals are illustrative, not validated aptitude scores.
 
 Report qualitative evidence and confidence rather than invented numerical aptitude scores.
 
