@@ -288,15 +288,22 @@ Every projection must be based on explicit assumptions. Unknown future events sh
 
 Suppose your current EPF balance is ₹30 lakh, your monthly total contribution is ₹40,000, and the assumed annual return is 8%.
 
-Example only · Constant contributions and return, monthly compounding approximation
+Example only · Constant contributions and return. Convention: the 8% annual return is converted to an effective monthly rate of (1.08)^(1/12) − 1 (≈ 0.6434% per month); each month the balance earns that rate and the ₹40,000 contribution is added at the end of the month.
 
-After 5 years
+After 5 years (60 months)
 
-# ₹75 lakh
+# ₹73.26 lakh
 
-After 10 years
+After 10 years (120 months)
 
-# ₹1.42 crore
+# ₹1.368 crore
+
+| Convention | Monthly rate | After 5 years | After 10 years |
+| --- | --- | --- | --- |
+| Effective monthly rate, end-of-month contributions (used above) | (1.08)^(1/12) − 1 | ≈ ₹73.26 lakh | ≈ ₹1.368 crore |
+| Nominal monthly rate r/12, end-of-month contributions | 0.08 / 12 | ≈ ₹74.09 lakh | ≈ ₹1.398 crore |
+
+An implementation must state which convention it uses; the two conventions give different results for the same inputs, as the table shows.
 
 These rounded estimates exclude changes in contributions, salary-based contribution rules, taxes, and actual EPF rate changes. They are not guaranteed balances.
 
