@@ -79,4 +79,5 @@ contract (e.g. data shape).
 ## Recent changes
 
 - _2026-10-17_ · initial scaffold
+- _2026-10-22_ · spec §4.1: corrected the illustrative EPF projection to ₹73.26 lakh (5 y) / ₹1.368 crore (10 y) and stated the compounding convention (effective monthly rate, end-of-month contributions), with nominal r/12 figures for comparison
 
