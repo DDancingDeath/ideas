@@ -35,6 +35,10 @@ Expense trackers, investment trackers and robo-advisors each cover a slice; this
 
 ## Open questions
 
-- [ ] Data-source strategy and import priority (spec section 7.1)?
-- [ ] V1 scope boundary vs later versions (spec section 2)?
-- [ ] Regulatory posture for recommendations?
+Tracked with recommended defaults in [spec/README.md](./spec/README.md#open-questions).
+
+- [x] Data-source strategy — documents first, then manual entry, then read-only live data (prices, mailbox, SMS); no scraping or portal credentials.
+- [x] V1 scope — the personal version is built as the Finance box of [Life OS](../life-os/).
+- [ ] Account Aggregator through a regulated partner?
+- [ ] Statutory EPF/NPS rules in projections?
+- [ ] Regulatory posture if ever shared beyond the owner?
