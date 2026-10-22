@@ -1,215 +1,152 @@
 # Functional spec — Life OS — personal life hub
 
-This is the **source of truth for what to build**. An agent reading only this
-folder (plus the linked box ideas) should be able to produce a working
-application.
+This folder is the **source of truth for what to build**. An agent reading only
+this folder (plus the Finance spec it links to) should be able to produce a
+working application.
 
 > Written to the crispness contract in [`AGENTS.md`](../../../../AGENTS.md).
 > The project README holds the single changelog.
 
+## North star
+
+**A personal chief of staff that knows the owner's whole life from the owner's
+own records.**
+
+| # | Pillar | The system promises | Specified in |
+| --- | --- | --- | --- |
+| 1 | Absorbs what the owner already has | Document folders re-scanned on the owner's schedule; bank and investment statements; read-only email; tax documents (ITR, Form 16, AIS); medical reports; certificates; personal chat exports | [Documents](boxes/documents.md), [Finance](boxes/finance.md), [Health](boxes/health.md), [Conversations](boxes/conversations.md) |
+| 2 | Understands them as connected facts | Every fact belongs to the **life graph** (people, accounts, assets, policies, documents, dates, events) and cites its source document and page | [Life graph](life-graph.md) |
+| 3 | Reasons across life areas | Any question is routed to the calculations of every relevant box and answered as one | [Ask](ask.md) |
+| 4 | Nudges before it matters | FD maturity, policy and passport expiry, missing expected statements, retests due, birthdays, tax savings, spending drift | [Nudges](nudges.md) |
+| 5 | Answers with evidence | Every number comes from a calculation; every fact names its source; identifiers are masked until revealed after re-authentication | [Ask](ask.md), [Identity vault](identity-vault.md) |
+| 6 | Stays the owner's | Local-first, end-to-end encrypted, no change without the owner's confirmation, identifiers never sent to an AI provider | [Privacy & security](privacy-security.md), [Encryption & sync](encryption-sync.md) |
+
 ## Reading order
 
-1. This file — overview, glossary, box contract, Ask contract, privacy rules,
-   configuration.
-2. Box detail, where a box has its own idea: Finance →
-   [personal-ai-cfo spec](../../personal-ai-cfo/spec/product-spec.md); Family →
-   [parenting-companion spec](../../parenting-companion/spec/README.md);
-   Notes & reminders → [notes-reminders spec](../../notes-reminders/spec/README.md);
-   Reflection → [reflective-friend spec](../../reflective-friend/spec/README.md).
-   Where a box spec conflicts with this file on the hub, box or Ask contract,
-   this file wins.
+1. This file — north star, overview, boxes, NFRs, open questions.
+2. [`glossary.md`](glossary.md) — every term, state and scale. Check it before inventing a word.
+3. [`configuration.md`](configuration.md) — every constant and setting (single home).
+4. [`box-contract.md`](box-contract.md) — what every box provides.
+5. [`ask.md`](ask.md) — the Ask answer contract.
+6. [`cross-cutting.md`](cross-cutting.md) — dates, no-defaults, samples, saves, backups, accessibility.
+7. [`privacy-security.md`](privacy-security.md) and [`encryption-sync.md`](encryption-sync.md).
+8. [`life-graph.md`](life-graph.md), [`nudges.md`](nudges.md), [`identity-vault.md`](identity-vault.md).
+9. Box specs in [`boxes/`](boxes/): [finance](boxes/finance.md) (plus the
+   [personal-ai-cfo spec](../../personal-ai-cfo/spec/README.md) for the finance
+   engine), [health](boxes/health.md), [career & learning](boxes/career-learning.md),
+   [family](boxes/family.md), [notes & reminders](boxes/notes-reminders.md),
+   [reflection](boxes/reflection.md), [documents](boxes/documents.md),
+   [conversations](boxes/conversations.md).
+10. [`worked-example.md`](worked-example.md) — one Ask answer end to end.
+
+Where a linked idea (parenting-companion, notes-reminders, reflective-friend)
+conflicts with this folder on the hub, box or Ask contract, this folder wins.
 
 ## Overview
 
 - **What it does.** A private hub for one household. Each life area is a
-  **box**. The **home** shows every box's glance and the top priorities across
-  all boxes. The **Ask** box takes a free-text question, routes it to the
-  calculations of every relevant box, runs them, and composes one answer in
-  which every number is traceable.
-- **Who it's for.** One **owner** (the individual) and the people in their
-  household profile. Only the owner signs in.
+  **box**. **Home** shows every box's glance, *Your week* (the life brief) and
+  *Top priorities across your life*. **Ask** takes a free-text question, routes
+  it to the calculations of every relevant box, runs them and composes one
+  answer in which every number is traceable.
+- **Who it's for.** One **owner** and the people in the owner's household
+  profile. Only the owner signs in.
 - **Primary user journeys.**
-  1. Owner opens the home, sees each box's glance and *Top priorities across
-     your life*, follows the first one.
-  2. Owner asks *"Can I afford a car for ₹15 lakh next year?"* → answer with
-     the affordability result, the aspects considered per box, suggestions,
-     caveats and follow-ups; any missing input is asked for inline.
-  3. Owner uploads a lab report in Health, reviews the extracted values,
-     saves; Health's glance and facts update; Ask can now use them.
-  4. Owner edits the household profile; every box that depends on it
-     (dependents, ages) recomputes.
+  1. Owner opens Home, sees *Your week* and the top priorities, follows the first.
+  2. Owner asks *"Can I afford a car for ₹15 lakh next year?"* → affordability
+     result, aspects considered per box, suggestions, caveats and follow-ups;
+     a missing input is asked for inline.
+  3. Owner points the Documents box at a folder; a new mutual-fund statement
+     and a lab report appear as drafts in Finance's and Health's review queues;
+     the owner reviews and applies them.
+  4. Owner gets a nudge that an FD matures in the "coming up" window and that
+     an expected monthly statement has not arrived.
   5. Owner opens the app with the network off and gets the same results.
 
 ## Boxes
 
-| Box id | Name | Holds | Calculations it must offer | Detailed spec |
-| --- | --- | --- | --- | --- |
-| `finance` | Finance | Accounts, investments, loans, income, spending, goals, assumptions | Projections, net worth, cash flow, loans, affordability, goal plans, recommendations | [personal-ai-cfo](../../personal-ai-cfo/spec/product-spec.md) |
-| `health` | Health | Lab reports (reviewed values with the report's own reference ranges), check-up plan | Latest value vs reference range, trend, due check-ups, follow-up prompts | This file (§Health rules) |
-| `career` | Career & Learning | Role history, skills (0–5 scale), target roles, learning resources | Skill gaps, ranked next paths, learning plan | This file |
-| `family` | Family | People and relations from the household profile, child milestones, education goals | Dependents, education-goal links to Finance goals | [parenting-companion](../../parenting-companion/spec/README.md) |
-| `notes` | Notes & reminders | Notes, reminders | Due reminders | [notes-reminders](../../notes-reminders/spec/README.md) |
-| `reflection` | Reflection | Reflection entries | Prompts, summaries | [reflective-friend](../../reflective-friend/spec/README.md) |
-
-A box is either `live` or `coming_soon`. A `coming_soon` box shows on the home
-but contributes no facts, tools or recommendations.
-
-## Box contract
-
-Every box provides exactly these six members. The hub and Ask use nothing else.
-
-| Member | Returns | Rules |
-| --- | --- | --- |
-| `manifest` | `{id, name, icon, tagline, status, order, nav[]}` | `status` ∈ {`live`, `coming_soon`}. |
-| `glance` | `{headline {label, value, unit, format}, chip {label, tone}, lines[], missing_count, state, action, source}` | Built only from calculation outputs. `lines` ≤ 2. `format` ∈ {`inr`, `count`, `years`, `date`}. |
-| `facts` | List of **facts** | See [Fact](#glossary). |
-| `tools` | Map name → **tool** | Each tool has a JSON Schema for its inputs, a description and the document paths it reads. |
-| `recommendations` | `[{id, domain, title, why, urgency, category, evidence, next_step, source_calc, rank_in_module}]` | `urgency` and `category` use the scales below. |
-| `missing` | `[{id, domain, topic, impact, blocking, href}]` | One entry per data gap that affects a calculation. |
-
-### Tool result
-
-Running a tool with the stored documents plus optional per-answer overrides
-returns `{tool, status, result, inputs_sha256, engine_version, needs[], notes[]}`.
-
-| `status` | Meaning | `result` | `needs` |
+| Box id | Name | Holds | Spec |
 | --- | --- | --- | --- |
-| `ok` | Calculated | Present | Empty |
-| `needs_input` | A required input is missing | Absent | Exact input paths + a form spec for each |
-| `invalid` | An input failed its schema | Absent | Empty; `notes` names the failing path |
-| `not_configured` | The box has no documents yet | Absent | Empty |
+| `finance` | Finance | Accounts, holdings, loans, income, spending, goals, assumptions, tax documents | [boxes/finance.md](boxes/finance.md) |
+| `health` | Health | Reviewed lab reports, settings, targets, check-up plan | [boxes/health.md](boxes/health.md) |
+| `career` | Career & Learning | Role history, skills, role profiles, learning resources and plan | [boxes/career-learning.md](boxes/career-learning.md) |
+| `family` | Family | People from the household profile, events, milestones, vaccinations, education-goal links | [boxes/family.md](boxes/family.md) |
+| `notes` | Notes & reminders | Notes, reminders, topics | [boxes/notes-reminders.md](boxes/notes-reminders.md) |
+| `reflection` | Reflection | Journal entries, reviews | [boxes/reflection.md](boxes/reflection.md) |
+| `documents` | Documents | Folder sources, the source-document index, classification rules | [boxes/documents.md](boxes/documents.md) |
+| `conversations` | Conversations | Personal chat exports, phone message/call metadata, the owner's voice notes, work bridge entries | [boxes/conversations.md](boxes/conversations.md) |
 
-Overrides apply to that one run only and are never saved.
+The default box order is `ranking.domainOrder` ([configuration](configuration.md)).
 
-## Ask answer contract
+## Tech stack (suggested, not mandatory)
 
-An answer is composed **deterministically from tool outputs**. Its fields:
-
-| Field | Content |
-| --- | --- |
-| `question` | The text as asked |
-| `intent` | The routed intent id, or `fallback` |
-| `answer_summary` | Sentences; every number in them is copied from a tool output or the question, with a `refs` entry giving its source path |
-| `aspects_considered` | One entry per box: `used` / `missing_data` / `not_relevant`, the facts used, and each tool call with `inputs_sha256` and `engine_version` |
-| `suggestions` | Ranked across boxes by the [priority order](#priority-order) |
-| `caveats` | Unknown amounts shown as bounds, sample or illustrative data used, values used for this answer only |
-| `follow_ups` | Suggested next questions |
-| `disclaimers` | Per touched box (finance: not investment advice; health: not medical advice; career) |
-| `needs` | Inputs to ask for inline when any tool returned `needs_input` |
-
-Rules:
-
-1. Routing is deterministic and inspectable: intents, their phrases and
-   weighted keywords, and the tool plan per intent are data, not code.
-2. Entities parsed from the question (amounts such as ₹15 lakh / 15L / 2 crore /
-   20k, durations, dates, health test names, role names) override tool inputs
-   for that answer only.
-3. Any number in AI-written text that does not appear in the tool outputs or
-   the question discards that text; the deterministic answer is shown with a
-   caveat.
-4. Every answer is appended to a local history with enough to reproduce it
-   (question, intent, tool calls, `inputs_sha256`, engine versions).
-
-### Priority order
-
-*Top priorities across your life* and Ask `suggestions` sort by, in order:
-
-1. `urgency`: `critical` > `high` > `medium` > `low` > `unrated`
-2. `category`: `lab_critical` > `protection` > `liquidity` > `health_followup` > `debt` > `data` > `optimisation` > `growth`
-3. box order: `ranking.domainOrder`
-4. the box's own `rank_in_module`
-
-## Privacy rules
-
-| # | Rule |
-| --- | --- |
-| P1 | Readable personal data exists only on the owner's devices. Anything that leaves a device is end-to-end encrypted with a key only the owner holds. |
-| P2 | Any relay or host stores ciphertext only and is replaceable without data loss. |
-| P3 | No analytics, telemetry, third-party scripts or external fonts. |
-| P4 | Access from another device requires owner sign-in; the server is reachable only over the owner's private network, never the public internet. |
-| P5 | An external AI provider is used only when the owner has turned it on **and** shared every box the answer touches; names, employers, labs and document ids are masked before sending; only the routed intent's facts are sent. |
-| P6 | Logs, histories and backups never contain passwords or session tokens. |
-| P7 | Health output is factual and non-diagnostic; anything outside a reference range points to a doctor. |
-| P8 | The owner can export all data as plain documents and delete it. |
-
-## No-defaults rule
-
-**Missing is never zero.** A calculation never substitutes a value for an
-input the owner has not given. It returns `needs_input` with the exact path.
-Settings with no agreed value are listed in the configuration table as
-`required — no default` and the box reports them as missing until set. Sample
-or illustrative data may be used only when labelled *sample* wherever it
-appears, and the answer's `caveats` say so.
-
-## Health rules
-
-| Rule | Behaviour |
-| --- | --- |
-| Reference ranges | Judged only against the range printed on the report; no built-in ranges |
-| Unreviewed values | Excluded unless `health.includeUnverified` is true |
-| Trend | Shown only with at least `health.trendMinPoints` values; "stable" within `health.stableTolerancePct` |
-| Critical flag | A value the lab marks critical gets urgency `critical`, category `lab_critical` |
-
-## Glossary
-
-- **Owner** — the one person who signs in and owns the data.
-- **Household profile** — the people in the owner's household: relation
-  (`self`, `spouse`, `child`, `parent`, `sibling`, `other`), birth date or
-  age-on-a-date, `household_member`, `financially_dependent`, `co_owner`.
-  Nothing is inferred.
-- **Box** — one life area implementing the box contract.
-- **Glance** — a box's tile on the home.
-- **Fact** — `{fact_id, domain, statement, value, unit, date, source {box, calculation, engine_version, inputs_sha256, ref}, status, tags}`; a statement backed by a calculation output.
-- **Tool** — a deterministic calculation a box exposes to Ask.
-- **Engine version** — version string of the calculation code; changes whenever any output can change.
-- **`inputs_sha256`** — SHA-256 of the canonical JSON of a calculation's inputs; equal inputs give equal hashes on every device.
-- **Intent** — a class of question with a fixed tool plan across boxes.
-- **Needs** — the list of missing inputs a tool reports.
-- **Urgency** — `critical`, `high`, `medium`, `low`, `unrated`.
-
-## Constants and configuration (single home)
-
-| Key | Scope | Type / unit | Default | Editable by | Used by |
-| --- | --- | --- | --- | --- | --- |
-| `productName` | app | string | `Life OS` (working title) | build | All UI |
-| `ranking.domainOrder` | Ask, home | list of box ids | `health, finance, family, career, notes, reflection` | owner | Priority order |
-| `ask.provider` | Ask | `none` \| `local` \| `cloud` | `none` | owner | Ask rule 3, P5 |
-| `ask.allowExternal` | Ask | bool | `false` | owner | P5 |
-| `health.trendMinPoints` | Health | count | `required — no default` | owner | Health rules |
-| `health.stableTolerancePct` | Health | percent | `required — no default` | owner | Health rules |
-| `health.includeUnverified` | Health | bool | `required — no default` | owner | Health rules |
-| `auth.sessionDays` | sign-in | days (1–365) | `required — no default` | owner | P4 |
+| Layer | Suggestion | Contract or negotiable |
+| --- | --- | --- |
+| Engines | Deterministic, versioned libraries with JSON Schemas (draft 2020-12); decimal arithmetic | Contract: determinism, schemas, `inputs_sha256`, `engine_version` |
+| API | One transport-agnostic dispatch function serving every route, reachable over HTTP (home server) or in-process in the browser (website) | Contract: identical answers on both transports |
+| Home server | Process on the owner's PC bound to loopback, published only on the owner's private network | Contract: [privacy-security.md](privacy-security.md) |
+| Website / installed app | Static files; engines compiled to WebAssembly in a worker; browser database for data documents | Negotiable |
+| Sync relay | Ciphertext-only blob store: the owner's home server, or a free-tier cloud store | Contract: [encryption-sync.md](encryption-sync.md) |
+| UI | Plain HTML/CSS/ES modules, no third-party scripts or fonts | Contract: no external resources; no money or medical maths in the UI |
 
 ## Non-functional requirements
 
-- **Determinism:** same inputs → same outputs and `inputs_sha256` on every device.
-- **Offline:** every box and Ask work with the network off once installed.
-- **Performance:** an Ask answer within 3 seconds on a mid-range phone.
-- **Accessibility:** keyboard-reachable; text alternatives for every chart.
-- **Language:** English UI; Ask routing also understands common Hinglish.
-- **Integrity:** every write is validated against the box's schema, atomic, and keeps a timestamped backup.
-
-## Worked example
-
-Owner asks *"Can I afford a car for ₹15 lakh next year?"* with Finance, Health
-and Career configured and no insurance documents entered.
-
-| Step | Result |
+| Area | Requirement |
 | --- | --- |
-| Route | intent `afford_purchase`; entities: amount ₹15,00,000, timing next year |
-| Plan | Finance affordability tool (amount and month overridden for this answer); Health and Career facts; Family dependents from the profile |
-| Run | Finance `ok`; insurance cover missing → listed in Finance `missing` |
-| Compose | `answer_summary` quotes only the affordability output's figures with `refs`; `aspects_considered`: finance `used`, health `used`, career `used`, family `used`; `caveats`: insurance cover unknown; `disclaimers`: finance |
+| Determinism | Same inputs → same outputs and `inputs_sha256` on every device and both transports. |
+| Offline | Website mode: every box and Ask work with the network off after the first load. Home-server mode: the app shell loads offline and says the server is unreachable. |
+| Performance | An Ask answer within `ask.answerLatencySeconds`; every Home API call within `perf.apiCallMs` on the home server. |
+| Accessibility | [cross-cutting.md § Accessibility](cross-cutting.md#accessibility-baseline). |
+| Language | English UI; Ask routing also understands common Hinglish and common misspellings. |
+| Integrity | Every write is schema-validated, atomic and versioned, and keeps a backup ([cross-cutting.md](cross-cutting.md#versioned-saves-and-conflicts)). |
+| Cost | Zero running cost: free tiers only, no billing account attached. |
 
 ## Open questions
 
-- `TODO(spec, blocks: M4)` — Final app name? **Default:** keep `productName` = `Life OS`.
-- `TODO(spec, blocks: M4)` — AI provider for Ask? **Default:** `ask.provider` = `none` (deterministic answers only).
-- `TODO(spec, blocks: M3c)` — Native iOS app? **Default:** installable website on iPhone; no native iOS app.
-- `TODO(spec, blocks: M3c)` — Desktop shell? **Default:** installable website; packaged desktop app only if the website cannot meet a requirement.
-- `TODO(spec, blocks: Later)` — Whose learning plans? **Default:** the owner's in Career & Learning; a child's in Family.
+Each blocks the named milestone of [`../plan/README.md`](../plan/README.md).
+
+- `TODO(spec, blocks: M5)` — Life graph data model? **Default:** one shared
+  entity store (person, account, asset, liability, policy, document, identity
+  fact, event) with provenance edges from every fact to its source document
+  and page ([life-graph.md](life-graph.md)).
+- `TODO(spec, blocks: M5)` — Proactive engine? **Default:** a single rules
+  engine over the life graph that emits nudges as reminders or recommendations
+  ([nudges.md](nudges.md)).
+- `TODO(spec, blocks: M4)` — AI provider for Ask? **Default:** a local model on
+  the home-server PC; a cloud provider (Azure OpenAI with the owner's key) only
+  as a fallback, with masked facts only and identifiers never sent
+  ([ask.md § AI provider](ask.md#ai-provider)). Until decided,
+  `ask.provider` stays `none`.
+- `TODO(spec, blocks: M4)` — Final app name? **Default:** keep `productName`.
+- `TODO(spec, blocks: M4)` — Whose learning does Career & Learning cover?
+  **Default:** the owner's learning in Career & Learning; a child's education
+  in Family (milestones and education-goal links).
+- Finance open questions (Account Aggregator via a regulated partner,
+  statutory EPF/NPS rules, regulatory posture) live in the
+  [personal-ai-cfo spec](../../personal-ai-cfo/spec/README.md#open-questions).
+- `TODO(spec, blocks: M3b)` — Which cloud relay for sync? **Default:** the
+  owner's home server as relay until the owner creates a free-tier Firebase
+  (Spark) project; then Firebase Auth + Firestore with owner-only rules.
+- `TODO(spec, blocks: M3c)` — Native iOS app? **Default:** the installable
+  website on iPhone; no native iOS app.
+- `TODO(spec, blocks: M3c)` — Desktop shell? **Default:** the installable
+  website; a packaged desktop app only for a requirement the website cannot
+  meet.
+- `TODO(spec, blocks: M3c)` — What may the Android app read from the phone for
+  Conversations? **Default:** SMS and call-log metadata only (who, when,
+  direction, duration), plus SMS text only from senders matched by Finance
+  alert templates; no call audio.
+- `TODO(spec, blocks: M6)` — How are commitments detected? **Default:**
+  deterministic, owner-editable phrase rules producing draft reminders; an AI
+  provider only for sources with `aiConsent` true, still producing drafts.
+- `TODO(spec, blocks: Later)` — Telegram own-account import? **Default:** not
+  supported; revisit only through an official, read-only API for the owner's
+  own account, with the same retention and consent rules as other sources.
 
 ## Out of scope
 
-Write access to any financial account; diagnosis; more than one signing-in
-user; public sharing.
+Moving money, trading, filing tax returns or any write access to a financial
+account; diagnosis or treatment advice; more than one signing-in user; public
+sharing or public network exposure; scraping websites or storing bank or EPFO
+portal passwords; work data of any kind (employer mail, work chats, Teams,
+work agents' data); recording call audio.

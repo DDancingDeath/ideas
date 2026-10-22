@@ -213,9 +213,9 @@ Illustrative dashboard
 
 Net worth
 
-# ₹5.86 Cr
+# ₹X
 
-Illustrative value only — not a live calculation
+Illustrative layout only — not a live calculation
 
 Monthly surplus
 
@@ -476,20 +476,20 @@ Connect eligible financial institutions and official services using supported AP
 
 ### India-specific integration plan
 
-| Data source                 | Recommended initial approach       | Potential later integration                                 |
+| Data source                 | Initial approach                   | Later integration                                           |
 | --------------------------- | ---------------------------------- | ----------------------------------------------------------- |
-| EPF / UAN                   | Upload passbook or statement       | Official supported integration, if available                |
-| NPS                         | Upload statement or enter balance  | Authorized provider integration, if available               |
-| Bank accounts               | Import statements                  | Account Aggregator ecosystem, where supported and consented |
-| Mutual funds                | Import consolidated statements     | Authorized investment-data integration                      |
-| Stocks / ETFs               | Import broker statements           | Supported broker APIs with read-only permissions            |
+| EPF / UAN                   | Upload passbook or statement       | EPFO SMS / email contribution messages (EPFO has no member API) |
+| NPS                         | Upload statement or enter balance  | Units × the NPS Trust daily NAV                             |
+| Bank accounts               | Import statements                  | Balances from the bank's own alert emails / SMS; Account Aggregator only through a regulated partner (see below) |
+| Mutual funds                | Import consolidated statements     | Units × the AMFI daily NAV                                  |
+| Stocks / ETFs               | Import broker statements           | Units × closing prices from exchange files the owner downloads; foreign shares at a price the owner enters |
 | Home loans                  | Upload lender statement            | Lender integration, if offered                              |
 | Insurance                   | Upload policy documents            | Insurer integration, if offered                             |
 | Property / private business | Manual entry and valuation updates | Accounting or valuation integrations where available        |
 
-The availability of any integration must be verified with the relevant institution and its current API and authorization requirements. Do not assume that EPFO, NPS providers, or every bank exposes an API for personal applications.
+The availability of any integration must be verified with the relevant institution and its current API and authorization requirements. EPFO and NPS providers expose no member API for personal applications.
 
-For bank-data access in India, investigate the regulated Account Aggregator ecosystem and the relevant consent-based workflows. Do not scrape internet banking pages or store bank passwords as a workaround.
+Account Aggregator data can only be requested by a regulated, registered Financial Information User — not by an individual's own app — so it is not a data source for this product unless a regulated partner is used (an open question in [`README.md`](README.md#open-questions)). The app never scrapes internet banking or any other website and never stores bank or EPFO portal passwords. Exchange price files are never downloaded automatically (exchange terms forbid it). Live-data sources, the review queue, auto-apply and freshness are specified in the [Life OS Finance box spec](../../life-os/spec/boxes/finance.md#live-data).
 
 ## 7.2 How the import process should work
 
@@ -725,7 +725,7 @@ The user should be able to move directly from a recommendation to the relevant f
 
 For a personal-first app with sophisticated financial calculations and future multi-user support, I would use a conventional, modular application architecture rather than start with a complex multi-agent system.
 
-The specific choices below are recommendations, not hard requirements.
+The specific choices below are recommendations, not hard requirements. They are superseded for hosting by the decided local-first approach (the owner's own devices and home server, end-to-end encrypted sync, no cloud backend holding plaintext) — see the [Life OS tech stack](../../life-os/spec/README.md#tech-stack-suggested-not-mandatory); the architectural principles below still apply.
 
 MOBILE APP
 
