@@ -1,23 +1,26 @@
 # Life graph — Life OS
 
 The life graph is the connected set of everything the system knows about the
-owner's life, where every fact cites where it came from. Its storage model is
-an open question ([README.md § Open questions](README.md#open-questions)); the
-requirements below hold whatever the model.
+owner's life, where every fact cites where it came from. Its canonical store
+is the [Knowledge Core](architecture.md#knowledge-core), which defines the
+shared entity types and review states; the rules below hold for every fact in
+it.
 
-## Entities
+## Where entities come from
 
-| Entity | Examples | Comes from |
-| --- | --- | --- |
-| Person | Owner, spouse, child, parent, contact | Household profile; conversation sources (contacts) |
-| Account | Bank account, demat, EPF member id, PRAN, folio | Finance inventory, statements |
-| Asset | Holding, property, FD | Finance inventory |
-| Liability | Loan, card due | Finance inventory |
-| Policy | Term life, health insurance | Finance inventory, policy documents |
-| Document | A source document (file, email attachment, export) | Documents box, mailbox, imports |
-| Identity fact | PAN, Aadhaar, passport number | [Identity vault](identity-vault.md) |
-| Event | Birthday, anniversary, school start, maturity, expiry, check-up | Family events, documents, finance items |
-| Date | A dated fact (due, maturity, expiry, valuation date) | Any of the above |
+Types are defined in [architecture.md § Shared entity types](architecture.md#shared-entity-types-canonical-in-the-core).
+
+| Type | Comes from |
+| --- | --- |
+| Person, household | Household profile (Me); contacts from chats once the owner links them |
+| Organisation | Finance inventory, source documents, career history |
+| Account, asset, liability, policy | Finance inventory, statements, policy documents |
+| Document | Folders / Documents, mailbox, imports |
+| Identity fact reference | [Identity vault](identity-vault.md) |
+| Event | Household profile, Family events, source documents, Finance items, Health retests |
+| Goal | Finance goals, Family goal links |
+| Commitment | Chats (drafts), Notes & reminders |
+| Note metadata | Notes & reminders |
 
 ## Rules
 
@@ -28,4 +31,4 @@ requirements below hold whatever the model.
 | G3 | A value observed in several sources keeps every observation; the current value is the newest applied observation; conflicting observations are surfaced, not silently merged. |
 | G4 | Ownership is not visibility, and relation is not ownership or dependency (Finance ownership rules apply). |
 | G5 | Deleting a source document from the index removes its provenance edges; facts that relied only on it are flagged *source removed*, not deleted. |
-| G6 | Ask and nudges read the graph only through facts, tools and reminders of the box contract. |
+| G6 | Ask and nudges read shared facts through the Knowledge Core API under a [context policy](context-policy.md), and box results only through facts, tools and reminders of the box contract. |

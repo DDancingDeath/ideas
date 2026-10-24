@@ -15,7 +15,7 @@ own records.**
 | # | Pillar | The system promises | Specified in |
 | --- | --- | --- | --- |
 | 1 | Absorbs what the owner already has | Document folders re-scanned on the owner's schedule; bank and investment statements; read-only email; tax documents (ITR, Form 16, AIS); medical reports; certificates; personal chat exports | [Documents](boxes/documents.md), [Finance](boxes/finance.md), [Health](boxes/health.md), [Conversations](boxes/conversations.md) |
-| 2 | Understands them as connected facts | Every fact belongs to the **life graph** (people, accounts, assets, policies, documents, dates, events) and cites its source document and page | [Life graph](life-graph.md) |
+| 2 | Understands them as connected facts | Every shared fact lives once in the **Knowledge Core** (the life graph made canonical: people, accounts, assets, policies, documents, dates, events, goals, commitments) and cites its source document and page | [Architecture](architecture.md), [Life graph](life-graph.md) |
 | 3 | Reasons across life areas | Any question is routed to the calculations of every relevant box and answered as one | [Ask](ask.md) |
 | 4 | Nudges before it matters | FD maturity, policy and passport expiry, missing expected statements, retests due, birthdays, tax savings, spending drift | [Nudges](nudges.md) |
 | 5 | Answers with evidence | Every number comes from a calculation; every fact names its source; identifiers are masked until revealed after re-authentication | [Ask](ask.md), [Identity vault](identity-vault.md) |
@@ -24,29 +24,33 @@ own records.**
 ## Reading order
 
 1. This file — north star, overview, boxes, NFRs, open questions.
-2. [`glossary.md`](glossary.md) — every term, state and scale. Check it before inventing a word.
-3. [`configuration.md`](configuration.md) — every constant and setting (single home).
-4. [`box-contract.md`](box-contract.md) — what every box provides.
-5. [`ask.md`](ask.md) — the Ask answer contract.
-6. [`cross-cutting.md`](cross-cutting.md) — dates, no-defaults, samples, saves, backups, accessibility.
-7. [`privacy-security.md`](privacy-security.md) and [`encryption-sync.md`](encryption-sync.md).
-8. [`life-graph.md`](life-graph.md), [`nudges.md`](nudges.md), [`identity-vault.md`](identity-vault.md).
-9. Box specs in [`boxes/`](boxes/): [finance](boxes/finance.md) (plus the
-   [personal-ai-cfo spec](../../personal-ai-cfo/spec/README.md) for the finance
-   engine), [health](boxes/health.md), [career & learning](boxes/career-learning.md),
-   [family](boxes/family.md), [notes & reminders](boxes/notes-reminders.md),
-   [reflection](boxes/reflection.md), [documents](boxes/documents.md),
-   [conversations](boxes/conversations.md).
-10. [`worked-example.md`](worked-example.md) — one Ask answer end to end.
+2. [`architecture.md`](architecture.md) — one brain, many apps: layers, components, Knowledge Core, invariants, the coordinator; then [`apps-and-modes.md`](apps-and-modes.md) (apps, sources, Me, modes, configuration layers) and [`context-policy.md`](context-policy.md) (what each app may see).
+3. [`glossary.md`](glossary.md) — every term, state and scale. Check it before inventing a word.
+4. [`configuration.md`](configuration.md) — every constant and setting (single home).
+5. [`box-contract.md`](box-contract.md) — what every box provides.
+6. [`ask.md`](ask.md) — the Ask answer contract.
+7. [`cross-cutting.md`](cross-cutting.md) — dates, no-defaults, samples, saves, backups, accessibility.
+8. [`privacy-security.md`](privacy-security.md) and [`encryption-sync.md`](encryption-sync.md).
+9. [`life-graph.md`](life-graph.md), [`nudges.md`](nudges.md), [`identity-vault.md`](identity-vault.md).
+10. Box specs in [`boxes/`](boxes/): [finance](boxes/finance.md) (plus the
+    [personal-ai-cfo spec](../../personal-ai-cfo/spec/README.md) for the finance
+    engine), [health](boxes/health.md), [career & learning](boxes/career-learning.md),
+    [family](boxes/family.md), [notes & reminders](boxes/notes-reminders.md),
+    [reflection](boxes/reflection.md), [documents](boxes/documents.md),
+    [conversations](boxes/conversations.md).
+11. [`worked-example.md`](worked-example.md) — one Ask answer end to end.
 
 Where a linked idea (parenting-companion, notes-reminders, reflective-friend)
 conflicts with this folder on the hub, box or Ask contract, this folder wins.
 
 ## Overview
 
-- **What it does.** A private hub for one household. Each life area is a
-  **box**. **Home** shows every box's glance, *Your week* (the life brief) and
-  *Top priorities across your life*. **Ask** takes a free-text question, routes
+- **What it does.** A private hub for one household: one brain, many apps
+  ([architecture.md](architecture.md)). Each life area is an **app**; each
+  connector is a **source**; identity and profile is **Me**
+  ([apps-and-modes.md](apps-and-modes.md)). **Home** shows every app's glance,
+  the sources' status, *Your week* (the life brief) and *Top priorities across
+  your life*. **Ask** takes a free-text question, routes
   it to the calculations of every relevant box, runs them and composes one
   answer in which every number is traceable.
 - **Who it's for.** One **owner** and the people in the owner's household
@@ -56,7 +60,7 @@ conflicts with this folder on the hub, box or Ask contract, this folder wins.
   2. Owner asks *"Can I afford a car for ₹15 lakh next year?"* → affordability
      result, aspects considered per box, suggestions, caveats and follow-ups;
      a missing input is asked for inline.
-  3. Owner points the Documents box at a folder; a new mutual-fund statement
+  3. Owner points the Folders / Documents source at a folder; a new mutual-fund statement
      and a lab report appear as drafts in Finance's and Health's review queues;
      the owner reviews and applies them.
   4. Owner gets a nudge that an FD matures in the "coming up" window and that
@@ -65,16 +69,17 @@ conflicts with this folder on the hub, box or Ask contract, this folder wins.
 
 ## Boxes
 
-| Box id | Name | Holds | Spec |
-| --- | --- | --- | --- |
-| `finance` | Finance | Accounts, holdings, loans, income, spending, goals, assumptions, tax documents | [boxes/finance.md](boxes/finance.md) |
-| `health` | Health | Reviewed lab reports, settings, targets, check-up plan | [boxes/health.md](boxes/health.md) |
-| `career` | Career & Learning | Role history, skills, role profiles, learning resources and plan | [boxes/career-learning.md](boxes/career-learning.md) |
-| `family` | Family | People from the household profile, events, milestones, vaccinations, education-goal links | [boxes/family.md](boxes/family.md) |
-| `notes` | Notes & reminders | Notes, reminders, topics | [boxes/notes-reminders.md](boxes/notes-reminders.md) |
-| `reflection` | Reflection | Journal entries, reviews | [boxes/reflection.md](boxes/reflection.md) |
-| `documents` | Documents | Folder sources, the source-document index, classification rules | [boxes/documents.md](boxes/documents.md) |
-| `conversations` | Conversations | Personal chat exports, phone message/call metadata, the owner's voice notes, work bridge entries | [boxes/conversations.md](boxes/conversations.md) |
+| Box id | Kind | Name | Holds | Spec |
+| --- | --- | --- | --- | --- |
+| `finance` | app | Finance | Accounts, holdings, loans, income, spending, goals, assumptions, tax documents | [boxes/finance.md](boxes/finance.md) |
+| `health` | app | Health | Reviewed lab reports, settings, targets, check-up plan | [boxes/health.md](boxes/health.md) |
+| `career` | app | Career & Learning | Role history, skills, role profiles, learning resources and plan | [boxes/career-learning.md](boxes/career-learning.md) |
+| `family` | app | Family | People from the household profile, events, milestones, vaccinations, education-goal links | [boxes/family.md](boxes/family.md) |
+| `notes` | app | Notes & reminders | Notes, reminders, topics | [boxes/notes-reminders.md](boxes/notes-reminders.md) |
+| `reflection` | app | Reflection (Journal) | Journal entries, reviews | [boxes/reflection.md](boxes/reflection.md) |
+| `documents` | source | Folders / Documents | Folder sources, the source-document index, classification rules | [boxes/documents.md](boxes/documents.md) |
+| `conversations` | source | Chats | Personal chat exports, phone message/call metadata, the owner's voice notes, work bridge entries | [boxes/conversations.md](boxes/conversations.md) |
+| `me` | me | Me | About me, the household profile, the identity vault | [apps-and-modes.md](apps-and-modes.md), [identity-vault.md](identity-vault.md) |
 
 The default box order is `ranking.domainOrder` ([configuration](configuration.md)).
 
@@ -105,10 +110,21 @@ The default box order is `ranking.domainOrder` ([configuration](configuration.md
 
 Each blocks the named milestone of [`../plan/README.md`](../plan/README.md).
 
-- `TODO(spec, blocks: M5)` — Life graph data model? **Default:** one shared
-  entity store (person, account, asset, liability, policy, document, identity
-  fact, event) with provenance edges from every fact to its source document
-  and page ([life-graph.md](life-graph.md)).
+- `TODO(spec, blocks: M7)` — Are the shared entity types in
+  [architecture.md § Shared entity types](architecture.md#shared-entity-types-canonical-in-the-core)
+  the complete canonical set for the first Knowledge Core? **Default:** yes,
+  exactly that list; every other record stays a domain record.
+- `TODO(spec, blocks: M7)` — Context policy defaults per app? **Default:** the
+  [default grants](context-policy.md#default-grants); every other cross-domain
+  read denied.
+- `TODO(spec, blocks: M7)` — Is a professional-profile data export (e.g. a
+  professional network's export) a source for Career & Learning? **Default:**
+  yes, a source producing drafts into Career & Learning's review, applied by
+  the owner.
+- `TODO(spec, blocks: Later)` — More than one signing-in user (other
+  household members, other people)? **Default:** no — stays out of scope;
+  every Knowledge Core write and context audit entry carries the owner's
+  identity so a later change needs no migration.
 - `TODO(spec, blocks: M5)` — Proactive engine? **Default:** a single rules
   engine over the life graph that emits nudges as reminders or recommendations
   ([nudges.md](nudges.md)).

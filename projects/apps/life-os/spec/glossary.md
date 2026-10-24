@@ -23,7 +23,20 @@ the [personal-ai-cfo spec](../../personal-ai-cfo/spec/README.md#glossary-and-voc
 
 | Term | Definition |
 | --- | --- |
-| **Box** | One life area implementing the [box contract](box-contract.md). Status `live` or `coming_soon`. |
+| **Box** | One unit implementing the [box contract](box-contract.md). Status `live` or `coming_soon`; kind `app`, `source` or `me`. |
+| **App** | A box of kind `app`: one life area with its own experience over the Knowledge Core ([apps-and-modes.md](apps-and-modes.md)). |
+| **Source** | A box or import of kind `source`: a connector with sync status and a review queue that turns source documents or messages into drafts ([apps-and-modes.md](apps-and-modes.md)). |
+| **Me** | The identity-and-profile area: about me, the household profile, the identity vault ([apps-and-modes.md](apps-and-modes.md)). |
+| **Knowledge Core** | The canonical store of shared facts with provenance and review states; the life graph made canonical ([architecture.md § Knowledge Core](architecture.md#knowledge-core)). |
+| **Shared fact** | A fact about a shared entity type, held only in the Knowledge Core ([architecture.md § Shared entity types](architecture.md#shared-entity-types-canonical-in-the-core)). |
+| **Domain record** | Data only one box understands, kept by that box ([architecture.md § Domain records](architecture.md#domain-records-stay-in-their-box)). |
+| **Review state** | `owner_entered`, `verified`, `draft`, `ai_interpretation` ([architecture.md § Review states](architecture.md#review-states)). |
+| **Context policy** | Per app: what context it may receive, at which level, for which purpose ([context-policy.md](context-policy.md)). |
+| **Context level** | `none`, `existence`, `summary`, `detail` ([context-policy.md § Levels](context-policy.md#levels)). |
+| **Sensitivity class** | `normal`, `personal`, `sensitive` ([context-policy.md § Sensitivity classes](context-policy.md#sensitivity-classes)). |
+| **Context audit log** | The record of every context grant ([context-policy.md](context-policy.md#retrieval-rules), rule C7). |
+| **Standalone / connected** | Modes with one app enabled or several, over the same core ([apps-and-modes.md § Modes](apps-and-modes.md#modes)). |
+| **Coordinator** | The layer above the apps that weighs every life area; its *Today* view ([architecture.md § Coordinator](architecture.md#coordinator-today)). |
 | **Glance** | A box's tile on Home. |
 | **Fact** | A statement backed by a calculation output, with provenance ([box-contract.md § Fact](box-contract.md#fact)). |
 | **Provenance** | Where a value came from: for a fact, the box, calculation, `engine_version`, `inputs_sha256` and the source document (and page) when there is one; for an observed value, its source and `observed_at`. |
