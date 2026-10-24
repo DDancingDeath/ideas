@@ -13,9 +13,9 @@ this folder and the Finance idea it links to.
 1. Read `../idea.md` end-to-end: north star, owner, privacy constraints,
    success criteria.
 2. Read `../spec/README.md`, then every spec file in the reading order it sets
-   (glossary, configuration, box contract, Ask, cross-cutting, privacy &
-   security, encryption & sync, life graph, nudges, identity vault, `boxes/`,
-   worked example).
+   (architecture, apps and modes, context policy, glossary, configuration, box
+   contract, Ask, cross-cutting, privacy & security, encryption & sync, life
+   graph, nudges, identity vault, `boxes/`, worked example).
 3. Read the Finance engine spec linked from `../spec/boxes/finance.md`.
 4. Skim `../plan/README.md` for milestone order and known issues — do NOT
    reintroduce them. Build milestone by milestone.

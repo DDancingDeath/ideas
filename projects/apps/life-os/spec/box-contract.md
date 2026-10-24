@@ -7,7 +7,8 @@ nothing else. Terms are defined in [glossary.md](glossary.md).
 
 | Member | Required | Returns | Rules |
 | --- | --- | --- | --- |
-| `manifest` | yes | `{id, name, icon, tagline, status, order, nav[]}` | `status` ∈ {`live`, `coming_soon`}. A `coming_soon` box shows on Home but contributes no facts, tools, recommendations or reminders. |
+| `manifest` | yes | `{id, name, icon, tagline, status, kind, order, nav[]}` | `status` ∈ {`live`, `coming_soon`}. A `coming_soon` box shows on Home but contributes no facts, tools, recommendations or reminders. `kind` ∈ {`app`, `source`, `me`} ([apps-and-modes.md](apps-and-modes.md)). |
+| `shared` | yes | `{reads[], writes[]}` shared entity types | The only shared facts the box reads or writes, always through the Knowledge Core API ([architecture.md](architecture.md#invariants), A1–A2). |
 | `glance` | yes | `{headline {label, value, unit, format}, chip {label, tone}, lines[], missing_count, state, action, source}` | Built only from calculation outputs. `lines` ≤ 2. `format` ∈ {`inr`, `count`, `years`, `date`}. With no data: the box's welcome state and first action, never a zero. |
 | `facts` | yes | list of [facts](#fact) | Every fact traceable to a calculation. |
 | `tools` | yes | map name → tool | Each tool: JSON Schema of its inputs, a description, and the data-document paths it reads (the overridable inputs). |

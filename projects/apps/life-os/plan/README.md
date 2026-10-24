@@ -23,7 +23,7 @@ proactive engine, spending insights, tax report, Conversations.
 ## Roadmap
 
 Milestones mirror the build repo's; M5 and M6 are this idea's next steps and
-are not yet on the build roadmap.
+are not yet on the build roadmap; M7 is on both.
 
 | Milestone | Scope | Status (2026-10-22) |
 | --- | --- | --- |
@@ -36,6 +36,7 @@ are not yet on the build roadmap.
 | M4 — Your data & personalisation | Real data replaces illustrative assumptions; live finance data; AI provider, app name, whose-learning and Account Aggregator decisions | Live data done; owner data entry and decisions open |
 | M5 — Chief of staff | Documents box, life graph, identity vault, proactive engine (nudges incl. FD maturity, document expiry, expected documents, birthdays from certificates), spending insights, tax report | Not started; build issues [#90](https://github.com/DDancingDeath/personal-ai-cfo/issues/90) (Documents), [#91](https://github.com/DDancingDeath/personal-ai-cfo/issues/91) (life graph), [#92](https://github.com/DDancingDeath/personal-ai-cfo/issues/92) (proactive engine), [#31](https://github.com/DDancingDeath/personal-ai-cfo/issues/31) (statutory rules + tax) |
 | M6 — Conversations | Personal chat exports, phone metadata (needs the Android app), people graph, relationship nudges, commitment drafts, work bridge entries | Not started; build issue [#93](https://github.com/DDancingDeath/personal-ai-cfo/issues/93) |
+| M7 — One brain, many apps | Knowledge Core canonical for shared facts (migrated out of box files); context policies per app with minimum-necessary context and an audit log; module boundaries (domain records vs shared facts); Home and navigation as apps vs sources vs Me; standalone app experiences (own entry point, manifest, scoped Ask, deep links); platform vs personal configuration; the *Today* coordinator; multi-user readiness last | Started 2026-10-25; build epic [#114](https://github.com/DDancingDeath/personal-ai-cfo/issues/114), ADR-003 |
 | Later | Background push when the app is closed; Telegram own-account (if ever) | Open |
 
 ## Backlog (unordered)
@@ -111,3 +112,36 @@ Append-only. Each entry: date · decision · rationale · alternatives considere
   stays in sanctioned work tools · Considered: importing work chats.
 - 2026-10-22 · Never record call audio; only the owner's own voice notes ·
   Consent and legal risk · Considered: call recording.
+- 2026-10-25 · **One brain, many apps.** Owner: *"One identity. One knowledge
+  base. Multiple specialized experiences. One coordinated personal
+  assistant."* and *"No application should have to understand the entire
+  person's life on its own. It should ask the shared intelligence layer for
+  the context it needs, while the platform remains responsible for identity,
+  provenance, permissions, and consistency."* Shared entities and facts
+  (people, households, organisations, accounts, assets, liabilities, policies,
+  documents, identity references, dates/events, goals, commitments, notes
+  metadata) become canonical in a Knowledge Core with provenance and review
+  states; boxes keep their domain records (loan schedules, lab result tables,
+  journal entries, transactions) and publish/consume shared facts only through
+  the core API; the derived life graph evolves into the core with a migration
+  from box files; each app receives context through a per-app policy (default
+  deny across domains, minimum necessary, audited); apps can run standalone or
+  connected over the same core; Life OS is the coordinator (*Today*, trade-offs,
+  never deciding silently). Phases: shared core → module boundaries →
+  context-aware integration → separate app experiences → cross-domain
+  orchestration → prepare for other users · No module should own the only
+  copy of an important personal fact; experience separation with knowledge
+  integration · Considered: separate apps with separate data and a sync bus
+  (copies drift, every app re-implements provenance and permissions); one
+  monolith UI (no separate experiences, no minimum-necessary boundary).
+  Build-repo ADR-003. Closes the life-graph data-model question.
+- 2026-10-25 · **Apps vs sources vs Me.** Apps are life areas (Finance,
+  Health, Career & Learning, Family, Notes & reminders, Reflection/Journal;
+  later Goals). Documents and Conversations are sources (Folders / Documents,
+  Chats) alongside email, statements, prices and profile exports, each with
+  sync status and a review queue; document search is global; the identity
+  vault, about me and the household belong to Me; chat-derived people, dates
+  and commitments surface in Family and Notes & reminders · Owner feedback on
+  Home: a folder or a chat export is where facts come from, not a part of
+  life · Considered: keeping Documents and Conversations as boxes beside the
+  life areas.

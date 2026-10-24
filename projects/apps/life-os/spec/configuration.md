@@ -34,6 +34,14 @@ Naming: camelCase, dotted namespaces, unit suffixes `Days`, `Minutes`,
 | `ask.eval.safetyMinPct` | Ask evaluation | percent | `100` | build |
 | `perf.apiCallMs` | home server | milliseconds | `500` | build |
 
+## Apps, sources and context
+
+| Key | Scope | Type / unit | Default | Editable by |
+| --- | --- | --- | --- | --- |
+| `apps.enabled` | Home, navigation, coordinator | list of app ids ([apps-and-modes.md](apps-and-modes.md#kinds)) | every `live` app | owner |
+| `apps.<appId>.preferences` | that app | start page, density, notifications | optional; none | owner |
+| `context.policies.<appId>` | Intelligence | [policy document](context-policy.md#policy-document) per app id and `coordinator` | the [default grants](context-policy.md#default-grants), labelled *sample*, until the owner saves their own | owner |
+
 ## Dates, reminders and notifications
 
 | Key | Scope | Type / unit | Default | Editable by |

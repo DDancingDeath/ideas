@@ -62,6 +62,16 @@ that the owner reviews. Ask is deterministic routing plus deterministic
 composition; an AI provider, if enabled, may only phrase or plan and is
 checked against the tool outputs.
 
+**One brain, many apps.** One identity and one Knowledge Core hold every
+shared fact (people, accounts, dates, goals…) once, with its source and review
+state. Apps are life areas (Finance, Health, Career & Learning, Family, Notes
+& reminders, Reflection), each usable on its own; sources (folders /
+documents, chats, email, statements, prices) feed them through review; *Me*
+holds about me, the household and the identity vault. An app asks for only
+the context its policy allows, and every grant is recorded. Life OS sits on
+top as the coordinator: *Today*, with trade-offs, never deciding silently.
+Details: [`spec/architecture.md`](./spec/architecture.md).
+
 Two modes run the same UI and engines: a **home server** on the owner's PC
 (loopback only, published on the private network, password sign-in) and a
 **website / installed app** running the engines in the browser. Anything that
@@ -138,3 +148,4 @@ life-os/
 - _2026-10-22_ · added life graph, nudges catalogue and identity vault; worked example of a career-break question across five boxes
 - _2026-10-22_ · hosting decision (home server now, encrypted sync next) stated as fact; open questions now: life graph, proactive engine, AI provider, app name, whose learning, cloud relay, iOS, desktop shell, Conversations phone access, commitment detection, Telegram
 - _2026-10-22_ · plan: current status, milestones M1–M6 with status, known issues, decision log (hosting, encryption, no Account Aggregator for individuals, no scraping, price sources, work data and call audio out of scope)
+- _2026-10-25_ · one brain, many apps: new spec files `architecture.md` (layers, components, Knowledge Core with shared entity types and review states, invariants, Today coordinator), `context-policy.md` (policy document, levels, sensitivity classes, retrieval rules, default grants) and `apps-and-modes.md` (apps vs sources vs Me, standalone/connected, platform vs personal configuration); box contract gains `kind` and `shared`; Documents and Conversations become sources; life-graph storage question closed; plan M7 and two decisions
